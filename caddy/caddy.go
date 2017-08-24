@@ -1,4 +1,4 @@
-package txtdirect
+package caddy
 
 import (
 	"net/http"

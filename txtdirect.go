@@ -14,6 +14,9 @@ type record struct {
 }
 
 func (r record) Parse(str string) (record, error) {
+	// default case
+	r.Code = 301
+
 	s := strings.Split(str, ";")
 	for _, l := range s {
 		switch {

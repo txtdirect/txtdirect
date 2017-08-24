@@ -13,18 +13,23 @@ func TestParse(t *testing.T) {
 		err       error
 	}{
 		{
-			"v=test1;to=https://example.com/;code=302",
+			"v=txtv0;to=https://example.com/;code=302",
 			record{
-				Version: "test1",
+				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
 			},
 			nil,
 		},
 		{
-			"v=test2;to=https://example.com/;code=test",
+			"v=txtv0;to=https://example.com/;code=test",
 			record{},
 			fmt.Errorf("could not parse status code"),
+		},
+		{
+			"v=txtv1;to=https://example.com/;code=test",
+			record{},
+			fmt.Errorf("unhandled version 'txtv1'"),
 		},
 	}
 

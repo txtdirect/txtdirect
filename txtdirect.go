@@ -39,6 +39,11 @@ func (r record) Parse(str string) (record, error) {
 				return r, fmt.Errorf("could not parse status code: %s", err)
 			}
 			r.Code = i
+		default:
+			if r.To != "" {
+				return r, fmt.Errorf("multiple values without keys")
+			}
+			r.To = l
 		}
 	}
 	return r, nil

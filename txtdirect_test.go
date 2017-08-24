@@ -31,9 +31,23 @@ func TestParse(t *testing.T) {
 			nil,
 		},
 		{
+			"v=txtv0;https://example.com/;code=302",
+			record{
+				Version: "txtv0",
+				To:      "https://example.com/",
+				Code:    302,
+			},
+			nil,
+		},
+		{
 			"v=txtv0;to=https://example.com/;code=test",
 			record{},
 			fmt.Errorf("could not parse status code"),
+		},
+		{
+			"v=txtv0;https://example.com/;https://google.com;code=test",
+			record{},
+			fmt.Errorf("multiple values without keys"),
 		},
 		{
 			"v=txtv1;to=https://example.com/;code=test",

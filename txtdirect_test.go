@@ -87,7 +87,7 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func TestHandleDefault(t *testing.T) {
+func TestRedirectDefault(t *testing.T) {
 	testURL := "https://%d._td.txtdirect.org"
 	dnsURL := "_redirect.%d._td.txtdirect.org"
 
@@ -105,7 +105,7 @@ func TestHandleDefault(t *testing.T) {
 	}
 }
 
-func TestHandleSuccess(t *testing.T) {
+func TestRedirectSuccess(t *testing.T) {
 	testURL := "https://%d._ths.txtdirect.org"
 	dnsURL := "_redirect.%d._ths.txtdirect.org"
 
@@ -123,7 +123,7 @@ func TestHandleSuccess(t *testing.T) {
 	}
 }
 
-func TestHandleFailure(t *testing.T) {
+func TestRedirectFailure(t *testing.T) {
 	testURL := "https://%d._thf.txtdirect.org"
 	dnsURL := "_redirect.%d._thf.txtdirect.org"
 

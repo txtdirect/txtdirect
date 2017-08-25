@@ -2,6 +2,8 @@ package txtdirect
 
 import (
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -86,101 +88,56 @@ func TestParse(t *testing.T) {
 }
 
 func TestHandleDefault(t *testing.T) {
-	testURL := "https://0._td.txtdirect.org"
+	testURL := "https://%d._td.txtdirect.org"
+	dnsURL := "_redirect.%d._td.txtdirect.org"
 
-	tests := []struct {
-		status int
-		err    error
-	}{
-		{
-			301,
-			nil,
-		},
-	}
-
-	for _, test := range tests {
+	for i := 0; ; i++ {
+		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
+		if err != nil {
+			break
+		}
 		req, _ := http.NewRequest("GET", testURL, nil)
 		rec := httptest.NewRecorder()
-		err := Handle(rec, req)
+		err = Handle(rec, req)
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)
-			continue
-		}
-		if rec.Code != test.status {
-			t.Errorf("Unexpected status code: got %d wanted %d", rec.Code, test.status)
 		}
 	}
 }
 
 func TestHandleSuccess(t *testing.T) {
 	testURL := "https://%d._ths.txtdirect.org"
+	dnsURL := "_redirect.%d._ths.txtdirect.org"
 
-	tests := []struct {
-		status int
-		err    error
-	}{
-		{
-			301,
-			nil,
-		},
-		{
-			302,
-			nil,
-		},
-		{
-			302,
-			nil,
-		},
-		{
-			301,
-			nil,
-		},
-	}
-
-	for i, test := range tests {
+	for i := 0; ; i++ {
+		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
+		if err != nil {
+			break
+		}
 		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
 		rec := httptest.NewRecorder()
-		err := Handle(rec, req)
+		err = Handle(rec, req)
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)
-			continue
-		}
-		if rec.Code != test.status {
-			t.Errorf("Unexpected status code: got %d wanted %d", rec.Code, test.status)
 		}
 	}
 }
 
 func TestHandleFailure(t *testing.T) {
 	testURL := "https://%d._thf.txtdirect.org"
+	dnsURL := "_redirect.%d._thf.txtdirect.org"
 
-	tests := []struct {
-		err error
-	}{
-		{
-			fmt.Errorf("could not parse record: unhandled version"),
-		},
-		{
-			fmt.Errorf("could not parse record: unhandled version"),
-		},
-		{
-			fmt.Errorf("could not parse record: multiple values without keys"),
-		},
-		{
-			fmt.Errorf("could not parse record: unhandled version"),
-		},
-	}
-
-	for i, test := range tests {
+	for i := 0; ; i++ {
+		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
+		if err != nil {
+			log.Print(err, i)
+			break
+		}
 		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
 		rec := httptest.NewRecorder()
-		err := Handle(rec, req)
+		err = Handle(rec, req)
 		if err == nil {
 			t.Errorf("Expected error, got nil)")
-			continue
-		}
-		if !strings.HasPrefix(err.Error(), test.err.Error()) {
-			t.Errorf("Unexpected error: %s", err)
 		}
 	}
 }

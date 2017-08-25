@@ -63,6 +63,10 @@ func getBaseTarget(host, path string) (string, int, error) {
 	zone := strings.Join([]string{basezone, host}, ".")
 	s, err := net.LookupTXT(zone)
 	if err != nil {
+		if strings.HasSuffix(err.Error(), "no such host") {
+			s := []string{defaultProtocol, "://", defaultSub, ".", host}
+			return strings.Join(s, ""), 301, nil
+		}
 		return "", 0, fmt.Errorf("could not get TXT record: %s", err)
 	}
 

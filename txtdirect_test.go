@@ -88,13 +88,12 @@ func TestParse(t *testing.T) {
 }
 
 /*
-DNS TXT records currently registered on _redirect.[i]._td.txtdirect.org :
-
-- 0: unavailable
+DNS TXT records currently registered at _td.test.txtdirect.org available in:
+https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
 */
 func TestRedirectDefault(t *testing.T) {
-	testURL := "https://%d._td.txtdirect.org"
-	dnsURL := "_redirect.%d._td.txtdirect.org"
+	testURL := "https://%d._td.test.txtdirect.org"
+	dnsURL := "_redirect.%d._td.test.txtdirect.org"
 
 	for i := 0; ; i++ {
 		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
@@ -111,16 +110,12 @@ func TestRedirectDefault(t *testing.T) {
 }
 
 /*
-DNS TXT records currently registered on _redirect.[i]._ths.txtdirect.org :
-
-- 0: "v=txtv0"
-- 1: "v=txtv0;to=txtdirect.org;code=302"
-- 2: "v=txtv0;txtdirect.org;code=302"
-- 3: "v=txtv0;to=www.txtdirect.org"
+DNS TXT records currently registered at _ths.test.txtdirect.org available in:
+https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
 */
 func TestRedirectSuccess(t *testing.T) {
-	testURL := "https://%d._ths.txtdirect.org"
-	dnsURL := "_redirect.%d._ths.txtdirect.org"
+	testURL := "https://%d._ths.test.txtdirect.org"
+	dnsURL := "_redirect.%d._ths.test.txtdirect.org"
 
 	for i := 0; ; i++ {
 		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
@@ -137,16 +132,12 @@ func TestRedirectSuccess(t *testing.T) {
 }
 
 /*
-DNS TXT records currently registered on _redirect.[i]._thf.txtdirect.org :
-
-- 0: "v=txtv1"
-- 1: "v=txtv1;to=txtdirect.org"
-- 2: "v=txtv0;txtdirect.org;302"
-- 3: "v=txtv0,txtdirect.org"
+DNS TXT records currently registered at _thf.test.txtdirect.org available in:
+https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
 */
 func TestRedirectFailure(t *testing.T) {
-	testURL := "https://%d._thf.txtdirect.org"
-	dnsURL := "_redirect.%d._thf.txtdirect.org"
+	testURL := "https://%d._thf.test.txtdirect.org"
+	dnsURL := "_redirect.%d._thf.test.txtdirect.org"
 
 	for i := 0; ; i++ {
 		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))

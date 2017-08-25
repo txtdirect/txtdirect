@@ -9,7 +9,11 @@ import (
 	"strings"
 )
 
-const basezone = "_redirect"
+const (
+	basezone        = "_redirect"
+	defaultSub      = "www"
+	defaultProtocol = "https"
+)
 
 type record struct {
 	Version string
@@ -56,7 +60,7 @@ func (r *record) Parse(str string) error {
 }
 
 func getBaseTarget(host, path string) (string, int, error) {
-	zone := basezone + "." + host
+	zone := strings.Join([]string{basezone, host}, ".")
 	s, err := net.LookupTXT(zone)
 	if err != nil {
 		return "", 0, err
@@ -68,7 +72,8 @@ func getBaseTarget(host, path string) (string, int, error) {
 	}
 
 	if rec.To == "" {
-		rec.To = "https://www." + host
+		s := []string{defaultProtocol, "://", defaultSub, ".", host}
+		rec.To = strings.Join(s, "")
 	}
 
 	return rec.To, rec.Code, nil

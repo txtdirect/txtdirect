@@ -58,7 +58,7 @@ func TestParse(t *testing.T) {
 
 	for i, test := range tests {
 		r := record{}
-		r, err := r.Parse(test.txtRecord)
+		err := r.Parse(test.txtRecord)
 
 		if err != nil {
 			if test.err == nil || !strings.HasPrefix(err.Error(), test.err.Error()) {

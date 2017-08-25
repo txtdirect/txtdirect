@@ -5,6 +5,8 @@ import (
 
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
+
+	"github.com/txtdirect/txtdirect"
 )
 
 func init() {
@@ -28,6 +30,8 @@ type Handler struct {
 }
 
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	w.Write([]byte("Hello TxtDirect !"))
-	return 200, nil
+	if err := txtdirect.Handle(w, r); err != nil {
+		return http.StatusInternalServerError, err
+	}
+	return 0, nil
 }

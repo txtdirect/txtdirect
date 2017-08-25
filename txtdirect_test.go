@@ -96,7 +96,7 @@ func TestHandleDefault(t *testing.T) {
 		if err != nil {
 			break
 		}
-		req, _ := http.NewRequest("GET", testURL, nil)
+		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
 		rec := httptest.NewRecorder()
 		err = Redirect(rec, req)
 		if err != nil {

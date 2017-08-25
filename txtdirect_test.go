@@ -98,7 +98,7 @@ func TestHandleDefault(t *testing.T) {
 		}
 		req, _ := http.NewRequest("GET", testURL, nil)
 		rec := httptest.NewRecorder()
-		err = Handle(rec, req)
+		err = Redirect(rec, req)
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)
 		}
@@ -116,7 +116,7 @@ func TestHandleSuccess(t *testing.T) {
 		}
 		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
 		rec := httptest.NewRecorder()
-		err = Handle(rec, req)
+		err = Redirect(rec, req)
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)
 		}
@@ -135,7 +135,7 @@ func TestHandleFailure(t *testing.T) {
 		}
 		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
 		rec := httptest.NewRecorder()
-		err = Handle(rec, req)
+		err = Redirect(rec, req)
 		if err == nil {
 			t.Errorf("Expected error, got nil)")
 		}

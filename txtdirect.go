@@ -44,6 +44,7 @@ func (r *record) Parse(str string) error {
 				return fmt.Errorf("could not parse status code: %s", err)
 			}
 			r.Code = i
+
 		default:
 			if r.To != "" {
 				return fmt.Errorf("multiple values without keys")
@@ -83,8 +84,8 @@ func getBaseTarget(host, path string) (string, int, error) {
 	return rec.To, rec.Code, nil
 }
 
-// Handle the redirection
-func Handle(w http.ResponseWriter, r *http.Request) error {
+// Redirect the request depending on the redirect record found
+func Redirect(w http.ResponseWriter, r *http.Request) error {
 	host := r.Host
 	path := r.URL.Path
 

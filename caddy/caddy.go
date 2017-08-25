@@ -19,18 +19,19 @@ func init() {
 func setup(c *caddy.Controller) error {
 	cfg := httpserver.GetConfig(c)
 	mid := func(next httpserver.Handler) httpserver.Handler {
-		return Handler{Next: next}
+		return Redirect{Next: next}
 	}
 	cfg.AddMiddleware(mid)
 	return nil
 }
 
-type Handler struct {
+// Redirect is middleware to redirect requests based on TXT records
+type Redirect struct {
 	Next httpserver.Handler
 }
 
-func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	if err := txtdirect.Handle(w, r); err != nil {
+func (rd Redirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
+	if err := txtdirect.Redirect(w, r); err != nil {
 		return http.StatusInternalServerError, err
 	}
 	return 0, nil

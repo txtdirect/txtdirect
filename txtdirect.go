@@ -63,12 +63,12 @@ func getBaseTarget(host, path string) (string, int, error) {
 	zone := strings.Join([]string{basezone, host}, ".")
 	s, err := net.LookupTXT(zone)
 	if err != nil {
-		return "", 0, err
+		return "", 0, fmt.Errorf("could not get TXT record: %s", err)
 	}
 
 	rec := record{}
 	if err = rec.Parse(s[0]); err != nil {
-		return "", 0, err
+		return "", 0, fmt.Errorf("could not parse record: %s", err)
 	}
 
 	if rec.To == "" {

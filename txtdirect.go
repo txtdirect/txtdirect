@@ -19,6 +19,7 @@ type record struct {
 	Version string
 	To      string
 	Code    int
+	Type    string
 }
 
 func (r *record) Parse(str string) error {
@@ -44,6 +45,10 @@ func (r *record) Parse(str string) error {
 				return fmt.Errorf("could not parse status code: %s", err)
 			}
 			r.Code = i
+
+		case strings.HasPrefix(l, "type="):
+			l = strings.TrimPrefix(l, "type=")
+			r.Type = l
 
 		default:
 			if r.To != "" {

@@ -71,6 +71,10 @@ func (r *record) Parse(str string) error {
 		r.Vcs = "git"
 	}
 
+	if r.Type == "" {
+		r.Type = "host"
+	}
+
 	return nil
 }
 
@@ -113,7 +117,7 @@ func Redirect(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if rec.Type == "host" || rec.Type == "" {
+	if rec.Type == "host" {
 		to, code := getBaseTarget(rec)
 		http.Redirect(w, r, to, code)
 		return nil

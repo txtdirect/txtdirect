@@ -53,7 +53,7 @@ func (r *record) Parse(str string) error {
 
 		case strings.HasPrefix(l, "vcs="):
 			l = strings.TrimPrefix(l, "vcs=")
-			r.Type = l
+			r.Vcs = l
 
 		default:
 			if r.To != "" {

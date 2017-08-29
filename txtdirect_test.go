@@ -22,6 +22,8 @@ func TestParse(t *testing.T) {
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
+				Vcs:     "git",
+				Type:    "host",
 			},
 			nil,
 		},
@@ -31,6 +33,8 @@ func TestParse(t *testing.T) {
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    301,
+				Vcs:     "git",
+				Type:    "host",
 			},
 			nil,
 		},
@@ -40,6 +44,30 @@ func TestParse(t *testing.T) {
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
+				Vcs:     "git",
+				Type:    "host",
+			},
+			nil,
+		},
+		{
+			"v=txtv0;https://example.com/;code=302;vcs=hg",
+			record{
+				Version: "txtv0",
+				To:      "https://example.com/",
+				Code:    302,
+				Vcs:     "hg",
+				Type:    "host",
+			},
+			nil,
+		},
+		{
+			"v=txtv0;https://example.com/;code=302;type=gometa",
+			record{
+				Version: "txtv0",
+				To:      "https://example.com/",
+				Code:    302,
+				Vcs:     "git",
+				Type:    "gometa",
 			},
 			nil,
 		},
@@ -83,6 +111,12 @@ func TestParse(t *testing.T) {
 		}
 		if got, want := r.Code, test.expected.Code; got != want {
 			t.Errorf("Test %d: Expected Code to be '%d', got '%d'", i, want, got)
+		}
+		if got, want := r.Type, test.expected.Type; got != want {
+			t.Errorf("Test %d: Expected Type to be '%s', got '%s'", i, want, got)
+		}
+		if got, want := r.Vcs, test.expected.Vcs; got != want {
+			t.Errorf("Test %d: Expected Vcs to be '%s', got '%s'", i, want, got)
 		}
 	}
 }

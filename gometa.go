@@ -1,13 +1,26 @@
 package txtdirect
 
-import "net/http"
+import (
+	"html/template"
+	"net/http"
+)
 
-const template = `<!DOCTYPE html>
+var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 <head>
 <meta name="go-import" content="{{.Host}}{{.Path}} {{.Vcs}} {{.NewUrl}}>
 </head>
-</html>`
+</html>`))
 
 func gometa(w http.ResponseWriter, r record, host, path string) error {
-	return nil
+	return tmpl.Execute(w, struct {
+		Host string
+		Path string
+		Vcs  string
+		URL  string
+	}{
+		host,
+		path,
+		r.Vcs,
+		r.To,
+	})
 }

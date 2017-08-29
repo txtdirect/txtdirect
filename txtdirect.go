@@ -116,8 +116,7 @@ func Redirect(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if rec.Type == "gometa" {
-		err = gometa(w, rec, host, path)
-		return err
+		return gometa(w, rec, host, path)
 	}
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)

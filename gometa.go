@@ -7,7 +7,7 @@ import (
 
 var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 <head>
-<meta name="go-import" content="{{.Host}}{{.Path}} {{.Vcs}} {{.NewUrl}}>
+<meta name="go-import" content="{{.Host}}{{.Path}} {{.Vcs}} {{.NewUrl}}">
 </head>
 </html>`))
 

@@ -20,6 +20,7 @@ type record struct {
 	To      string
 	Code    int
 	Type    string
+	Vcs     string
 }
 
 func (r *record) Parse(str string) error {
@@ -48,6 +49,10 @@ func (r *record) Parse(str string) error {
 
 		case strings.HasPrefix(l, "type="):
 			l = strings.TrimPrefix(l, "type=")
+			r.Type = l
+
+		case strings.HasPrefix(l, "vcs="):
+			l = strings.TrimPrefix(l, "vcs=")
 			r.Type = l
 
 		default:

@@ -67,6 +67,10 @@ func (r *record) Parse(str string) error {
 		r.Code = 301
 	}
 
+	if r.Vcs == "" {
+		r.Vcs = "git"
+	}
+
 	return nil
 }
 

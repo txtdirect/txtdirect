@@ -70,20 +70,20 @@ func (r *record) Parse(str string) error {
 	return nil
 }
 
-func getBaseTarget(host, path string) (string, int, error) {
+func getBaseTarget(rec record) (string, int) {
+	return rec.To, rec.Code
+}
+
+func getRecord(host, path string) (record, error) {
 	zone := strings.Join([]string{basezone, host}, ".")
 	s, err := net.LookupTXT(zone)
 	if err != nil {
-		if strings.HasSuffix(err.Error(), "no such host") {
-			s := []string{defaultProtocol, "://", defaultSub, ".", host}
-			return strings.Join(s, ""), 301, nil
-		}
-		return "", 0, fmt.Errorf("could not get TXT record: %s", err)
+		return record{}, fmt.Errorf("could not get TXT record: %s", err)
 	}
 
 	rec := record{}
 	if err = rec.Parse(s[0]); err != nil {
-		return "", 0, fmt.Errorf("could not parse record: %s", err)
+		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
 	if rec.To == "" {
@@ -91,7 +91,7 @@ func getBaseTarget(host, path string) (string, int, error) {
 		rec.To = strings.Join(s, "")
 	}
 
-	return rec.To, rec.Code, nil
+	return rec, nil
 }
 
 // Redirect the request depending on the redirect record found
@@ -99,11 +99,21 @@ func Redirect(w http.ResponseWriter, r *http.Request) error {
 	host := r.Host
 	path := r.URL.Path
 
-	to, code, err := getBaseTarget(host, path)
+	rec, err := getRecord(host, path)
 	if err != nil {
+		if strings.HasSuffix(err.Error(), "no such host") {
+			s := []string{defaultProtocol, "://", defaultSub, ".", host}
+			http.Redirect(w, r, strings.Join(s, ""), 301)
+			return nil
+		}
 		return err
 	}
 
-	http.Redirect(w, r, to, code)
-	return nil
+	if rec.Type == "host" || rec.Type == "" {
+		to, code := getBaseTarget(rec)
+		http.Redirect(w, r, to, code)
+		return nil
+	}
+
+	return fmt.Errorf("record type %s unsupported", rec.Type)
 }

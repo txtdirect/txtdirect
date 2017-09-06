@@ -33,7 +33,7 @@ func setup(c *caddy.Controller) error {
 			if enable != nil {
 				return c.ArgErr()
 			}
-			enable = removeArrayFromArray(enable, c.RemainingArgs())
+			enable = removeArrayFromArray(allOptions, c.RemainingArgs())
 		default:
 			return c.ArgErr() // unhandled option
 		}

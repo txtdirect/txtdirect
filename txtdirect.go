@@ -102,8 +102,17 @@ func getRecord(host, path string) (record, error) {
 	return rec, nil
 }
 
+func contains(array []string, word string) bool {
+	for _, w := range array {
+		if w == word {
+			return true
+		}
+	}
+	return false
+}
+
 // Redirect the request depending on the redirect record found
-func Redirect(w http.ResponseWriter, r *http.Request) error {
+func Redirect(w http.ResponseWriter, r *http.Request, enable []string) error {
 	host := r.Host
 	path := r.URL.Path
 
@@ -115,6 +124,10 @@ func Redirect(w http.ResponseWriter, r *http.Request) error {
 			return nil
 		}
 		return err
+	}
+
+	if !contains(enable, rec.Type) {
+		return fmt.Errorf("option disabled")
 	}
 
 	if rec.Type == "host" {

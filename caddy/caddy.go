@@ -86,6 +86,9 @@ type Redirect struct {
 
 func (rd Redirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 	if err := txtdirect.Redirect(w, r, rd.Enable); err != nil {
+		if err.Error() == "option disabled" {
+			return rd.Next.ServeHTTP(w, r)
+		}
 		return http.StatusInternalServerError, err
 	}
 	return 0, nil

@@ -16,6 +16,8 @@ func init() {
 	})
 }
 
+var allOptions = []string{"host", "gometa"}
+
 func setup(c *caddy.Controller) error {
 	var enable, disable []string
 	c.Next() // skip directive name
@@ -31,34 +33,50 @@ func setup(c *caddy.Controller) error {
 			if enable != nil {
 				return c.ArgErr()
 			}
-			disable = c.RemainingArgs()
+			disable = removeArrayFromArray(disable, c.RemainingArgs())
 		default:
 			return c.ArgErr() // unhandled option
 		}
+	}
+
+	// If nothing is specified, enable everything
+	if disable == nil && enable == nil {
+		enable = allOptions
 	}
 
 	// Add handler to Caddy
 	cfg := httpserver.GetConfig(c)
 	mid := func(next httpserver.Handler) httpserver.Handler {
 		return Redirect{
-			Next:    next,
-			Enable:  enable,
-			Disable: disable,
+			Next:   next,
+			Enable: enable,
 		}
 	}
 	cfg.AddMiddleware(mid)
 	return nil
 }
 
+func removeArrayFromArray(array, toBeRemoved []string) []string {
+	for _, toRemove := range toBeRemoved {
+		for i, option := range array {
+			if option == toRemove {
+				array[i] = array[len(array)-1]
+				array = array[:len(array)-1]
+				break
+			}
+		}
+	}
+	return array
+}
+
 // Redirect is middleware to redirect requests based on TXT records
 type Redirect struct {
-	Next    httpserver.Handler
-	Enable  []string
-	Disable []string
+	Next   httpserver.Handler
+	Enable []string
 }
 
 func (rd Redirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	if err := txtdirect.Redirect(w, r); err != nil {
+	if err := txtdirect.Redirect(w, r, rd.Enable); err != nil {
 		return http.StatusInternalServerError, err
 	}
 	return 0, nil

@@ -19,13 +19,13 @@ func init() {
 var allOptions = []string{"host", "gometa"}
 
 func setup(c *caddy.Controller) error {
-	var enable, disable []string
+	var enable []string
 	c.Next() // skip directive name
 	for c.NextBlock() {
 		option := c.Val()
 		switch option {
 		case "enable":
-			if disable != nil {
+			if enable != nil {
 				return c.ArgErr()
 			}
 			enable = c.RemainingArgs()
@@ -33,14 +33,14 @@ func setup(c *caddy.Controller) error {
 			if enable != nil {
 				return c.ArgErr()
 			}
-			disable = removeArrayFromArray(disable, c.RemainingArgs())
+			enable = removeArrayFromArray(enable, c.RemainingArgs())
 		default:
 			return c.ArgErr() // unhandled option
 		}
 	}
 
 	// If nothing is specified, enable everything
-	if disable == nil && enable == nil {
+	if enable == nil {
 		enable = allOptions
 	}
 

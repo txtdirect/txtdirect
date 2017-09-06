@@ -17,9 +17,34 @@ func init() {
 }
 
 func setup(c *caddy.Controller) error {
+	var enable, disable []string
+	c.Next() // skip directive name
+	for c.NextBlock() {
+		option := c.Val()
+		switch option {
+		case "enable":
+			if disable != nil {
+				return c.ArgErr()
+			}
+			enable = c.RemainingArgs()
+		case "disable":
+			if enable != nil {
+				return c.ArgErr()
+			}
+			disable = c.RemainingArgs()
+		default:
+			return c.ArgErr() // unhandled option
+		}
+	}
+
+	// Add handler to Caddy
 	cfg := httpserver.GetConfig(c)
 	mid := func(next httpserver.Handler) httpserver.Handler {
-		return Redirect{Next: next}
+		return Redirect{
+			Next:    next,
+			Enable:  enable,
+			Disable: disable,
+		}
 	}
 	cfg.AddMiddleware(mid)
 	return nil
@@ -27,7 +52,9 @@ func setup(c *caddy.Controller) error {
 
 // Redirect is middleware to redirect requests based on TXT records
 type Redirect struct {
-	Next httpserver.Handler
+	Next    httpserver.Handler
+	Enable  []string
+	Disable []string
 }
 
 func (rd Redirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {

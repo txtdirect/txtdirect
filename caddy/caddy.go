@@ -29,11 +29,20 @@ func setup(c *caddy.Controller) error {
 				return c.ArgErr()
 			}
 			enable = c.RemainingArgs()
+			if len(enable) == 0 {
+				return c.ArgErr()
+			}
+
 		case "disable":
 			if enable != nil {
 				return c.ArgErr()
 			}
-			enable = removeArrayFromArray(allOptions, c.RemainingArgs())
+			toDisable := c.RemainingArgs()
+			if len(toDisable) == 0 {
+				return c.ArgErr()
+			}
+			enable = removeArrayFromArray(allOptions, toDisable)
+
 		default:
 			return c.ArgErr() // unhandled option
 		}

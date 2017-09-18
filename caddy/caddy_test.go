@@ -46,16 +46,20 @@ func TestSetup(t *testing.T) {
 			[]string{"host", "gometa"},
 		},
 		{
-			`txtdirect {
+			`
+			txtdirect {
 				enable host
-			}`,
+			}
+			`,
 			false,
 			[]string{"host"},
 		},
 		{
-			`txtdirect {
+			`
+			txtdirect {
 				disable host
-			}`,
+			}
+			`,
 			false,
 			[]string{"gometa"},
 		},

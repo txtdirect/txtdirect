@@ -137,7 +137,7 @@ func TestRedirectDefault(t *testing.T) {
 		}
 		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
 		rec := httptest.NewRecorder()
-		err = Redirect(rec, req)
+		err = Redirect(rec, req, []string{"host"})
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)
 		}
@@ -159,7 +159,7 @@ func TestRedirectSuccess(t *testing.T) {
 		}
 		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
 		rec := httptest.NewRecorder()
-		err = Redirect(rec, req)
+		err = Redirect(rec, req, []string{"host", "gometa"})
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)
 		}
@@ -182,7 +182,7 @@ func TestRedirectFailure(t *testing.T) {
 		}
 		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
 		rec := httptest.NewRecorder()
-		err = Redirect(rec, req)
+		err = Redirect(rec, req, []string{"host"})
 		if err == nil {
 			t.Errorf("Expected error, got nil)")
 		}

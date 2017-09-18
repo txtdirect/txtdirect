@@ -3,7 +3,6 @@ package txtdirect
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -177,7 +176,6 @@ func TestRedirectFailure(t *testing.T) {
 	for i := 0; ; i++ {
 		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
 		if err != nil {
-			log.Print(err, i)
 			break
 		}
 		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)

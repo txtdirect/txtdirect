@@ -6,7 +6,7 @@ import (
 	"github.com/mholt/caddy"
 )
 
-func TestSetup(t *testing.T) {
+func TestParse(t *testing.T) {
 	tests := []struct {
 		input     string
 		shouldErr bool
@@ -67,7 +67,7 @@ func TestSetup(t *testing.T) {
 
 	for i, test := range tests {
 		c := caddy.NewTestController("http", test.input)
-		err := setup(c)
+		_, err := parse(c)
 		if !test.shouldErr && err != nil {
 			t.Errorf("Test %d: Unexpected error %s", i, err)
 			continue

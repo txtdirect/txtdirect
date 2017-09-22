@@ -4,3 +4,33 @@ go:
   - 1.x
   - 1.8.x
   - master
+
+services:
+  - docker
+
+
+jobs:
+  include:
+    - stage: deploy
+      script:
+        # build caddy
+        - go get github.com/mholt/caddy/caddy
+        - go get github.com/caddyserver/builds
+        - go get -d -u
+        - cd $GOPATH/src/github.com/mholt/caddy
+        - find caddyhttp/httpserver -name 'plugin.go' -type f -exec sed -i -e "s/gopkg/txtdirect/g" -- {} +
+        - find caddy/caddymain -name 'run.go' -type f -exec sed -i -e "s/\/\/ This is where other plugins get plugged in (imported)/_ \"github.com\/txtdirect\/txtdirect\/caddy\"/g" -- {} +
+        - cd caddy
+        - CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w"
+        # add write Dockerfile
+        - echo "FROM alpine:3.6" > Dockerfile
+        - echo "ADD caddy /caddy" >> Dockerfile
+        - echo "CMD [\"/caddy\"]" >> Dockerfile
+        # build image and push
+        - docker login --username="$DOCKER_USER" --password="$DOCKER_PASSWORD"
+        - BUILD_REF=`echo $TRAVIS_COMMIT | cut -c1-6`
+        - TAG=`if [ -n "$TRAVIS_TAG" ]; then echo $TRAVIS_TAG; else echo dev; fi`
+        - docker build -t seetheprogress/txtdirect:$TAG-$BUILD_REF -f Dockerfile .
+        - docker push seetheprogress/txtdirect:$TAG-$BUILD_REF
+
+      go: 1.x

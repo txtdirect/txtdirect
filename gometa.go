@@ -12,6 +12,10 @@ var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 </html>`))
 
 func gometa(w http.ResponseWriter, r record, host, path string) error {
+	if path == "/" {
+		path = ""
+	}
+
 	return tmpl.Execute(w, struct {
 		Host   string
 		Path   string

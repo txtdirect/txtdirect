@@ -36,6 +36,19 @@ func TestGometa(t *testing.T) {
 </head>
 </html>`,
 		},
+		{
+			host: "root.com",
+			path: "/",
+			record: record{
+				Vcs: "git",
+				To:  "redirect.com/my-root-package",
+			},
+			expected: `<!DOCTYPE html>
+<head>
+<meta name="go-import" content="root.com git redirect.com/my-root-package">
+</head>
+</html>`,
+		},
 	}
 
 	for i, test := range tests {

@@ -6,6 +6,7 @@ import (
 )
 
 var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
+<html>
 <head>
 <meta name="go-import" content="{{.Host}}{{.Path}} {{.Vcs}} {{.NewURL}}">
 </head>

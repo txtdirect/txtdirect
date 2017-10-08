@@ -128,6 +128,10 @@ func TestRedirectDefault(t *testing.T) {
 	testURL := "https://%d._td.test.txtdirect.org"
 	dnsURL := "_redirect.%d._td.test.txtdirect.org"
 
+	config := Config{
+		Enable: []string{"host"},
+	}
+
 	for i := 0; ; i++ {
 		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
 		if err != nil {
@@ -135,7 +139,7 @@ func TestRedirectDefault(t *testing.T) {
 		}
 		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
 		rec := httptest.NewRecorder()
-		err = Redirect(rec, req, []string{"host"})
+		err = Redirect(rec, req, config)
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)
 		}
@@ -150,6 +154,10 @@ func TestRedirectSuccess(t *testing.T) {
 	testURL := "https://%d._ths.test.txtdirect.org"
 	dnsURL := "_redirect.%d._ths.test.txtdirect.org"
 
+	config := Config{
+		Enable: []string{"host", "gometa"},
+	}
+
 	for i := 0; ; i++ {
 		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
 		if err != nil {
@@ -157,7 +165,7 @@ func TestRedirectSuccess(t *testing.T) {
 		}
 		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
 		rec := httptest.NewRecorder()
-		err = Redirect(rec, req, []string{"host", "gometa"})
+		err = Redirect(rec, req, config)
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)
 		}
@@ -172,6 +180,10 @@ func TestRedirectFailure(t *testing.T) {
 	testURL := "https://%d._thf.test.txtdirect.org"
 	dnsURL := "_redirect.%d._thf.test.txtdirect.org"
 
+	config := Config{
+		Enable: []string{"host"},
+	}
+
 	for i := 0; ; i++ {
 		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
 		if err != nil {
@@ -179,7 +191,7 @@ func TestRedirectFailure(t *testing.T) {
 		}
 		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
 		rec := httptest.NewRecorder()
-		err = Redirect(rec, req, []string{"host"})
+		err = Redirect(rec, req, config)
 		if err == nil {
 			t.Errorf("Expected error, got nil)")
 		}

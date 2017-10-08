@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/txtdirect/txtdirect"
+
 	"github.com/mholt/caddy"
 )
 
@@ -12,7 +14,7 @@ func TestParse(t *testing.T) {
 	tests := []struct {
 		input     string
 		shouldErr bool
-		expected  []string
+		expected  txtdirect.Config
 	}{
 		{
 			`
@@ -21,7 +23,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			true,
-			[]string{},
+			txtdirect.Config{},
 		},
 		{
 			`
@@ -30,7 +32,16 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			true,
-			[]string{},
+			txtdirect.Config{},
+		},
+		{
+			`
+			txtdirect {
+				disable
+			}
+			`,
+			true,
+			txtdirect.Config{},
 		},
 		{
 			`
@@ -40,12 +51,33 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			true,
-			[]string{},
+			txtdirect.Config{},
+		},
+		{
+			`
+			txtdirect {
+				disable this
+				enable that
+			}
+			`,
+			true,
+			txtdirect.Config{},
+		},
+		{
+			`
+			txtdirect {
+				redirect
+			}
+			`,
+			true,
+			txtdirect.Config{},
 		},
 		{
 			`txtdirect`,
 			false,
-			[]string{"host", "gometa"},
+			txtdirect.Config{
+				Enable: allOptions,
+			},
 		},
 		{
 			`
@@ -54,7 +86,9 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			[]string{"host"},
+			txtdirect.Config{
+				Enable: []string{"host"},
+			},
 		},
 		{
 			`
@@ -63,13 +97,40 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			[]string{"gometa"},
+			txtdirect.Config{
+				Enable: []string{"gometa", "www"},
+			},
+		},
+		{
+			`
+			txtdirect {
+				redirect https://example.com
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   allOptions,
+			},
+		},
+		{
+			`
+			txtdirect {
+				enable host
+				redirect https://example.com
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host"},
+			},
 		},
 	}
 
 	for i, test := range tests {
 		c := caddy.NewTestController("http", test.input)
-		options, err := parse(c)
+		conf, err := parse(c)
 		if !test.shouldErr && err != nil {
 			t.Errorf("Test %d: Unexpected error %s", i, err)
 			continue
@@ -81,10 +142,10 @@ func TestParse(t *testing.T) {
 			continue
 		}
 
-		if !identical(options, test.expected) {
-			options := fmt.Sprintf("[ %s ]", strings.Join(options, ", "))
-			expected := fmt.Sprintf("[ %s ]", strings.Join(test.expected, ", "))
-			t.Errorf("Test %d: Expected options %s, got %s", i, options, expected)
+		if !identical(conf.Enable, test.expected.Enable) {
+			options := fmt.Sprintf("[ %s ]", strings.Join(conf.Enable, ", "))
+			expected := fmt.Sprintf("[ %s ]", strings.Join(test.expected.Enable, ", "))
+			t.Errorf("Test %d: Expected options %s, got %s", i, expected, options)
 		}
 	}
 }
@@ -105,7 +166,14 @@ func identical(s1, s2 []string) bool {
 	}
 
 	for i := range s1 {
-		if s1[i] != s2[i] {
+		found := false
+		for j := range s2 {
+			if s1[i] == s2[j] {
+				found = true
+			}
+		}
+
+		if !found {
 			return false
 		}
 	}

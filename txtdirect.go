@@ -125,6 +125,10 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	rec, err := getRecord(host, path)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
+			if c.Redirect != "" {
+				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
+				return nil
+			}
 			if contains(c.Enable, "www") {
 				s := []string{defaultProtocol, "://", defaultSub, ".", host}
 				http.Redirect(w, r, strings.Join(s, ""), 301)

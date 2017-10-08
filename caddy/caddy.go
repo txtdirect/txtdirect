@@ -87,16 +87,18 @@ func setup(c *caddy.Controller) error {
 }
 
 func removeArrayFromArray(array, toBeRemoved []string) []string {
+	tmp := make([]string, len(array))
+	copy(tmp, array)
 	for _, toRemove := range toBeRemoved {
-		for i, option := range array {
+		for i, option := range tmp {
 			if option == toRemove {
-				array[i] = array[len(array)-1]
-				array = array[:len(array)-1]
+				tmp[i] = tmp[len(tmp)-1]
+				tmp = tmp[:len(tmp)-1]
 				break
 			}
 		}
 	}
-	return array
+	return tmp
 }
 
 // Redirect is middleware to redirect requests based on TXT records

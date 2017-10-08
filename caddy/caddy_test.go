@@ -37,8 +37,27 @@ func TestParse(t *testing.T) {
 		{
 			`
 			txtdirect {
+				disable
+			}
+			`,
+			true,
+			txtdirect.Config{},
+		},
+		{
+			`
+			txtdirect {
 				enable this
 				disable that
+			}
+			`,
+			true,
+			txtdirect.Config{},
+		},
+		{
+			`
+			txtdirect {
+				disable this
+				enable that
 			}
 			`,
 			true,

@@ -45,6 +45,15 @@ func TestParse(t *testing.T) {
 			txtdirect.Config{},
 		},
 		{
+			`
+			txtdirect {
+				redirect
+			}
+			`,
+			true,
+			txtdirect.Config{},
+		},
+		{
 			`txtdirect`,
 			false,
 			txtdirect.Config{
@@ -73,6 +82,31 @@ func TestParse(t *testing.T) {
 				Enable: []string{"gometa", "www"},
 			},
 		},
+		{
+			`
+			txtdirect {
+				redirect https://example.com
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   allOptions,
+			},
+		},
+		{
+			`
+			txtdirect {
+				enable host
+				redirect https://example.com
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host"},
+			},
+		},
 	}
 
 	for i, test := range tests {
@@ -92,7 +126,7 @@ func TestParse(t *testing.T) {
 		if !identical(conf.Enable, test.expected.Enable) {
 			options := fmt.Sprintf("[ %s ]", strings.Join(conf.Enable, ", "))
 			expected := fmt.Sprintf("[ %s ]", strings.Join(test.expected.Enable, ", "))
-			t.Errorf("Test %d: Expected options %s, got %s", i, options, expected)
+			t.Errorf("Test %d: Expected options %s, got %s", i, expected, options)
 		}
 	}
 }

@@ -23,6 +23,12 @@ type record struct {
 	Vcs     string
 }
 
+// Config contains the middleware's configuration
+type Config struct {
+	Enable   []string
+	Redirect string
+}
+
 func (r *record) Parse(str string) error {
 	s := strings.Split(str, ";")
 	for _, l := range s {
@@ -112,7 +118,7 @@ func contains(array []string, word string) bool {
 }
 
 // Redirect the request depending on the redirect record found
-func Redirect(w http.ResponseWriter, r *http.Request, enable []string) error {
+func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
 	path := r.URL.Path
 
@@ -126,7 +132,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, enable []string) error {
 		return err
 	}
 
-	if !contains(enable, rec.Type) {
+	if !contains(c.Enable, rec.Type) {
 		return fmt.Errorf("option disabled")
 	}
 

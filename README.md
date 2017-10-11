@@ -1,6 +1,6 @@
 
 
-<a href="https://about.txtdirect.org"><img src="https://github.com/txtdirect/txtdirect/blob/master/logo.svg" width="500"/></a>
+<a href="https://about.txtdirect.org"><img src="https://github.com/txtdirect/txtdirect/blob/master/media/logo.svg" width="500"/></a>
 
 
 

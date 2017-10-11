@@ -1,7 +1,7 @@
 project:
   name: "TXTdirect" # required
   state: "unstable" # unstable, beta, stable are supported
-  image: "https://github.com/txtdirect/txtdirect/blob/master/logo.svg"
+  image: "https://github.com/txtdirect/txtdirect/blob/master/media/logo.svg"
   website: "https://about.txtdirect.org"
   oneLiner: "DNS TXT-record based redirects"
   description: |

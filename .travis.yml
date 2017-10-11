@@ -28,6 +28,7 @@ jobs:
         - CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w"
         # add write Dockerfile
         - echo "FROM alpine:3.6" > Dockerfile
+        - echo "RUN apk --no-cache add ca-certificates" >> Dockerfile
         - echo "ADD caddy /caddy" >> Dockerfile
         - echo "CMD [\"/caddy\"]" >> Dockerfile
         # build image and push

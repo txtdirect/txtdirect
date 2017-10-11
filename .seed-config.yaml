@@ -1,61 +1,39 @@
 project:
-  name: "txtdirect" # required
+  name: "TXTdirect" # required
   state: "unstable" # unstable, beta, stable are supported
-# image: "/blob/master/logo.svg"
-  website: "about.txtdirect.org"
-  oneLiner: "URL redirection for all your needs"
+  image: "https://github.com/txtdirect/txtdirect/blob/master/logo.svg"
+  website: "https://about.txtdirect.org"
+  oneLiner: "DNS TXT-record based redirects"
   description: |
-    Free software developers guarantee everyone equal rights to their programs;
-    any user can study the source code, modify it, and share the program.
-    By contrast, most software carries fine print that denies users these basic rights, leaving them susceptible to the whims of its owners.
-  # required
+    Convenient and minimalistic DNS based redirects
   version: "v0.1.0"
 
 vision:
   type: "community" # personal is the default.
   overview: |
-    This project thrives to be open, transparent and helpful.
-  # required
-  items:
-    - "Only specific categories allowed"
-    - "Bugfixes only"
-    - "For personal projects only"
-  concept: "Example Project's core concept to showcase how, why it does what it does."
-  aim: "Example Project should only provide a small core and further additions should be done in helper projects/plugins or some sort."
-
-supportPlatforms:
-  - service: "Chat"
-    link: "chat.example.com"
-  - service: "User Mailinglist"
-    link: "list.example.com"
-  - service: "Forum"
-    link: "forum.example.com"
+    TXTdirect thrives to give back control and data to redirects.
+  concept: "Instead of relying on external providers to control redirect data. TXTdirect uses data stored within your own DNS records and provides an easily switchable backend service/implementation."
+  aim: "TXTdirect provides the specification for redirection records and a based implementation as caddy plugin."
 
 supportLinks:
-  documentation: "/docs" # recommended
+  documentation: "/docs"
   examples: "/examples"
-  troubleshooting: "/docs/troubleshooting.md" # recommended
-
-readme:
-  usageExample: |
-    Some example ```go run cli```
-  # recommended
+  troubleshooting: "/docs/troubleshooting.md"
 
 contributionLinks:
   issueTemplate: "/.github/ISSUE_TEMPLATE.md"
-  starterIssues: "https://github.com/txtdirect/txtdirect/labels/starter%20issue" # replace dear-github with your actual url
+  starterIssues: "https://github.com/txtdirect/txtdirect/labels/starter%20issue"
 
 email:
-  commercialSupport: "payed-support@example.com"
-  security: "security@example.com" # required
-  coc: "coc@example.com" # required
+  commercialSupport: "support@okkur.io"
+  security: "security@okkur.io"
+  coc: "coc@okkur.io"
 
 copyright:
-  owner: "The Example Project authors" # default is project.name
-  year: "2017" # required
+  year: "2017"
 
 cla:
-  copyrightHolder: "Tiny Gopher" # required
+  copyrightHolder: "Michael Grosser"
 
 maintainers:
   - name: "Antoine Martin"
@@ -64,15 +42,23 @@ maintainers:
     nick: "stp-ip"
 
 repo:
-  link: "https://github.com/txtdirect/txtdirect/" # required
-  type: "Github" # required
+  link: "https://github.com/txtdirect/txtdirect/"
+  type: "Github"
 
 issueTemplate:
   questions:
   - "OS"
-  - "CLI version"
+  - "Caddy version"
 
 badges:
+  - image: "https://img.shields.io/badge/state-unstable-red.svg"
+    alt: "state"
+  - image: "https://img.shields.io/github/release/txtdirect/txtdirect.svg"
+    link: "https://github.com/txtdirect/txtdirect/releases"
+    alt: "release"
+  - image: "https://img.shields.io/github/license/txtdirect/txtdirect.svg"
+    link: "LICENSE"
+    alt: "license"
   - image: "https://travis-ci.org/txtdirect/txtdirect.svg?branch=master"
     alt: "Build Status"
     link: "https://travis-ci.org/txtdirect/txtdirect"

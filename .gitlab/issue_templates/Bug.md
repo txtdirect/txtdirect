@@ -11,7 +11,7 @@
 **Anything else we need to know?**:
 
 **Environment**:
-- txtdirect version:  
+- TXTdirect version:  
 - OS:  
-- CLI version:  
+- Caddy version:  
 - Others:

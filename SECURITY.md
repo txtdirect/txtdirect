@@ -12,5 +12,5 @@ If you want we will publicly acknowledge your responsible disclosure.
 We also try to make the issue public after the vulnerability is announced.
 Usually bug reports are made public after 30 days, if possible.
 
-You are not allowed to search for security vulnerabilities on any hosted service of txtdirect without the consent of the party hosting it.
-txtdirect is open source software and can be installed for testing and security issues on your own infrastructure.
+You are not allowed to search for security vulnerabilities on any hosted service of TXTdirect without the consent of the party hosting it.
+TXTdirect is open source software and can be installed for testing and security issues on your own infrastructure.

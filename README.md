@@ -1,26 +1,23 @@
 
-# txtdirect
+
+<a href="https://about.txtdirect.org"><img src="https://github.com/txtdirect/txtdirect/blob/master/logo.svg" width="500"/></a>
 
 
-URL redirection for all your needs
 
-[![Build Status](https://travis-ci.org/txtdirect/txtdirect.svg?branch=master)](https://travis-ci.org/txtdirect/txtdirect) [![Go Report Card](https://goreportcard.com/badge/github.com/txtdirect/txtdirect)](https://goreportcard.com/report/github.com/txtdirect/txtdirect)
+DNS TXT-record based redirects
+
+ [![state](https://img.shields.io/badge/state-unstable-red.svg)]() [![release](https://img.shields.io/github/release/txtdirect/txtdirect.svg)](https://github.com/txtdirect/txtdirect/releases) [![license](https://img.shields.io/github/license/txtdirect/txtdirect.svg)](LICENSE) [![Build Status](https://travis-ci.org/txtdirect/txtdirect.svg?branch=master)](https://travis-ci.org/txtdirect/txtdirect) [![Go Report Card](https://goreportcard.com/badge/github.com/txtdirect/txtdirect)](https://goreportcard.com/report/github.com/txtdirect/txtdirect)
 
 
 **NOTE: This is a work-in-progress, we do not consider it production ready. Use at your own risk.**
 
 
-# txtdirect
-Free software developers guarantee everyone equal rights to their programs;
-any user can study the source code, modify it, and share the program.
-By contrast, most software carries fine print that denies users these basic rights, leaving them susceptible to the whims of its owners.
+# TXTdirect
+Convenient and minimalistic DNS based redirects
 
 
 
-## Using txtdirect
-
-
-  Some example ```go run cli```
+## Using TXTdirect
 
 
 
@@ -43,4 +40,4 @@ Best place to start is our [contribution guide](/CONTRIBUTING.md).
 
 ---
 
-Copyright 2017 - The Example Project authors
+Copyright 2017 -  The TXTdirect Authors

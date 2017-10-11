@@ -1,0 +1,81 @@
+project:
+  name: "txtdirect" # required
+  state: "unstable" # unstable, beta, stable are supported
+# image: "/blob/master/logo.svg"
+  website: "about.txtdirect.org"
+  oneLiner: "URL redirection for all your needs"
+  description: |
+    Free software developers guarantee everyone equal rights to their programs;
+    any user can study the source code, modify it, and share the program.
+    By contrast, most software carries fine print that denies users these basic rights, leaving them susceptible to the whims of its owners.
+  # required
+  version: "v0.1.0"
+
+vision:
+  type: "community" # personal is the default.
+  overview: |
+    This project thrives to be open, transparent and helpful.
+  # required
+  items:
+    - "Only specific categories allowed"
+    - "Bugfixes only"
+    - "For personal projects only"
+  concept: "Example Project's core concept to showcase how, why it does what it does."
+  aim: "Example Project should only provide a small core and further additions should be done in helper projects/plugins or some sort."
+
+supportPlatforms:
+  - service: "Chat"
+    link: "chat.example.com"
+  - service: "User Mailinglist"
+    link: "list.example.com"
+  - service: "Forum"
+    link: "forum.example.com"
+
+supportLinks:
+  documentation: "/docs" # recommended
+  examples: "/examples"
+  troubleshooting: "/docs/troubleshooting.md" # recommended
+
+readme:
+  usageExample: |
+    Some example ```go run cli```
+  # recommended
+
+contributionLinks:
+  issueTemplate: "/.github/ISSUE_TEMPLATE.md"
+  starterIssues: "https://github.com/txtdirect/txtdirect/labels/starter%20issue" # replace dear-github with your actual url
+
+email:
+  commercialSupport: "payed-support@example.com"
+  security: "security@example.com" # required
+  coc: "coc@example.com" # required
+
+copyright:
+  owner: "The Example Project authors" # default is project.name
+  year: "2017" # required
+
+cla:
+  copyrightHolder: "Tiny Gopher" # required
+
+maintainers:
+  - name: "Antoine Martin"
+    nick: "alarsyo"
+  - name: "Michael Grosser"
+    nick: "stp-ip"
+
+repo:
+  link: "https://github.com/txtdirect/txtdirect/" # required
+  type: "Github" # required
+
+issueTemplate:
+  questions:
+  - "OS"
+  - "CLI version"
+
+badges:
+  - image: "https://travis-ci.org/txtdirect/txtdirect.svg?branch=master"
+    alt: "Build Status"
+    link: "https://travis-ci.org/txtdirect/txtdirect"
+  - image: "https://goreportcard.com/badge/github.com/txtdirect/txtdirect"
+    alt: "Go Report Card"
+    link: "https://goreportcard.com/report/github.com/txtdirect/txtdirect"

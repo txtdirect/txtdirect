@@ -15,4 +15,4 @@ _2017-01-01_
   - Go package import vanity url redirects
   - 404 defaulting
   - Optional default redirect to "www." subdomain
-  - Optional gloabl redirect
+  - Optional global redirect

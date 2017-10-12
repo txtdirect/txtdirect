@@ -10,7 +10,7 @@ _2017-01-01_
 
 [Examples](/tree/v0.1.0/examples)
 
-## Changes since v0.1.0
+## Changes since v0.0.0
   - Host based redirects
   - Go package import vanity url redirects
   - 404 defaulting

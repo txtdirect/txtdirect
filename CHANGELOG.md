@@ -1,5 +1,22 @@
+<!--
+# v0.2.0
+_2017_
+  - [Downloads for v0.2.0](https://github.com/txtdirect/txtdirect/releases/tag/v0.2.0)
+  - [Container build for v0.2.0](https://hub.docker.com/r/seetheprogress/txtdirect/tags/)
+  - [Changelog since v0.1.0](#changes-since-v010)
+  - [Documentation for v0.2.0](#documentation-for-v020)
+
+## Documentation for v0.2.0
+[Documentation](/tree/v0.2.0/docs)
+
+[Examples](/tree/v0.2.0/examples)
+
+## Changes since v0.1.0
+  - Update base files via reposeed
+-->
+
 # v0.1.0
-_2017-01-01_
+_2017-10-12_
   - [Downloads for v0.1.0](https://github.com/txtdirect/txtdirect/releases/tag/v0.1.0)
   - [Container build for v0.1.0](https://hub.docker.com/r/seetheprogress/txtdirect/tags/)
   - [Changelog since v0.0.0](#changes-since-v000)

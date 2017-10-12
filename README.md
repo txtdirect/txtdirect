@@ -38,6 +38,8 @@ Best place to start is our [contribution guide](/CONTRIBUTING.md).
 
 *Illustrations, trademarks and third-party resources are owned by their respective party and are subject to different licensing.*
 
+*The TXTdirect logo was created by [Florin Luca](https://99designs.com/profiles/florinluca)*
+
 ---
 
 Copyright 2017 -  The TXTdirect Authors

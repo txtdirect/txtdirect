@@ -18,7 +18,6 @@ vision:
 supportLinks:
   documentation: "/docs"
   examples: "/examples"
-  troubleshooting: "/docs/troubleshooting.md"
 
 contributionLinks:
   issueTemplate: "/.github/ISSUE_TEMPLATE.md"

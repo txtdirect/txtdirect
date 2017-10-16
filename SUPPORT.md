@@ -15,4 +15,3 @@ Be kind to anyone helping out.
 ## Documentation
 
 * [User Documentation](/docs)
-* [Troubleshooting Guide](/docs/troubleshooting.md)

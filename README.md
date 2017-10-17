@@ -3,9 +3,6 @@
 DNS TXT-record based redirects
 
  [![state](https://img.shields.io/badge/state-unstable-red.svg)]() [![release](https://img.shields.io/github/release/txtdirect/txtdirect.svg)](https://github.com/txtdirect/txtdirect/releases) [![license](https://img.shields.io/github/license/txtdirect/txtdirect.svg)](LICENSE) [![Build Status](https://travis-ci.org/txtdirect/txtdirect.svg?branch=master)](https://travis-ci.org/txtdirect/txtdirect) [![Go Report Card](https://goreportcard.com/badge/github.com/txtdirect/txtdirect)](https://goreportcard.com/report/github.com/txtdirect/txtdirect)
-
-
-
 **NOTE: This is a work-in-progress, we do not consider it production ready. Use at your own risk.**
 
 # TXTdirect

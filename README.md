@@ -1,4 +1,5 @@
 <a href='https://about.txtdirect.org'><img src='https://github.com/txtdirect/txtdirect/blob/master/media/logo.svg' width='500'/></a>
+
 DNS TXT-record based redirects
 
  [![state](https://img.shields.io/badge/state-unstable-red.svg)]() [![release](https://img.shields.io/github/release/txtdirect/txtdirect.svg)](https://github.com/txtdirect/txtdirect/releases) [![license](https://img.shields.io/github/license/txtdirect/txtdirect.svg)](LICENSE) [![Build Status](https://travis-ci.org/txtdirect/txtdirect.svg?branch=master)](https://travis-ci.org/txtdirect/txtdirect) [![Go Report Card](https://goreportcard.com/badge/github.com/txtdirect/txtdirect)](https://goreportcard.com/report/github.com/txtdirect/txtdirect)

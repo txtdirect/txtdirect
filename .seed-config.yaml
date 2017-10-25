@@ -1,5 +1,5 @@
 project:
-  name: "TXTdirect" # required
+  name: "TXTDIRECT" # required
   state: "unstable" # unstable, beta, stable are supported
   image: "https://github.com/txtdirect/txtdirect/blob/master/media/logo.svg"
   website: "https://about.txtdirect.org"
@@ -11,9 +11,9 @@ project:
 vision:
   type: "community" # personal is the default.
   overview: |
-    TXTdirect thrives to give back control and data to redirects.
-  concept: "Instead of relying on external providers to control redirect data. TXTdirect uses data stored within your own DNS records and provides an easily switchable backend service/implementation."
-  aim: "TXTdirect provides the specification for redirection records and a based implementation as caddy plugin."
+    TXTDIRECT thrives to give back control and data to redirects.
+  concept: "Instead of relying on external providers to control redirect data. TXTDIRECT uses data stored within your own DNS records and provides an easily switchable backend service/implementation."
+  aim: "TXTDIRECT provides the specification for redirection records and a based implementation as caddy plugin."
 
 supportLinks:
   documentation: "/docs"

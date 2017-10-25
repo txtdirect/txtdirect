@@ -6,10 +6,10 @@ DNS TXT-record based redirects
 
 **NOTE: This is a work-in-progress, we do not consider it production ready. Use at your own risk.**
 
-# TXTdirect
+# TXTDIRECT
 Convenient and minimalistic DNS based redirects
 
-## Using TXTdirect
+## Using TXTDIRECT
 Take a look at our full [documentation](/docs).
 
 ## Support
@@ -28,5 +28,5 @@ Best place to start is our [contribution guide](/CONTRIBUTING.md).
 
 ---
 
-Copyright 2017 - The TXTdirect Authors
+Copyright 2017 - The TXTDIRECT Authors
 

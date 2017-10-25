@@ -10,7 +10,22 @@ DNS TXT-record based redirects
 Convenient and minimalistic DNS based redirects
 
 ## Using TXTDIRECT
-Take a look at our full [documentation](/docs).
+Redirect to host provided in TXT record:  
+**Default: Redirect to "www"-subdomain on empty record**
+```
+txtdirect {
+  enable host www
+}
+```
+**www.example.com -> about.example.com 301**
+```
+www.example.com               3600 IN CNAME  txtdirect.example.com.
+_redirect.www.example.com     3600 IN TXT    "v=txtv0;to=https://about.example.com;type=host;code=301"
+```
+
+Further examples:  
+[Configuration](/examples/README.md#configuration)  
+[TXT-records](/examples/README.md#txt-record)  
 
 ## Support
 For detailed information on support options see our [support guide](/SUPPORT.md).
@@ -29,4 +44,3 @@ Best place to start is our [contribution guide](/CONTRIBUTING.md).
 ---
 
 Copyright 2017 - The TXTDIRECT Authors
-

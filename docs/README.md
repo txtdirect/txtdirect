@@ -14,6 +14,37 @@ limitations under the License.
 
 # Documentation
 
-No documentation available yet. Start your first contribution with some documentation.
+For configuration examples for the caddy plugin look at our [examples section](/examples/README.md#configuration)
+
+## Specification
+### General
+* The TXT record must consist of multiple sections, delimited by semicolons(;)
+* Each section is a key=value pair
+* The encoding is utf8.
+* Punycode for domain names is permitted, but not required.
+* The ordering of the tuples (a key-value pair) is arbitary, and not mandated.
+
+### Keys
+*v=*:
+* Mandatory
+* Possible values: "txtv0"
+
+*to=*:
+* Recommended
+* Default: Last plain value "v=txtv0;to=example.com" == "v=txtv0;example.com"
+* Possible values: "absolute URLs", "relative URLs"
+
+*code=*:
+* Optional
+* Default: "301"
+* Possible values: "301", "302"
+
+*type=*:
+* Mandatory
+* Possible values: "host", "gometa"
+
+---
+
+Start your first contribution with some documentation.
 
 See how you can contribute with our [contribution guide](/CONTRIBUTING.md).

@@ -38,7 +38,7 @@ txtdirect {
 ```
 
 **Redirect to host provided in TXT record:**  
-*Default: Redirect to "www"-subdomain on empty record*
+*Default: Redirect to example.com on empty record*
 ```
 txtdirect {
   redirect https://example.com
@@ -81,12 +81,12 @@ _redirect.www.example.com     3600 IN TXT    "v=txtv0;to=https://about.example.c
 *www.example.com -> about.example.com 302*
 ```
 www.example.com               3600 IN CNAME  txtdirect.example.com.
-_redirect.www.example.        3600 IN TXT    "v=txtv0;to=https://about.example.com;type=host;code=302"
+_redirect.www.example.com     3600 IN TXT    "v=txtv0;to=https://about.example.com;type=host;code=302"
 ```
 
 *gophers.example.com -> example.com/gophers*
 ```
-gophers.example               3600 IN CNAME  txtdirect.example.com.
+gophers.example.com           3600 IN CNAME  txtdirect.example.com.
 _redirect.gophers.example.com 3600 IN TXT    "v=txtv0;to=https://example.com/gophers;type=host"
 ```
 

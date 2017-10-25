@@ -10,57 +10,22 @@ DNS TXT-record based redirects
 Convenient and minimalistic DNS based redirects
 
 ## Using TXTDIRECT
-Take a look at our full [documentation](/docs).
-
-## Examples
-
-Redirect requests from example.com to www.example.com:
-
+Redirect to host provided in TXT record:  
+**Default: Redirect to "www"-subdomain on empty record**
 ```
 txtdirect {
-    enable www
+  enable host www
 }
 ```
-
-Redirect to host provided in TXT record if one is found, otherwise 404:
-
+**www.example.com -> about.example.com 301**
 ```
-txtdirect {
-    enable host
-}
+www.example.com               3600 IN CNAME  txtdirect.example.com.
+_redirect.www.example.com     3600 IN TXT    "v=txtv0;to=https://about.example.com;type=host;code=301"
 ```
 
-Redirect to host provided in TXT record if one is found, otherwise redirect to www.example.com:
-
-```
-txtdirect {
-    enable host www
-}
-```
-
-Enable go package vanity URLs:
-
-```
-txtdirect {
-    enable gometa
-}
-```
-
-Redirect to example.com if no TXT record is found for the request:
-
-```
-txtdirect {
-    redirect https://example.com
-}
-```
-
-Enable everything except redirection to www.example.com from example.com:
-
-```
-txtdirect {
-    disable www
-}
-```
+Further examples:  
+[Configuration](/examples/README.md#configuration)  
+[TXT-records](/examples/README.md#txt-record)  
 
 ## Support
 For detailed information on support options see our [support guide](/SUPPORT.md).

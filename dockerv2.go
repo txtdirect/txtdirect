@@ -13,8 +13,13 @@ limitations under the License.
 
 package txtdirect
 
-import "net/http"
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strings"
+)
 
 func dockerv2(w http.ResponseWriter, r *http.Request, rec record) error {
 	path := r.URL.Path
@@ -22,6 +27,27 @@ func dockerv2(w http.ResponseWriter, r *http.Request, rec record) error {
 	if path == "/v2/" {
 		_, err := w.Write([]byte(http.StatusText(http.StatusOK)))
 		return err
+	}
+
+	dest, err := url.Parse(rec.To)
+	if err != nil {
+		return fmt.Errorf("Could not parse 'to' URL: %s", err)
+	}
+
+	if path == "/v2/_catalog" {
+		http.Redirect(w, r, dest.Host+path, http.StatusMovedPermanently)
+		return nil
+	}
+
+	exp := regexp.MustCompile("/v2/(.*)/(tags|manifests|blobs)/(.*)")
+	if exp.MatchString(path) {
+		dst := make([]byte, 0, 1024)
+		tpl := "/v2" + strings.TrimSuffix(dest.Path, "/") + "/$1/$2/$3"
+		matches := exp.FindStringSubmatchIndex(path)
+
+		s := exp.ExpandString(dst, tpl, path, matches)
+		http.Redirect(w, r, string(s), http.StatusMovedPermanently)
+		return nil
 	}
 
 	return fmt.Errorf("Unhandled dockerv2 case")

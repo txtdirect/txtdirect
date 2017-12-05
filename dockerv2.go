@@ -46,7 +46,7 @@ func dockerv2(w http.ResponseWriter, r *http.Request, rec record) error {
 		matches := exp.FindStringSubmatchIndex(path)
 
 		s := exp.ExpandString(dst, tpl, path, matches)
-		http.Redirect(w, r, string(s), http.StatusMovedPermanently)
+		http.Redirect(w, r, dest.Host+string(s), http.StatusMovedPermanently)
 		return nil
 	}
 

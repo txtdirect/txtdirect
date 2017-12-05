@@ -35,7 +35,8 @@ func dockerv2(w http.ResponseWriter, r *http.Request, rec record) error {
 	}
 
 	if path == "/v2/_catalog" {
-		http.Redirect(w, r, dest.Host+path, http.StatusMovedPermanently)
+		dest.Path = path
+		http.Redirect(w, r, dest.String(), http.StatusMovedPermanently)
 		return nil
 	}
 
@@ -45,8 +46,8 @@ func dockerv2(w http.ResponseWriter, r *http.Request, rec record) error {
 		tpl := "/v2" + strings.TrimSuffix(dest.Path, "/") + "/$1/$2/$3"
 		matches := exp.FindStringSubmatchIndex(path)
 
-		s := exp.ExpandString(dst, tpl, path, matches)
-		http.Redirect(w, r, dest.Host+string(s), http.StatusMovedPermanently)
+		dest.Path = string(exp.ExpandString(dst, tpl, path, matches))
+		http.Redirect(w, r, dest.String(), http.StatusMovedPermanently)
 		return nil
 	}
 

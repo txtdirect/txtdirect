@@ -167,5 +167,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return gometa(w, rec, host, path)
 	}
 
+	if rec.Type == "dockerv2" {
+		return dockerv2(w, r, rec)
+	}
+
 	return fmt.Errorf("record type %s unsupported", rec.Type)
 }

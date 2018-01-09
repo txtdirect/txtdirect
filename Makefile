@@ -13,3 +13,6 @@ all:
 	cd $$GOPATH/src/github.com/mholt/caddy/caddy && \
 	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w"
 	mv $$GOPATH/src/github.com/mholt/caddy/caddy/caddy ./$(BIN)
+
+docker: all
+	docker build -t seetheprogress/txtdirect:dev-$$(git rev-parse HEAD | cut -c1-6) .

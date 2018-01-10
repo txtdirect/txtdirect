@@ -14,9 +14,62 @@ limitations under the License.
 
 # Documentation
 
-For configuration examples for the caddy plugin look at our [examples section](/examples/README.md#configuration).
+For configuration examples for the caddy plugin look at our [examples section](/examples/README.md#configuration)
 
-The full spec for the TXT record format and each specific type is available in the [spec directory](/spec/).
+# Specification
+*implementation does not yet implement the full specification yet*
+
+## TXT record
+### Basic requirements
+* The TXT record must consist of multiple sections, delimited by semicolons ";"
+* Each section is a key=value pair
+* The key and value encoding is utf8
+* Punycode for domain names is permitted, but not required
+* The ordering of the tuples (a key-value pair) is arbitary
+
+### Keys
+*v*
+* Mandatory
+* Possible values: "txtv0"
+
+*to*
+* Recommended
+* Default: Last plain value "v=txtv0;to=example.com" == "v=txtv0;example.com"
+* Possible values: "absolute/relative URL"
+
+*code*
+* Optional
+* Default: "301"
+* Possible values: "301", "302"
+
+*type*
+* Mandatory
+* Possible values: "host", "path", "gometa", "dockerv2"
+
+*from*
+* Optional (used with type=path)
+* Possible values: "absolute/relative URL + simplified regex"
+
+*re*
+* Optional (used with type=path)
+* Possible values: "absolute/relative URL + simplified regex"
+
+[Separate specifications for each type exist in the spec directory](/spec/)
+
+### Location
+The TXT record must be accessible under the subdomain "\_redirect".
+
+### Types
+*host*
+host redirect
+*path*
+path based
+wildcards
+fallback via wildcards
+*gometa*
+*dockerv2*
+
+[Full list of TXT record examples](/examples/README.md#txt-record)
 
 ---
 

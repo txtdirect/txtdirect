@@ -17,7 +17,7 @@ limitations under the License.
 For configuration examples for the caddy plugin look at our [examples section](/examples/README.md#configuration)
 
 # Specification
-*implementation does not yet implement the full specification yet*
+*implementation does not yet implement the full specification*
 
 ## TXT record
 ### Basic requirements
@@ -60,6 +60,7 @@ For configuration examples for the caddy plugin look at our [examples section](/
 The TXT record must be accessible under the subdomain "\_redirect".
 
 ### Types
+TBD
 *host*
 host redirect
 *path*

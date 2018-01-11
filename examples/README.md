@@ -61,26 +61,24 @@ txtdirect {
 ```
 
 # Placeholders
-```
-{dir} 	The directory of the requested file (from request URI)
-{file} 	The name of the requested file (from request URI)
-{fragment} 	The last part of the URL starting with "#"
-{>Header} 	Any request header, where "Header" is the header field name
-{host} 	The host value on the request
-{hostname} 	The name of the host machine that is processing the request
-{hostonly} 	Same as {host} but without port information
-{method} 	The request method (GET, POST, etc.)
-{path} 	The path portion of the original request URI (does not include query string or fragment)
+{dir} 	        The directory of the requested file (from request URI)
+{file} 	        The name of the requested file (from request URI)
+{fragment} 	    The last part of the URL starting with "#"
+{>Header} 	    Any request header, where "Header" is the header field name
+{host} 	        The host value on the request
+{hostname} 	    The name of the host machine that is processing the request
+{hostonly} 	    Same as {host} but without port information
+{method} 	      The request method (GET, POST, etc.)
+{path} 	        The path portion of the original request URI (does not include query string or fragment)
 {path_escaped} 	Query-escaped variant of {path}
-{port} 	The client's port
-{query} 	The query string portion of the URL, without leading "?"
-{query_escaped} 	The query-escaped variant of {query}
-{?key} 	The value of the "key" argument from the query string
-{remote} 	The client's IP address
-{scheme} 	The protocol/scheme used (usually http or https)
-{uri} 	The request URI (includes path, query string, and fragment)
+{port} 	        The client's port
+{query} 	      The query string portion of the URL, without leading "?"
+{query_escaped} The query-escaped variant of {query}
+{?key} 	        The value of the "key" argument from the query string
+{remote} 	      The client's IP address
+{scheme} 	      The protocol/scheme used (usually http or https)
+{uri} 	        The request URI (includes path, query string, and fragment)
 {uri_escaped} 	The query-escaped variant of {uri}
-```
 
 # TXT records
 "txtdirect.example.com" is your hosted TXTDIRECT instance and is usually provided as CNAME.

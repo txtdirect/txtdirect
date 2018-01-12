@@ -8,6 +8,8 @@ go:
 services:
   - docker
 
+script:
+  - make travis-build
 
 jobs:
   include:

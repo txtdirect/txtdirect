@@ -27,7 +27,10 @@ For configuration examples for the caddy plugin look at our [examples section](/
 * Punycode for domain names is permitted, but not required
 * The ordering of the tuples (a key-value pair) is arbitary
 
-### Keys
+### Location
+The TXT record must be accessible under the subdomain "\_redirect".
+
+### type=host
 *v*
 * Mandatory
 * Possible values: "txtv0"
@@ -42,33 +45,51 @@ For configuration examples for the caddy plugin look at our [examples section](/
 * Default: "301"
 * Possible values: "301", "302"
 
-*type*
+### type=path
+*v*
 * Mandatory
-* Possible values: "host", "path", "gometa", "dockerv2"
+* Possible values: "txtv0"
+
+*to*
+* Optional
+* Website address to redirect to for non special (dep, docker) users
 
 *from*
-* Optional (used with type=path)
 * Possible values: "absolute/relative URL + simplified regex"
 
 *re*
-* Optional (used with type=path)
 * Possible values: "absolute/relative URL + simplified regex"
 
-[Separate specifications for each type exist in the spec directory](/spec/)
+Path forces the implementation to look up a new record.
+Each match from `from` or `re` is added as subdomain to be looked up:
+`from=/$1/$2` -> \_redirect.<2>.<1>
 
-### Location
-The TXT record must be accessible under the subdomain "\_redirect".
+Wildcards for catch all records are also possible, by providing "\_" as subdomain.
+The wildcards need to be subdomains under specific domains if used.
+`_redirect._.test` <-- is allowed
+`_redirect.test._` <-- is not allowed
+  
+### type=gometa
+*v*
+* Mandatory
+* Possible values: "txtv0"
 
-### Types
-TBD
-*host*
-host redirect
-*path*
-path based
-wildcards
-fallback via wildcards
-*gometa*
-*dockerv2*
+*to*
+* Recommended
+* Default: Last plain value "v=txtv0;to=example.com" == "v=txtv0;example.com"
+* Possible values: "absolute URL being the repository route"
+
+The specifics especially concerning the dep registry idea need to be fleshed out.
+
+### type=dockerv2
+*v*
+* Mandatory
+* Possible values: "txtv0"
+
+*to*
+* Recommended
+* Default: Last plain value "v=txtv0;to=example.com" == "v=txtv0;example.com"
+* Possible values: "absolute/relative URL"
 
 [Full list of TXT record examples](/examples/README.md#txt-record)
 

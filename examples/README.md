@@ -175,13 +175,16 @@ _redirect.pkg.example.com     3600 IN TXT    "v=txtv0;to=https://github.com/some
 example.com                     3600 IN A      127.0.0.1
 _redirect.example.com           3600 IN TXT    "v=txtv0;from=/$1/$2;to=https://fallback.example.com;type=path"
 _redirect.fmt.pkg.example.com   3600 IN TXT    "v=txtv0;to=https://github.com/somePackage/someFmt;type=gometa"
+_redirect._._.example.com       3600 IN TXT    "v=txtv0;to=https://fallback.example.com;type=gometa"
+
 ```
 
 *example.com/firstMatch/secondMatch -> github.com/somePackage/SomeFmt*
 ```
-example.com                     3600 IN A      127.0.0.1
-_redirect.example.com           3600 IN TXT    "v=txtv0;re=\/(.*)\/(.*);to=https://fallback.example.com;type=path"
-_redirect.secondMatch.firstMatch.example.com   3600 IN TXT    "v=txtv0;to=https://github.com/somePackage/someFmt;type=gometa"
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;re=\/(.*)\/(.*);to=https://fallback.example.com;type=path"
+_redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https://github.com/somePackage/someFmt;type=gometa"
+_redirect._._.example.com                     3600 IN TXT    "v=txtv0;to=https://fallback.example.com;type=gometa"
 ```
 
 *example.com/pkg/fmt -> github.com/somePackage/fmt*

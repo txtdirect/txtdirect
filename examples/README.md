@@ -61,24 +61,24 @@ txtdirect {
 ```
 
 # Placeholders
-{dir} 	        The directory of the requested file (from request URI)
-{file} 	        The name of the requested file (from request URI)
-{fragment} 	    The last part of the URL starting with "#"
-{>Header} 	    Any request header, where "Header" is the header field name
-{host} 	        The host value on the request
-{hostname} 	    The name of the host machine that is processing the request
-{hostonly} 	    Same as {host} but without port information
-{method} 	      The request method (GET, POST, etc.)
-{path} 	        The path portion of the original request URI (does not include query string or fragment)
-{path_escaped} 	Query-escaped variant of {path}
-{port} 	        The client's port
-{query} 	      The query string portion of the URL, without leading "?"
-{query_escaped} The query-escaped variant of {query}
-{?key} 	        The value of the "key" argument from the query string
-{remote} 	      The client's IP address
-{scheme} 	      The protocol/scheme used (usually http or https)
-{uri} 	        The request URI (includes path, query string, and fragment)
-{uri_escaped} 	The query-escaped variant of {uri}
+{dir} 	        The directory of the requested file (from request URI)  
+{file} 	        The name of the requested file (from request URI)  
+{fragment} 	    The last part of the URL starting with "#"  
+{>Header} 	    Any request header, where "Header" is the header field name  
+{host} 	        The host value on the request  
+{hostname} 	    The name of the host machine that is processing the request  
+{hostonly} 	    Same as {host} but without port information  
+{method} 	      The request method (GET, POST, etc.)  
+{path} 	        The path portion of the original request URI (does not include query string or fragment)  
+{path_escaped} 	Query-escaped variant of {path}  
+{port} 	        The client's port  
+{query} 	      The query string portion of the URL, without leading "?"  
+{query_escaped} The query-escaped variant of {query}  
+{?key} 	        The value of the "key" argument from the query string  
+{remote} 	      The client's IP address  
+{scheme} 	      The protocol/scheme used (usually http or https)  
+{uri} 	        The request URI (includes path, query string, and fragment)  
+{uri_escaped} 	The query-escaped variant of {uri}  
 
 # TXT records
 "txtdirect.example.com" is your hosted TXTDIRECT instance and is usually provided as CNAME.
@@ -205,6 +205,53 @@ example.com                       3600 IN A      127.0.0.1
 _redirect.example.com             3600 IN TXT    "v=txtv0;from=/$1/$2;to=https://fallback.example.com;type=path"
 _redirect._._.example.com         3600 IN TXT    "v=txtv0;to=https://github.com/{1}/{2};type=gometa"
 _redirect.area51.pkg.example.com  3600 IN TXT    "v=txtv0;to=https://github.com/secret/package;type=gometa"
+```
+
+## dep
+*pkg.example.com/somePackage -> github.com/user/repo/somePackage*
+```
+import "pkg.example.com"
+
+_redirect.pkg.example.com     3600 IN TXT    "v=txtv0;to=https://github.com/some/repo;type=dep"
+```
+
+*example.com/somePackage -> github.com/user/repo/somePackage*
+```
+import "example.com/somePackage"
+
+_redirect.example.com     3600 IN TXT    "v=txtv0;to=https://github.com/user/repo;type=dep"
+```
+
+## dep + path
+*example.com/user/fmt -> github.com/user/fmt*
+*example.com/user/somePackage/fmt/sub -> github.com/user/repo/fmt/sub*
+*example.com/user/somePackage/fmt42 -> github.com/user/repo/fmt42*
+*example.com/user/anotherPackage/fmt42 -> mirror.example.com/deps/fmt42*
+*example.com/test -> 404* <- 404 for dep tool
+*example.com/test -> fallback.example.com* <- website for user traffic
+```
+_redirect.example.com                     3600 IN TXT    "v=txtv0;from=/$1/$2;to=https://fallback.example.com;type=path"
+_redirect.fmt.user.example.com            3600 IN TXT    "v=txtv0;to=https://github.com/user/fmt;type=dep"
+_redirect.somePackage.user.example.com    3600 IN TXT    "v=txtv0;to=https://github.com/user/repo;type=dep"
+_redirect._.user.example.com              3600 IN TXT    "v=txtv0;to=https://mirror.example.com/deps;type=dep"
+```
+
+*example.com/firstMatch/secondMatch -> github.com/somePackage/SomeFmt*
+*example.com/failure/test -> 404*
+```
+_redirect.example.com                           3600 IN TXT    "v=txtv0;re=\/(.*)\/(.*);type=path"
+_redirect.secondMatch.firstMatch.example.com    3600 IN TXT    "v=txtv0;to=https://github.com/user/repo;type=dep"
+```
+
+*example.com/pkg/area51/test -> github.com/secret/package/test*
+*example.com/pkg/fmt -> github.com/pkg/fmt*
+*example.com/pkg/fmt23 -> github.com/pkg/fmt23*
+*example.com/pkg23/fmt42 -> github.com/pkg23/fmt42*
+*example.com/pkg/area51 -> github.com/pkg23/fmt42*
+```
+_redirect.example.com             3600 IN TXT    "v=txtv0;from=/$1/$2;type=path"
+_redirect.area51.pkg.example.com  3600 IN TXT    "v=txtv0;to=https://github.com/secret/package;type=dep"
+_redirect._._.example.com         3600 IN TXT    "v=txtv0;to=https://github.com/{1}/{2};type=dep"
 ```
 
 ## dockerv2

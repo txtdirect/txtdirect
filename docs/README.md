@@ -77,9 +77,19 @@ The wildcards need to be subdomains under specific domains if used.
 *to*
 * Recommended
 * Default: Last plain value "v=txtv0;to=example.com" == "v=txtv0;example.com"
-* Possible values: "absolute URL being the repository route"
+* Possible values: "absolute URL being the repository"
 
 The specifics especially concerning the dep registry idea need to be fleshed out.
+
+## type=dep
+*v*
+* Mandatory
+* Possible values: "txtv0"
+
+*to*
+* Recommended
+* Default: Last plain value "v=txtv0;to=github.com/user/package" == "v=txtv0;example.com/user/package"
+* Possible values: "absolute URL pointing to the package root"
 
 ### type=dockerv2
 *v*

@@ -60,12 +60,32 @@ txtdirect {
 }
 ```
 
-# TXT record
+# Placeholders
+{dir} 	        The directory of the requested file (from request URI)  
+{file} 	        The name of the requested file (from request URI)  
+{fragment} 	    The last part of the URL starting with "#"  
+{>Header} 	    Any request header, where "Header" is the header field name  
+{host} 	        The host value on the request  
+{hostname} 	    The name of the host machine that is processing the request  
+{hostonly} 	    Same as {host} but without port information  
+{method} 	      The request method (GET, POST, etc.)  
+{path} 	        The path portion of the original request URI (does not include query string or fragment)  
+{path_escaped} 	Query-escaped variant of {path}  
+{port} 	        The client's port  
+{query} 	      The query string portion of the URL, without leading "?"  
+{query_escaped} The query-escaped variant of {query}  
+{?key} 	        The value of the "key" argument from the query string  
+{remote} 	      The client's IP address  
+{scheme} 	      The protocol/scheme used (usually http or https)  
+{uri} 	        The request URI (includes path, query string, and fragment)  
+{uri_escaped} 	The query-escaped variant of {uri}  
+
+# TXT records
 "txtdirect.example.com" is your hosted TXTDIRECT instance and is usually provided as CNAME.
 
 For more details take a look at our [TXT-record specification](/docs/README.md#specification).
 
-## Host
+## host
 *example.com -> about.example.com 301*
 ```
 example.com                   3600 IN A      127.0.0.1
@@ -90,11 +110,174 @@ gophers.example.com           3600 IN CNAME  txtdirect.example.com.
 _redirect.gophers.example.com 3600 IN TXT    "v=txtv0;to=https://example.com/gophers;type=host"
 ```
 
-## Gometa
+*gophers.example.com/1 -> example.com/gophers/1*
+```
+gophers.example.com           3600 IN CNAME  txtdirect.example.com.
+_redirect.gophers.example.com 3600 IN TXT    "v=txtv0;to=https://example.com/gophers{uri};type=host"
+```
+
+*placeholder.example.com/cat.png -> example.com/cat.png*
+```
+placeholder.example.com              3600 IN CNAME  txtdirect.example.com.
+_redirect.placeholder.example.com    3600 IN TXT    "v=txtv0;to=https://example.com/{file};type=host"
+```
+
+## path
+*example.com/firstMatch/secondMatch -> about.example.com/secondMatch/firstMatch*
+*example.com/firstMatch/noMatch -> 404*
+```
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;from=/$1/$2;;type=path"
+_redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/{2}/{1};type=host"
+```
+
+*example.com/firstMatch/secondMatch -> about.example.com/secondMatch/firstMatch*
+*example.com/firstMatch/noMatch -> fallback.example.com*
+```
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;from=/$1/$2;to=https://fallback.example.com;type=path"
+_redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/{2}/{1};type=host"
+```
+
+*example.com/firstMatch/secondMatch -> about.example.com*
+*example.com/firstMatch/noMatch -> fallback.example.com*
+```
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;re=\/(.*)\/(.*);to=https://fallback.example.com;type=path"
+_redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com;type=host"
+```
+
+*example.com/some/thing -> catchall.example.com*
+*example.com/another/thing -> catchall.example.com*
+*example.com/so/many/things -> catchall.example.com/things*
+```
+example.com                           3600 IN A      127.0.0.1
+_redirect.example.com                 3600 IN TXT    "v=txtv0;from=/$1/$2;type=path"
+_redirect._._.example.com             3600 IN TXT    "v=txtv0;to=https://catchall.example.com{uri};type=host"
+```
+
+## gometa
 *pkg.example.com -> github.com/some/repo*
 ```
 pkg.example.com               3600 IN CNAME  txtdirect.example.com.
 _redirect.pkg.example.com     3600 IN TXT    "v=txtv0;to=https://github.com/some/repo;type=gometa"
+```
+
+*example.com/somePackage -> github.com/some/repo/somePackage*
+```
+pkg.example.com               3600 IN CNAME  txtdirect.example.com.
+_redirect.pkg.example.com     3600 IN TXT    "v=txtv0;to=https://github.com/some/repo{uri};type=gometa"
+```
+
+## gometa + path
+*example.com/pkg/fmt -> github.com/pkg/fmt*
+```
+example.com                     3600 IN A      127.0.0.1
+_redirect.example.com           3600 IN TXT    "v=txtv0;from=/$1/$2;to=https://fallback.example.com;type=path"
+_redirect.fmt.pkg.example.com   3600 IN TXT    "v=txtv0;to=https://github.com/somePackage/someFmt;type=gometa"
+_redirect._._.example.com       3600 IN TXT    "v=txtv0;to=https://fallback.example.com;type=gometa"
+
+```
+
+*example.com/firstMatch/secondMatch -> github.com/somePackage/SomeFmt*
+```
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;re=\/(.*)\/(.*);to=https://fallback.example.com;type=path"
+_redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https://github.com/somePackage/someFmt;type=gometa"
+_redirect._._.example.com                     3600 IN TXT    "v=txtv0;to=https://fallback.example.com;type=gometa"
+```
+
+*example.com/pkg/fmt -> github.com/somePackage/fmt*
+*example.com/pkg2/fmt -> github.com/anotherRepo/fmt/anotherPackage*
+```
+example.com                     3600 IN A      127.0.0.1
+_redirect.example.com           3600 IN TXT    "v=txtv0;from=/$1/$2;to=https://fallback.example.com;type=path"
+_redirect._.pkg.example.com     3600 IN TXT    "v=txtv0;to=https://github.com/somePackage/{2};type=gometa"
+_redirect._.pkg2.example.com    3600 IN TXT    "v=txtv0;to=https://github.com/anotherRepo/{2}/anotherPackage;type=gometa"
+```
+
+*example.com/pkg/fmt -> github.com/pkg/fmt*
+*example.com/pkg/fmt23 -> github.com/pkg/fmt23*
+*example.com/pkg23/fmt42 -> github.com/pkg23/fmt42*
+*example.com/pkg/area51 -> github.com/pkg23/fmt42*
+```
+example.com                       3600 IN A      127.0.0.1
+_redirect.example.com             3600 IN TXT    "v=txtv0;from=/$1/$2;to=https://fallback.example.com;type=path"
+_redirect._._.example.com         3600 IN TXT    "v=txtv0;to=https://github.com/{1}/{2};type=gometa"
+_redirect.area51.pkg.example.com  3600 IN TXT    "v=txtv0;to=https://github.com/secret/package;type=gometa"
+```
+
+## dep
+*pkg.example.com/somePackage -> github.com/user/repo/somePackage*
+```
+import "pkg.example.com"
+
+_redirect.pkg.example.com     3600 IN TXT    "v=txtv0;to=https://github.com/some/repo;type=dep"
+```
+
+*example.com/somePackage -> github.com/user/repo/somePackage*
+```
+import "example.com/somePackage"
+
+_redirect.example.com     3600 IN TXT    "v=txtv0;to=https://github.com/user/repo;type=dep"
+```
+
+## dep + path
+*example.com/user/fmt -> github.com/user/fmt*
+*example.com/user/somePackage/fmt/sub -> github.com/user/repo/fmt/sub*
+*example.com/user/somePackage/fmt42 -> github.com/user/repo/fmt42*
+*example.com/user/anotherPackage/fmt42 -> mirror.example.com/deps/fmt42*
+*example.com/test -> 404* <- 404 for dep tool
+*example.com/test -> fallback.example.com* <- website for user traffic
+```
+_redirect.example.com                     3600 IN TXT    "v=txtv0;from=/$1/$2;to=https://fallback.example.com;type=path"
+_redirect.fmt.user.example.com            3600 IN TXT    "v=txtv0;to=https://github.com/user/fmt;type=dep"
+_redirect.somePackage.user.example.com    3600 IN TXT    "v=txtv0;to=https://github.com/user/repo;type=dep"
+_redirect._.user.example.com              3600 IN TXT    "v=txtv0;to=https://mirror.example.com/deps;type=dep"
+```
+
+*example.com/firstMatch/secondMatch -> github.com/somePackage/SomeFmt*
+*example.com/failure/test -> 404*
+```
+_redirect.example.com                           3600 IN TXT    "v=txtv0;re=\/(.*)\/(.*);type=path"
+_redirect.secondMatch.firstMatch.example.com    3600 IN TXT    "v=txtv0;to=https://github.com/user/repo;type=dep"
+```
+
+*example.com/pkg/area51/test -> github.com/secret/package/test*
+*example.com/pkg/fmt -> github.com/pkg/fmt*
+*example.com/pkg/fmt23 -> github.com/pkg/fmt23*
+*example.com/pkg23/fmt42 -> github.com/pkg23/fmt42*
+*example.com/pkg/area51 -> github.com/pkg23/fmt42*
+```
+_redirect.example.com             3600 IN TXT    "v=txtv0;from=/$1/$2;type=path"
+_redirect.area51.pkg.example.com  3600 IN TXT    "v=txtv0;to=https://github.com/secret/package;type=dep"
+_redirect._._.example.com         3600 IN TXT    "v=txtv0;to=https://github.com/{1}/{2};type=dep"
+```
+
+## dockerv2
+*container.example.com -> hub.example.com/some/container*
+```
+container.example.com             3600 IN CNAME  txtdirect.example.com
+_redirect.container.example.com   3600 IN TXT    "v=txtv0;https://hub.example.com/some/container;type=dockerv2"
+```
+
+*container.example.com/image -> hub.example.com/some/image*
+*container.example.com/image42 -> hub.example.com/some/image42*
+```
+container.example.com             3600 IN CNAME  txtdirect.example.com
+_redirect.container.example.com   3600 IN TXT    "v=txtv0;https://hub.example.com/some{uri};type=dockerv2"
+```
+
+## dockerv2 + path
+*example.com/con/img -> hub.docker.com/con/img*
+*example.com/con/img23 -> hub.docker.com/con/img23*
+*example.com/con23/img42 -> hub.docker.com/con23/img42*
+*example.com/con/image51 -> hub.docker.com/secret/image*
+```
+example.com                       3600 IN A      127.0.0.1
+_redirect.example.com             3600 IN TXT    "v=txtv0;from=/$1/$2;to=https://fallback.example.com;type=path"
+_redirect._._.example.com         3600 IN TXT    "v=txtv0;to=https://hub.docker.com/{1}/{2};type=dockerv2"
+_redirect.area51.con.example.com  3600 IN TXT    "v=txtv0;to=https://hub.docker.com/secret/image;type=dockerv2"
 ```
 
 ---

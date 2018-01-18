@@ -16,32 +16,92 @@ limitations under the License.
 
 For configuration examples for the caddy plugin look at our [examples section](/examples/README.md#configuration)
 
-## Specification
-### General
-* The TXT record must consist of multiple sections, delimited by semicolons(;)
-* Each section is a key=value pair
-* The encoding is utf8.
-* Punycode for domain names is permitted, but not required.
-* The ordering of the tuples (a key-value pair) is arbitary, and not mandated.
+# Specification
+*implementation does not yet implement the full specification*
 
-### Keys
-*v=*:
+## TXT record
+### Basic requirements
+* The TXT record must consist of multiple sections, delimited by semicolons ";"
+* Each section is a key=value pair
+* The key and value encoding is utf8
+* Punycode for domain names is permitted, but not required
+* The ordering of the tuples (a key-value pair) is arbitary
+
+### Location
+The TXT record must be accessible under the subdomain "\_redirect".
+
+### type=host
+*v*
 * Mandatory
 * Possible values: "txtv0"
 
-*to=*:
+*to*
 * Recommended
 * Default: Last plain value "v=txtv0;to=example.com" == "v=txtv0;example.com"
-* Possible values: "absolute URLs", "relative URLs"
+* Possible values: "absolute/relative URL"
 
-*code=*:
+*code*
 * Optional
 * Default: "301"
 * Possible values: "301", "302"
 
-*type=*:
+### type=path
+*v*
 * Mandatory
-* Possible values: "host", "gometa"
+* Possible values: "txtv0"
+
+*to*
+* Optional
+* Website address to redirect to for non special (dep, docker) users
+
+*from*
+* Possible values: "absolute/relative URL + simplified regex"
+
+*re*
+* Possible values: "absolute/relative URL + simplified regex"
+
+Path forces the implementation to look up a new record.
+Each match from `from` or `re` is added as subdomain to be looked up:
+`from=/$1/$2` -> \_redirect.<2>.<1>
+
+Wildcards for catch all records are also possible, by providing "\_" as subdomain.
+The wildcards need to be subdomains under specific domains if used.
+`_redirect._.test` <-- is allowed
+`_redirect.test._` <-- is not allowed
+  
+### type=gometa
+*v*
+* Mandatory
+* Possible values: "txtv0"
+
+*to*
+* Recommended
+* Default: Last plain value "v=txtv0;to=example.com" == "v=txtv0;example.com"
+* Possible values: "absolute URL being the repository"
+
+The specifics especially concerning the dep registry idea need to be fleshed out.
+
+## type=dep
+*v*
+* Mandatory
+* Possible values: "txtv0"
+
+*to*
+* Recommended
+* Default: Last plain value "v=txtv0;to=github.com/user/package" == "v=txtv0;example.com/user/package"
+* Possible values: "absolute URL pointing to the package root"
+
+### type=dockerv2
+*v*
+* Mandatory
+* Possible values: "txtv0"
+
+*to*
+* Recommended
+* Default: Last plain value "v=txtv0;to=example.com" == "v=txtv0;example.com"
+* Possible values: "absolute/relative URL"
+
+[Full list of TXT record examples](/examples/README.md#txt-record)
 
 ---
 

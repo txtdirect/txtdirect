@@ -11,6 +11,11 @@ services:
 script:
   - make travis-build
 
+stages:
+  - test
+  - name: deploy
+    if: (branch = master) AND (type != pull_request)
+
 jobs:
   include:
     - stage: deploy

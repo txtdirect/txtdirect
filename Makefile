@@ -36,3 +36,8 @@ docker:
 
 docker-push:
 	docker push seetheprogress/txtdirect:$(TAG)-$(BUILD_REF)
+
+.PHONY: clean
+clean:
+	rm -rf caddy-copy/
+	rm $(BIN)

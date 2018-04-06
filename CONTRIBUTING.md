@@ -11,12 +11,12 @@ By submitting code as an entity you agree to the
 
 ## Contribute to Project
 
-Thank you for your interest in contributing to TXTDIRECT.  
-This guide helps make contributing to TXTDIRECT simple and efficient for everyone.
+Thank you for your interest in contributing to TXTDirect.  
+This guide helps make contributing to TXTDirect simple and efficient for everyone.
 
 ### First contribution
 
-If you are starting out contributing to TXTDIRECT, there might be smaller scoped "starter issues" available:
+If you are starting out contributing to TXTDirect, there might be smaller scoped "starter issues" available:
 [Current starter issues](https://github.com/txtdirect/txtdirect/labels/starter%20issue)
 
 ### Report bug
@@ -25,7 +25,7 @@ If you are sure you found a bug and no issue exists yet, please feel free to cre
 
 ### New feature
 
-As your time is precious and not all features might be in the scope of what the TXTDIRECT wants to achieve, please open up an issue first.
+As your time is precious and not all features might be in the scope of what the TXTDirect wants to achieve, please open up an issue first.
 
 It would be helpful to answer some questions:
   * Why do you need this feature?

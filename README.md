@@ -1,31 +1,16 @@
 <a href='https://about.txtdirect.org'><img src='https://github.com/txtdirect/txtdirect/blob/master/media/logo.svg' width='500'/></a>
 
-DNS TXT-record based redirects
+Convenient redirects based on DNS TXT-records
 
  [![state](https://img.shields.io/badge/state-unstable-red.svg)]() [![release](https://img.shields.io/github/release/txtdirect/txtdirect.svg)](https://github.com/txtdirect/txtdirect/releases) [![license](https://img.shields.io/github/license/txtdirect/txtdirect.svg)](LICENSE) [![Build Status](https://travis-ci.org/txtdirect/txtdirect.svg?branch=master)](https://travis-ci.org/txtdirect/txtdirect) [![Go Report Card](https://goreportcard.com/badge/github.com/txtdirect/txtdirect)](https://goreportcard.com/report/github.com/txtdirect/txtdirect)
 
 **NOTE: This is a work-in-progress, we do not consider it production ready. Use at your own risk.**
 
-# TXTDIRECT
-Convenient and minimalistic DNS based redirects
+# TXTDirect
+Convenient and minimalistic DNS based redirects, while controlling your data with your own DNS records.
 
-## Using TXTDIRECT
-**Redirect to host provided in TXT record:**  
-*Default: Redirect to "www"-subdomain on empty record*
-```
-txtdirect {
-  enable host www
-}
-```
-*www.example.com -> about.example.com 301*
-```
-www.example.com               3600 IN CNAME  txtdirect.example.com.
-_redirect.www.example.com     3600 IN TXT    "v=txtv0;to=https://about.example.com;type=host;code=301"
-```
-
-Further examples:  
-[Configuration](/examples/README.md#configuration)  
-[TXT-records](/examples/README.md#txt-record)  
+## Using TXTDirect
+Take a look at our full [documentation](/docs).
 
 ## Support
 For detailed information on support options see our [support guide](/SUPPORT.md).
@@ -43,4 +28,5 @@ Best place to start is our [contribution guide](/CONTRIBUTING.md).
 
 ---
 
-Copyright 2017 - The TXTDIRECT Authors
+Copyright 2017 - The TXTDirect Authors
+

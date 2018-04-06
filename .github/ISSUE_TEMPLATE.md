@@ -14,7 +14,7 @@ bug | feature
 **Anything else we need to know?**:
 
 **Environment**:
-- TXTDIRECT version:  
+- TXTDirect version:  
 - OS:  
 - Caddy version:  
 - Others:

@@ -1,19 +1,19 @@
 project:
-  name: "TXTDIRECT" # required
-  state: "unstable" # unstable, beta, stable are supported
+  name: "TXTDirect"
+  state: "unstable"
   image: "https://github.com/txtdirect/txtdirect/blob/master/media/logo.svg"
   website: "https://about.txtdirect.org"
-  oneLiner: "DNS TXT-record based redirects"
+  oneLiner: "Convenient redirects based on DNS TXT-records"
   description: |
-    Convenient and minimalistic DNS based redirects
+    Convenient and minimalistic DNS based redirects, while controlling your data with your own DNS records.
   version: "v0.1.0"
 
 vision:
-  type: "community" # personal is the default.
+  type: "community"
   overview: |
-    TXTDIRECT thrives to give back control and data to redirects.
-  concept: "Instead of relying on external providers to control redirect data. TXTDIRECT uses data stored within your own DNS records and provides an easily switchable backend service/implementation."
-  aim: "TXTDIRECT provides the specification for redirection records and a based implementation as caddy plugin."
+    TXTDirect thrives to give back control and data to redirects.
+  concept: "Instead of relying on external providers to control redirect data. TXTDirect uses data stored within your own DNS records and provides an easily switchable backend service/implementation."
+  aim: "TXTDirect provides the specification for redirection records and a based implementation as caddy plugin."
 
 supportLinks:
   documentation: "/docs"

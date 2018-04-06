@@ -13,7 +13,7 @@ If you're looking for help check out [our support guidelines](/SUPPORT.md).
 **Anything else we need to know?**:
 
 **Environment**:
-- TXTDIRECT version:  
+- TXTDirect version:  
 - OS:  
 - Caddy version:  
 - Others:

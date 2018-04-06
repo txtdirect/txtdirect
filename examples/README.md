@@ -1,5 +1,5 @@
 <!--
-Copyright 2017 - The TXTDIRECT Authors
+Copyright 2017 - The TXTDirect Authors
 
 This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License;
 you may not use this file except in compliance with the License.

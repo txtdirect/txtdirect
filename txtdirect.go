@@ -34,6 +34,7 @@ type record struct {
 	Code    int
 	Type    string
 	Vcs     string
+	From    string
 }
 
 // Config contains the middleware's configuration
@@ -166,6 +167,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "gometa" {
 		return gometa(w, rec, host, path)
 	}
+
+	if rec.Type == "path" {
+		return redirectPath(w, r, rec, host, path)
+	}
+
+	// if rec.Type == "path" {
+	// 	return RedirectPath(w, rec, host, path)
+	// }
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)
 }

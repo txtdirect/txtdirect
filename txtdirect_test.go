@@ -98,6 +98,17 @@ func TestParse(t *testing.T) {
 			record{},
 			fmt.Errorf("unhandled version 'txtv1'"),
 		},
+		{
+			"v=txtv0;to=https://example.com/caddy;type=path;code=302",
+			record{
+				Version: "txtv0",
+				To:      "https://example.com/caddy",
+				Type:    "path",
+				Code:    302,
+				Vcs:     "git",
+			},
+			nil,
+		},
 	}
 
 	for i, test := range tests {

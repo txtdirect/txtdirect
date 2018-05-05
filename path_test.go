@@ -27,6 +27,7 @@ func TestRedirectPath(t *testing.T) {
 		Type:    "path",
 	}
 	redirectPath(w, req, r, req.Host, req.URL.Path)
-	resp, _ := w.Result().Location()
-	t.Error(resp.String())
+	if w.Code != 302 {
+		t.Errorf("Expected %d, got %d", 302, w.Code)
+	}
 }

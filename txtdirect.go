@@ -18,6 +18,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -104,9 +105,23 @@ func getBaseTarget(rec record) (string, int) {
 
 func getRecord(host, path string) (record, error) {
 	zone := strings.Join([]string{basezone, host}, ".")
+	from := 0
+	if path != "" {
+		zone, from, _ = zoneFromPath(host, path)
+	}
 	s, err := net.LookupTXT(zone)
-	if err != nil {
+	if err != nil && from < 1 {
 		return record{}, fmt.Errorf("could not get TXT record: %s", err)
+	}
+
+	for i := 1; i <= from; i++ {
+		zoneSlice := strings.Split(zone, ".")
+		zoneSlice[i] = "_"
+		zone = strings.Join(zoneSlice, ".")
+		s, err = net.LookupTXT(zone)
+		if err != nil && i == from {
+			return record{}, fmt.Errorf("could not get TXT record: %s", err)
+		}
 	}
 
 	rec := record{}
@@ -169,7 +184,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "path" {
-		return redirectPath(w, r, rec, host, path)
+		http.Redirect(w, r, rec.To, 302)
+		return nil
 	}
 
 	// if rec.Type == "path" {
@@ -177,4 +193,24 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	// }
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)
+}
+
+func reverse(input []string) {
+	last := len(input) - 1
+	for i := 0; i < len(input)/2; i++ {
+		input[i], input[last-i] = input[last-i], input[i]
+	}
+}
+
+func zoneFromPath(host string, path string) (string, int, error) {
+	match, err := regexp.Compile("([a-zA-Z0-9])\\w+")
+	if err != nil {
+		return "", 0, err
+	}
+	pathSlice := match.FindAllString(path, -1)
+	from := len(pathSlice)
+	reverse(pathSlice)
+	url := append(pathSlice, host)
+	url = append([]string{basezone}, url...)
+	return strings.Join(url, "."), from, nil
 }

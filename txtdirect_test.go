@@ -221,3 +221,20 @@ func TestRedirectFailure(t *testing.T) {
 		}
 	}
 }
+
+/*
+DNS TXT records currently registered at _ths.test.txtdirect.org available in:
+https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
+*/
+func TestPathBasedRoutingRedirect(t *testing.T) {
+	config := Config{
+		Enable: []string{"path"},
+	}
+	req := httptest.NewRequest("GET", "https://pkg.txtdirect.com/caddy/v1/", nil)
+	w := httptest.NewRecorder()
+
+	err := Redirect(w, req, config)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+}

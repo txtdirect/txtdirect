@@ -105,23 +105,10 @@ func getBaseTarget(rec record) (string, int) {
 
 func getRecord(host, path string) (record, error) {
 	zone := strings.Join([]string{basezone, host}, ".")
-	from := 0
-	if path != "" {
-		zone, from, _ = zoneFromPath(host, path)
-	}
-	s, err := net.LookupTXT(zone)
-	if err != nil && from < 1 {
-		return record{}, fmt.Errorf("could not get TXT record: %s", err)
-	}
 
-	for i := 1; i <= from; i++ {
-		zoneSlice := strings.Split(zone, ".")
-		zoneSlice[i] = "_"
-		zone = strings.Join(zoneSlice, ".")
-		s, err = net.LookupTXT(zone)
-		if err != nil && i == from {
-			return record{}, fmt.Errorf("could not get TXT record: %s", err)
-		}
+	s, err := net.LookupTXT(zone)
+	if err != nil {
+		return record{}, fmt.Errorf("could not get TXT record: %s", err)
 	}
 
 	rec := record{}
@@ -129,9 +116,42 @@ func getRecord(host, path string) (record, error) {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
+	if rec.Type == "path" && path != "" {
+		zone, from, _ := zoneFromPath(host, path)
+		rec, err = getFinalRecord(zone, from)
+		if err != nil {
+			return record{}, err
+		}
+	}
+
 	if rec.To == "" {
 		s := []string{defaultProtocol, "://", defaultSub, ".", host}
 		rec.To = strings.Join(s, "")
+	}
+
+	return rec, nil
+}
+
+func getFinalRecord(zone string, from int) (record, error) {
+	var txts []string
+	var err error
+
+	txts, err = net.LookupTXT(zone)
+
+	// if nothing found, jump into wildcards
+	for i := 1; i <= from && len(txts) == 0; i++ {
+		zoneSlice := strings.Split(zone, ".")
+		zoneSlice[i] = "_"
+		zone = strings.Join(zoneSlice, ".")
+		txts, err = net.LookupTXT(zone)
+	}
+	if err != nil || len(txts) == 0 {
+		return record{}, fmt.Errorf("could not get TXT record: %s", err)
+	}
+
+	rec := record{}
+	if err = rec.Parse(txts[0]); err != nil {
+		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
 	return rec, nil

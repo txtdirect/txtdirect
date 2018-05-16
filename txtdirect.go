@@ -18,6 +18,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -77,6 +78,11 @@ func (r *record) Parse(str string) error {
 			r.Vcs = l
 
 		default:
+			_, err := url.ParseRequestURI(l)
+			if err != nil {
+				continue
+			}
+
 			if r.To != "" {
 				return fmt.Errorf("multiple values without keys")
 			}

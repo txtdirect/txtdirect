@@ -105,6 +105,17 @@ func TestParse(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"v=txtv0;to=https://example.com/;key=value",
+			record{
+				Version: "txtv0",
+				To:      "https://example.com/",
+				Code:    301,
+				Vcs:     "git",
+				Type:    "host",
+			},
+			nil,
+		},
 	}
 
 	for i, test := range tests {

@@ -223,7 +223,7 @@ func reverse(input []string) {
 }
 
 func zoneFromPath(host string, path string) (string, int, error) {
-	match, err := regexp.Compile("([a-zA-Z0-9])\\w+")
+	match, err := regexp.Compile("([a-zA-Z0-9]+)")
 	if err != nil {
 		return "", 0, err
 	}

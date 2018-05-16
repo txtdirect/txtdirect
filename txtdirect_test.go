@@ -59,13 +59,13 @@ func TestParse(t *testing.T) {
 			nil,
 		},
 		{
-			"v=txtv0;https://example.com/;code=302;vcs=hg",
+			"v=txtv0;https://example.com/;code=302;vcs=hg;type=gometa",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
 				Vcs:     "hg",
-				Type:    "host",
+				Type:    "gometa",
 			},
 			nil,
 		},
@@ -111,7 +111,6 @@ func TestParse(t *testing.T) {
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    301,
-				Vcs:     "git",
 				Type:    "host",
 			},
 			nil,

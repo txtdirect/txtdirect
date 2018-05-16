@@ -29,7 +29,7 @@ func TestParse(t *testing.T) {
 		err       error
 	}{
 		{
-			"v=txtv0;to=https://example.com/;code=302",
+			"v=txtv0;to=https://example.com/;code=302;vcs=git",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
@@ -40,7 +40,7 @@ func TestParse(t *testing.T) {
 			nil,
 		},
 		{
-			"v=txtv0;to=https://example.com/",
+			"v=txtv0;to=https://example.com/;vcs=git",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
@@ -51,7 +51,7 @@ func TestParse(t *testing.T) {
 			nil,
 		},
 		{
-			"v=txtv0;https://example.com/;code=302",
+			"v=txtv0;https://example.com/;code=302;vcs=git",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
@@ -73,7 +73,7 @@ func TestParse(t *testing.T) {
 			nil,
 		},
 		{
-			"v=txtv0;https://example.com/;code=302;type=gometa",
+			"v=txtv0;https://example.com/;code=302;type=gometa;vcs=git",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
@@ -105,7 +105,6 @@ func TestParse(t *testing.T) {
 				To:      "https://example.com/caddy",
 				Type:    "path",
 				Code:    302,
-				Vcs:     "git",
 			},
 			nil,
 		},

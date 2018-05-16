@@ -88,10 +88,6 @@ func (r *record) Parse(str string) error {
 		r.Code = 301
 	}
 
-	if r.Vcs == "" {
-		r.Vcs = "git"
-	}
-
 	if r.Type == "" {
 		r.Type = "host"
 	}
@@ -202,15 +198,6 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "gometa" {
 		return gometa(w, rec, host, path)
 	}
-
-	if rec.Type == "path" {
-		http.Redirect(w, r, rec.To, 302)
-		return nil
-	}
-
-	// if rec.Type == "path" {
-	// 	return RedirectPath(w, rec, host, path)
-	// }
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)
 }

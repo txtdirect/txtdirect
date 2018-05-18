@@ -18,7 +18,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -112,42 +111,9 @@ func getRecord(host, path string) (record, error) {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
-	if rec.Type == "path" && path != "" {
-		zone, from, _ := zoneFromPath(host, path)
-		rec, err = getFinalRecord(zone, from)
-		if err != nil {
-			return record{}, err
-		}
-	}
-
 	if rec.To == "" {
 		s := []string{defaultProtocol, "://", defaultSub, ".", host}
 		rec.To = strings.Join(s, "")
-	}
-
-	return rec, nil
-}
-
-func getFinalRecord(zone string, from int) (record, error) {
-	var txts []string
-	var err error
-
-	txts, err = net.LookupTXT(zone)
-
-	// if nothing found, jump into wildcards
-	for i := 1; i <= from && len(txts) == 0; i++ {
-		zoneSlice := strings.Split(zone, ".")
-		zoneSlice[i] = "_"
-		zone = strings.Join(zoneSlice, ".")
-		txts, err = net.LookupTXT(zone)
-	}
-	if err != nil || len(txts) == 0 {
-		return record{}, fmt.Errorf("could not get TXT record: %s", err)
-	}
-
-	rec := record{}
-	if err = rec.Parse(txts[0]); err != nil {
-		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
 	return rec, nil
@@ -189,6 +155,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return fmt.Errorf("option disabled")
 	}
 
+	if rec.Type == "path" && path != "" {
+		zone, from, _ := zoneFromPath(host, path)
+		rec, err = getFinalRecord(zone, from)
+		if err != nil {
+			return err
+		}
+	}
+
 	if rec.Type == "host" {
 		to, code := getBaseTarget(rec)
 		http.Redirect(w, r, to, code)
@@ -200,24 +174,4 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)
-}
-
-func reverse(input []string) {
-	last := len(input) - 1
-	for i := 0; i < len(input)/2; i++ {
-		input[i], input[last-i] = input[last-i], input[i]
-	}
-}
-
-func zoneFromPath(host string, path string) (string, int, error) {
-	match, err := regexp.Compile("([a-zA-Z0-9]+)")
-	if err != nil {
-		return "", 0, err
-	}
-	pathSlice := match.FindAllString(path, -1)
-	from := len(pathSlice)
-	reverse(pathSlice)
-	url := append(pathSlice, host)
-	url = append([]string{basezone}, url...)
-	return strings.Join(url, "."), from, nil
 }

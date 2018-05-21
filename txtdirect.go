@@ -35,6 +35,7 @@ type record struct {
 	Type    string
 	Vcs     string
 	From    string
+	Default string
 }
 
 // Config contains the middleware's configuration
@@ -161,6 +162,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if path == "/" {
+		http.Redirect(w, r, rec.Default, rec.Code)
+		return nil
 	}
 
 	if rec.Type == "host" {

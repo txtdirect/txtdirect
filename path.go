@@ -8,6 +8,9 @@ import (
 )
 
 func zoneFromPath(host string, path string) (string, int, error) {
+	if path == "/" {
+		return host, 0, nil
+	}
 	match, err := regexp.Compile("([a-zA-Z0-9]+)")
 	if err != nil {
 		return "", 0, err

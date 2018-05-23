@@ -156,17 +156,17 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return fmt.Errorf("option disabled")
 	}
 
+	if path == "/" {
+		http.Redirect(w, r, rec.Default, rec.Code)
+		return nil
+	}
+
 	if rec.Type == "path" && path != "" {
 		zone, from, _ := zoneFromPath(host, path)
 		rec, err = getFinalRecord(zone, from)
 		if err != nil {
 			return err
 		}
-	}
-
-	if path == "/" {
-		http.Redirect(w, r, rec.Default, rec.Code)
-		return nil
 	}
 
 	if rec.Type == "host" {

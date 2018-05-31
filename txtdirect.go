@@ -14,7 +14,6 @@ limitations under the License.
 package txtdirect
 
 import (
-	"net/url"
 	"fmt"
 	"log"
 	"net"

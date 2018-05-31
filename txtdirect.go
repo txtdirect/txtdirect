@@ -14,6 +14,7 @@ limitations under the License.
 package txtdirect
 
 import (
+	"net/url"
 	"fmt"
 	"log"
 	"net"
@@ -102,6 +103,10 @@ func getBaseTarget(rec record) (string, int) {
 }
 
 func getRecord(host, path string) (record, error) {
+	if strings.Contains(host, ":") {
+		hostSlice := strings.Split(host, ":")
+		host = hostSlice[0]
+	}
 	zone := strings.Join([]string{basezone, host}, ".")
 	s, err := net.LookupTXT(zone)
 	if err != nil {

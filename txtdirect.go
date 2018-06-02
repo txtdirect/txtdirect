@@ -107,7 +107,13 @@ func getRecord(host, path string) (record, error) {
 		host = hostSlice[0]
 	}
 	zone := strings.Join([]string{basezone, host}, ".")
-	s, err := net.LookupTXT(zone)
+	var absoluteZone string
+	if strings.HasSuffix(zone, ".") {
+		absoluteZone = zone
+	} else {
+		absoluteZone = strings.Join([]string{zone, "."}, "")
+	}
+	s, err := net.LookupTXT(absoluteZone)
 	if err != nil {
 		return record{}, fmt.Errorf("could not get TXT record: %s", err)
 	}

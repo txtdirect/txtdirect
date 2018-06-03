@@ -145,6 +145,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
 	path := r.URL.Path
 
+	bl := make(map[string]bool)
+	bl["/favicon.ico"] = true
+
+	if bl[path] {
+		http.Redirect(w, r, strings.Join([]string{host, path}, ""), 200)
+		return nil
+	}
+
 	rec, err := getRecord(host, path)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {

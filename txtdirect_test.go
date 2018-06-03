@@ -237,3 +237,16 @@ func TestPathBasedRoutingRedirect(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err)
 	}
 }
+
+func TestRedirectBlacklist(t *testing.T) {
+	config := Config{
+		Enable: []string{"path"},
+	}
+	req := httptest.NewRequest("GET", "https://txtdirect.com/favicon.ico", nil)
+	w := httptest.NewRecorder()
+
+	err := Redirect(w, req, config)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+}

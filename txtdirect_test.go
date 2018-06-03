@@ -29,34 +29,31 @@ func TestParse(t *testing.T) {
 		err       error
 	}{
 		{
-			"v=txtv0;to=https://example.com/;code=302;vcs=git",
+			"v=txtv0;to=https://example.com/;code=302",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
-				Vcs:     "git",
 				Type:    "host",
 			},
 			nil,
 		},
 		{
-			"v=txtv0;to=https://example.com/;vcs=git",
+			"v=txtv0;to=https://example.com/",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    301,
-				Vcs:     "git",
 				Type:    "host",
 			},
 			nil,
 		},
 		{
-			"v=txtv0;https://example.com/;code=302;vcs=git",
+			"v=txtv0;https://example.com/;code=302",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
-				Vcs:     "git",
 				Type:    "host",
 			},
 			nil,

@@ -34,7 +34,6 @@ func TestParse(t *testing.T) {
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
-				Vcs:     "git",
 				Type:    "host",
 			},
 			nil,
@@ -45,7 +44,6 @@ func TestParse(t *testing.T) {
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    301,
-				Vcs:     "git",
 				Type:    "host",
 			},
 			nil,
@@ -56,7 +54,6 @@ func TestParse(t *testing.T) {
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
-				Vcs:     "git",
 				Type:    "host",
 			},
 			nil,
@@ -73,7 +70,7 @@ func TestParse(t *testing.T) {
 			nil,
 		},
 		{
-			"v=txtv0;https://example.com/;code=302;type=gometa",
+			"v=txtv0;https://example.com/;code=302;type=gometa;vcs=git",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
@@ -97,6 +94,16 @@ func TestParse(t *testing.T) {
 			"v=txtv1;to=https://example.com/;code=test",
 			record{},
 			fmt.Errorf("unhandled version 'txtv1'"),
+		},
+		{
+			"v=txtv0;to=https://example.com/caddy;type=path;code=302",
+			record{
+				Version: "txtv0",
+				To:      "https://example.com/caddy",
+				Type:    "path",
+				Code:    302,
+			},
+			nil,
 		},
 	}
 
@@ -208,5 +215,35 @@ func TestRedirectFailure(t *testing.T) {
 		if err == nil {
 			t.Errorf("Expected error, got nil)")
 		}
+	}
+}
+
+/*
+DNS TXT records currently registered at _ths.test.txtdirect.org available in:
+https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
+*/
+func TestPathBasedRoutingRedirect(t *testing.T) {
+	config := Config{
+		Enable: []string{"path"},
+	}
+	req := httptest.NewRequest("GET", "https://pkg.txtdirect.com/caddy/v1/", nil)
+	w := httptest.NewRecorder()
+
+	err := Redirect(w, req, config)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+}
+
+func TestRedirectBlacklist(t *testing.T) {
+	config := Config{
+		Enable: []string{"path"},
+	}
+	req := httptest.NewRequest("GET", "https://txtdirect.com/favicon.ico", nil)
+	w := httptest.NewRecorder()
+
+	err := Redirect(w, req, config)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
 	}
 }

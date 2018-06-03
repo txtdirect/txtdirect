@@ -139,6 +139,19 @@ func TestParse(t *testing.T) {
 				Enable:   []string{"host"},
 			},
 		},
+		{
+			`
+			txtdirect {
+				enable path
+				redirect https://example.com
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"path"},
+			},
+		},
 	}
 
 	for i, test := range tests {

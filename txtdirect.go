@@ -34,6 +34,8 @@ type record struct {
 	Code    int
 	Type    string
 	Vcs     string
+	From    string
+	Default string
 }
 
 // Config contains the middleware's configuration
@@ -86,10 +88,6 @@ func (r *record) Parse(str string) error {
 		r.Code = 301
 	}
 
-	if r.Vcs == "" {
-		r.Vcs = "git"
-	}
-
 	if r.Type == "" {
 		r.Type = "host"
 	}
@@ -107,6 +105,7 @@ func getRecord(host, path string) (record, error) {
 		host = hostSlice[0]
 	}
 	zone := strings.Join([]string{basezone, host}, ".")
+
 	var absoluteZone string
 	if strings.HasSuffix(zone, ".") {
 		absoluteZone = zone
@@ -114,6 +113,7 @@ func getRecord(host, path string) (record, error) {
 		absoluteZone = strings.Join([]string{zone, "."}, "")
 	}
 	s, err := net.LookupTXT(absoluteZone)
+
 	if err != nil {
 		return record{}, fmt.Errorf("could not get TXT record: %s", err)
 	}
@@ -145,6 +145,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
 	path := r.URL.Path
 
+	bl := make(map[string]bool)
+	bl["/favicon.ico"] = true
+
+	if bl[path] {
+		http.Redirect(w, r, strings.Join([]string{host, path}, ""), 200)
+		return nil
+	}
+
 	rec, err := getRecord(host, path)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
@@ -165,6 +173,19 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if !contains(c.Enable, rec.Type) {
 		return fmt.Errorf("option disabled")
+	}
+
+	if path == "/" {
+		http.Redirect(w, r, rec.Default, rec.Code)
+		return nil
+	}
+
+	if rec.Type == "path" && path != "" {
+		zone, from, _ := zoneFromPath(host, path)
+		rec, err = getFinalRecord(zone, from)
+		if err != nil {
+			return err
+		}
 	}
 
 	if rec.Type == "host" {

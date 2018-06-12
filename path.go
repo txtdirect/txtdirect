@@ -4,16 +4,32 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
-func zoneFromPath(host string, path string) (string, int, error) {
+func zoneFromPath(host string, path string, rec record) (string, int, error) {
 	match, err := regexp.Compile("([a-zA-Z0-9]+)")
 	if err != nil {
 		return "", 0, err
 	}
 	pathSlice := match.FindAllString(path, -1)
 	from := len(pathSlice)
+	if rec.From != "" {
+		match, err := regexp.Compile("\\/\\$(\\d+)")
+		if err != nil {
+			return "", 0, err
+		}
+		fromSlice := match.FindAllStringSubmatch(rec.From, -1)
+		generatedPath := []string{}
+		for _, v := range fromSlice {
+			index, _ := strconv.Atoi(v[1])
+			generatedPath = append(generatedPath, pathSlice[index-1])
+		}
+		url := append(generatedPath, host)
+		url = append([]string{basezone}, url...)
+		return strings.Join(url, "."), from, nil
+	}
 	reverse(pathSlice)
 	url := append(pathSlice, host)
 	url = append([]string{basezone}, url...)

@@ -181,7 +181,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "path" && path != "" {
-		zone, from, _ := zoneFromPath(host, path)
+		zone, from, _ := zoneFromPath(host, path, rec)
 		rec, err = getFinalRecord(zone, from)
 		if err != nil {
 			return err

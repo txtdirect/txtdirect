@@ -40,6 +40,48 @@ func Test_zoneFromPath(t *testing.T) {
 			"_redirect.caddy.v1.pkg.example.com",
 			nil,
 		},
+		{
+			"example.com",
+			"/path-routing",
+			"",
+			"_redirect.path-routing.example.com",
+			nil,
+		},
+		{
+			"example.com",
+			"/path-routing/test",
+			"",
+			"_redirect.test.path-routing.example.com",
+			nil,
+		},
+		{
+			"example.com",
+			"/path_routing/test",
+			"",
+			"_redirect.test.path_routing.example.com",
+			nil,
+		},
+		{
+			"example.com",
+			"/special-chars/#?%!",
+			"",
+			"_redirect.?%!.special-chars.example.com",
+			nil,
+		},
+		{
+			"example.com",
+			"/path2routing/nested/test/",
+			"",
+			"_redirect.test.nested.path2routing.example.com",
+			nil,
+		},
+		{
+			"example.com",
+			"/123/test",
+			"",
+			"_redirect.test.123.example.com",
+			nil,
+		},
 	}
 	for _, test := range tests {
 		rec := record{}

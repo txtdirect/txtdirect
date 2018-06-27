@@ -14,6 +14,8 @@ limitations under the License.
 package txtdirect
 
 import (
+	"fmt"
+	"strings"
 	"html/template"
 	"net/http"
 )
@@ -28,6 +30,10 @@ var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 func gometa(w http.ResponseWriter, r record, host, path string) error {
 	if path == "/" {
 		path = ""
+	}
+	bl := "/internal"
+	if strings.Contains(path, bl) {
+		return fmt.Errorf("path containing 'internal' is disallowed")
 	}
 
 	return tmpl.Execute(w, struct {

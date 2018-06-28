@@ -82,6 +82,10 @@ func (r *record) Parse(str string) error {
 			}
 			r.To = l
 		}
+		if len(l) > 255 {
+			return fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
+		}
+
 	}
 
 	if r.Code == 0 {
@@ -116,6 +120,10 @@ func getRecord(host, path string) (record, error) {
 
 	if err != nil {
 		return record{}, fmt.Errorf("could not get TXT record: %s", err)
+	}
+
+	if len(s) != 1 {
+		return record{}, fmt.Errorf("could not parse TXT record with %d redirects", len(s))
 	}
 
 	rec := record{}

@@ -10,6 +10,7 @@ build: fetch-dependencies
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e "s/\/\/ This is where other plugins get plugged in (imported)/_ \"github.com\/txtdirect\/txtdirect\/caddy\"/g" -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/miekg\/caddy-prometheus"' -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/captncraig\/caddy-realip"' -- {} +
+	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e 's/const enableTelemetry = true/const enableTelemetry = false/g' -- {} +
 	cd caddy-copy/caddy && \
 	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w"
 	mv caddy-copy/caddy/caddy ./$(BIN)

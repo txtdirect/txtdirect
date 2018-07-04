@@ -26,6 +26,7 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 			index, _ := strconv.Atoi(v[1])
 			generatedPath = append(generatedPath, pathSlice[index-1])
 		}
+		reverse(generatedPath)
 		url := append(generatedPath, host)
 		url = append([]string{basezone}, url...)
 		return strings.Join(url, "."), from, nil

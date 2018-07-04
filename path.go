@@ -9,11 +9,15 @@ import (
 )
 
 func zoneFromPath(host string, path string, rec record) (string, int, error) {
-	match, err := regexp.Compile("[^\\/#\\.]+")
+	match, err := regexp.Compile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
 	if err != nil {
 		return "", 0, err
 	}
-	pathSlice := match.FindAllString(path, -1)
+	pathSubmatchs := match.FindAllStringSubmatch(path, -1)
+	pathSlice := []string{}
+	for _, v := range pathSubmatchs {
+		pathSlice = append(pathSlice, v[1])
+	}
 	from := len(pathSlice)
 	if rec.From != "" {
 		match, err := regexp.Compile("\\/\\$(\\d+)")

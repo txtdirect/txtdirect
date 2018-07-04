@@ -65,7 +65,7 @@ func Test_zoneFromPath(t *testing.T) {
 			"example.com",
 			"/special-chars/#?%!",
 			"",
-			"_redirect.?%!.special-chars.example.com",
+			"_redirect.special-chars.example.com",
 			nil,
 		},
 		{

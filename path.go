@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -24,12 +25,26 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 		if err != nil {
 			return "", 0, err
 		}
-		fromSlice := match.FindAllStringSubmatch(rec.From, -1)
-		generatedPath := []string{}
-		for _, v := range fromSlice {
+
+		fromSubmatch := match.FindAllStringSubmatch(rec.From, -1)
+		fromSlice := make(map[int]string)
+		for k, v := range fromSubmatch {
 			index, _ := strconv.Atoi(v[1])
-			generatedPath = append(generatedPath, pathSlice[index-1])
+			fromSlice[index] = pathSlice[k]
 		}
+
+		keys := []int{}
+		for k := range fromSlice {
+			keys = append(keys, k)
+		}
+		generatedPath := []string{}
+
+		sort.Sort(sort.Reverse(sort.IntSlice(keys)))
+
+		for _, k := range keys {
+			generatedPath = append(generatedPath, fromSlice[k])
+		}
+
 		url := append(generatedPath, host)
 		url = append([]string{basezone}, url...)
 		return strings.Join(url, "."), from, nil

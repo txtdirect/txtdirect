@@ -9,27 +9,18 @@ import (
 	"strings"
 )
 
-const PathRegex = "\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)"
-const FromRegex = "\\/\\$(\\d+)"
+var PathRegex = regexp.MustCompile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
+var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
 
 func zoneFromPath(host string, path string, rec record) (string, int, error) {
-	match, err := regexp.Compile(PathRegex)
-	if err != nil {
-		return "", 0, err
-	}
-	pathSubmatchs := match.FindAllStringSubmatch(path, -1)
+	pathSubmatchs := PathRegex.FindAllStringSubmatch(path, -1)
 	pathSlice := []string{}
 	for _, v := range pathSubmatchs {
 		pathSlice = append(pathSlice, v[1])
 	}
 	from := len(pathSlice)
 	if rec.From != "" {
-		match, err := regexp.Compile(FromRegex)
-		if err != nil {
-			return "", 0, err
-		}
-
-		fromSubmatch := match.FindAllStringSubmatch(rec.From, -1)
+		fromSubmatch := FromRegex.FindAllStringSubmatch(rec.From, -1)
 		fromSlice := make(map[int]string)
 		for k, v := range fromSubmatch {
 			index, _ := strconv.Atoi(v[1])

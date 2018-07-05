@@ -37,7 +37,7 @@ func Test_zoneFromPath(t *testing.T) {
 			"example.com",
 			"/caddy/pkg/v1/download",
 			"/$1/$4/$2/$3",
-			"_redirect.v1.pkg.download.caddy.example.com",
+			"_redirect.pkg.download.v1.caddy.example.com",
 			nil,
 		},
 		{

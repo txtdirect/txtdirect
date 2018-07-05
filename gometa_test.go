@@ -84,3 +84,11 @@ func TestGometa(t *testing.T) {
 		}
 	}
 }
+
+func TestInternalFolderInPath(t *testing.T) {
+	rec := httptest.NewRecorder()
+	err := gometa(rec, record{}, "example.com", "/test/internal")
+	if err == nil {
+		t.Errorf("Expected to get an error when '/internal' folder included in path")
+	}
+}

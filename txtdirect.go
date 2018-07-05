@@ -76,6 +76,10 @@ func (r *record) Parse(str string) error {
 			l = strings.TrimPrefix(l, "vcs=")
 			r.Vcs = l
 
+		case strings.HasPrefix(l, "default="):
+			l = strings.TrimPrefix(l, "default=")
+			r.Default = l
+
 		default:
 			if r.To != "" {
 				return fmt.Errorf("multiple values without keys")

@@ -8,10 +8,6 @@ import (
 )
 
 func zoneFromPath(host string, path string) (string, int, error) {
-	bl := "/internal"
-	if strings.Contains(path, bl) {
-		return "", 0, fmt.Errorf("path containing 'internal' is disallowed")
-	}
 	match, err := regexp.Compile("([a-zA-Z0-9]+)")
 	if err != nil {
 		return "", 0, err

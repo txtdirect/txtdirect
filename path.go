@@ -9,8 +9,11 @@ import (
 	"strings"
 )
 
+const PathRegex = "\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)"
+const FromRegex = "\\/\\$(\\d+)"
+
 func zoneFromPath(host string, path string, rec record) (string, int, error) {
-	match, err := regexp.Compile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
+	match, err := regexp.Compile(PathRegex)
 	if err != nil {
 		return "", 0, err
 	}
@@ -21,7 +24,7 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 	}
 	from := len(pathSlice)
 	if rec.From != "" {
-		match, err := regexp.Compile("\\/\\$(\\d+)")
+		match, err := regexp.Compile(FromRegex)
 		if err != nil {
 			return "", 0, err
 		}

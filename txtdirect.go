@@ -122,7 +122,7 @@ func getRecord(host, path string) (record, error) {
 	}
 
 	if len(s) != 1 {
-		return record{}, fmt.Errorf("could not parse TXT record with %d redirects", len(s))
+		return record{}, fmt.Errorf("could not parse TXT record with %d records", len(s))
 	}
 
 	rec := record{}

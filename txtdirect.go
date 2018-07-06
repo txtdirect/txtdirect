@@ -85,7 +85,6 @@ func (r *record) Parse(str string) error {
 		if len(l) > 255 {
 			return fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
 		}
-
 	}
 
 	if r.Code == 0 {

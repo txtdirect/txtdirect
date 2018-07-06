@@ -10,6 +10,8 @@ services:
   - docker
 
 script:
+  - go get -u github.com/mholt/caddy
+  - go test -v ./...
   - make travis-build
 
 stages:

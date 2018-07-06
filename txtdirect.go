@@ -79,7 +79,11 @@ func (r *record) Parse(str string) error {
 
 		default:
 			_, err := url.ParseRequestURI(l)
-			if err != nil {
+			if err != nil { // not a url
+				tuple := strings.Split(l, "=")
+				if len(tuple) != 2 {
+					return fmt.Errorf("arbitrary data now allowed")
+				}
 				continue
 			}
 

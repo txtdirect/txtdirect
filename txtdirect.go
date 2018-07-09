@@ -35,7 +35,7 @@ type record struct {
 	Type    string
 	Vcs     string
 	From    string
-	Default string
+	Root    string
 }
 
 // Config contains the middleware's configuration
@@ -75,6 +75,10 @@ func (r *record) Parse(str string) error {
 		case strings.HasPrefix(l, "vcs="):
 			l = strings.TrimPrefix(l, "vcs=")
 			r.Vcs = l
+
+		case strings.HasPrefix(l, "root="):
+			l = strings.TrimPrefix(l, "root=")
+			r.Root = l
 
 		default:
 			if r.To != "" {
@@ -175,16 +179,25 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return fmt.Errorf("option disabled")
 	}
 
-	if path == "/" {
-		http.Redirect(w, r, rec.Default, rec.Code)
-		return nil
-	}
+	fallback, code := getBaseTarget(rec)
 
-	if rec.Type == "path" && path != "" {
-		zone, from, _ := zoneFromPath(host, path)
-		rec, err = getFinalRecord(zone, from)
-		if err != nil {
-			return err
+	if rec.Type == "path" {
+		if path == "/" {
+			http.Redirect(w, r, rec.Root, rec.Code)
+			return nil
+		}
+		if path != "" {
+			zone, from, _ := zoneFromPath(host, path, rec)
+			rec, err = getFinalRecord(zone, from)
+			if err != nil {
+				if fallback != "" {
+					http.Redirect(w, r, fallback, code)
+				} else if c.Redirect != "" {
+					http.Redirect(w, r, c.Redirect, 403)
+				}
+				http.NotFound(w, r)
+				return err
+			}
 		}
 	}
 

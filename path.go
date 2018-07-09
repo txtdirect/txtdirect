@@ -4,16 +4,45 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 )
 
-func zoneFromPath(host string, path string) (string, int, error) {
-	match, err := regexp.Compile("([a-zA-Z0-9]+)")
-	if err != nil {
-		return "", 0, err
+var PathRegex = regexp.MustCompile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
+var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
+
+func zoneFromPath(host string, path string, rec record) (string, int, error) {
+	pathSubmatchs := PathRegex.FindAllStringSubmatch(path, -1)
+	pathSlice := []string{}
+	for _, v := range pathSubmatchs {
+		pathSlice = append(pathSlice, v[1])
 	}
-	pathSlice := match.FindAllString(path, -1)
 	from := len(pathSlice)
+	if rec.From != "" {
+		fromSubmatch := FromRegex.FindAllStringSubmatch(rec.From, -1)
+		fromSlice := make(map[int]string)
+		for k, v := range fromSubmatch {
+			index, _ := strconv.Atoi(v[1])
+			fromSlice[index] = pathSlice[k]
+		}
+
+		keys := []int{}
+		for k := range fromSlice {
+			keys = append(keys, k)
+		}
+		generatedPath := []string{}
+
+		sort.Sort(sort.Reverse(sort.IntSlice(keys)))
+
+		for _, k := range keys {
+			generatedPath = append(generatedPath, fromSlice[k])
+		}
+
+		url := append(generatedPath, host)
+		url = append([]string{basezone}, url...)
+		return strings.Join(url, "."), from, nil
+	}
 	reverse(pathSlice)
 	url := append(pathSlice, host)
 	url = append([]string{basezone}, url...)

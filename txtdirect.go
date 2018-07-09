@@ -35,7 +35,7 @@ type record struct {
 	Type    string
 	Vcs     string
 	From    string
-	Default string
+	Root    string
 }
 
 // Config contains the middleware's configuration
@@ -76,9 +76,9 @@ func (r *record) Parse(str string) error {
 			l = strings.TrimPrefix(l, "vcs=")
 			r.Vcs = l
 
-		case strings.HasPrefix(l, "default="):
-			l = strings.TrimPrefix(l, "default=")
-			r.Default = l
+		case strings.HasPrefix(l, "root="):
+			l = strings.TrimPrefix(l, "root=")
+			r.Root = l
 
 		default:
 			if r.To != "" {
@@ -183,7 +183,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "path" {
 		if path == "/" {
-			http.Redirect(w, r, rec.Default, rec.Code)
+			http.Redirect(w, r, rec.Root, rec.Code)
 			return nil
 		}
 		if path != "" {

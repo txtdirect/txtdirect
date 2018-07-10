@@ -79,7 +79,7 @@ func getFinalRecord(zone string, from int) (record, error) {
 		}
 		zone, from, err := zoneFromPath(url.Host, url.Path, rec)
 		if err != nil {
-			return rec, fmt.Errorf("could not generate zone URI from path. %s", err)
+			return rec, fmt.Errorf("could not generate zone URI from path: %s", err)
 		}
 		rec, err = getFinalRecord(zone, from)
 	}

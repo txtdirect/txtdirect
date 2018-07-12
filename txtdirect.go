@@ -151,6 +151,15 @@ func contains(array []string, word string) bool {
 	return false
 }
 
+func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int, c Config) {
+	if fallback != "" {
+		http.Redirect(w, r, fallback, code)
+	} else if c.Redirect != "" {
+		http.Redirect(w, r, c.Redirect, 403)
+	}
+	http.NotFound(w, r)
+}
+
 // Redirect the request depending on the redirect record found
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
@@ -186,23 +195,24 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return fmt.Errorf("option disabled")
 	}
 
-	fallback, code := getBaseTarget(rec)
+	fallbackURL, code := getBaseTarget(rec)
 
 	if rec.Type == "path" {
 		if path == "/" {
+			if rec.Root == "" {
+				fallback(w, r, fallbackURL, code, c)
+				return nil
+			}
 			http.Redirect(w, r, rec.Root, rec.Code)
 			return nil
 		}
+
 		if path != "" {
-			zone, from, _ := zoneFromPath(host, path, rec)
+			zone, from, err := zoneFromPath(host, path, rec)
 			rec, err = getFinalRecord(zone, from)
 			if err != nil {
-				if fallback != "" {
-					http.Redirect(w, r, fallback, code)
-				} else if c.Redirect != "" {
-					http.Redirect(w, r, c.Redirect, 403)
-				}
-				http.NotFound(w, r)
+				log.Print("Fallback is triggerd because an error has occurred: ", err)
+				fallback(w, r, fallbackURL, code, c)
 				return err
 			}
 		}

@@ -31,6 +31,9 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 		for k := range fromSlice {
 			keys = append(keys, k)
 		}
+		if len(keys) != len(pathSlice) {
+			return "", 0, fmt.Errorf("length of path doesn't match with length of from= in record")
+		}
 		generatedPath := []string{}
 
 		sort.Sort(sort.Reverse(sort.IntSlice(keys)))

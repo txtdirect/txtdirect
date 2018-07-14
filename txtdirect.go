@@ -155,7 +155,11 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 	if fallback != "" {
 		http.Redirect(w, r, fallback, code)
 	} else if c.Redirect != "" {
-		http.Redirect(w, r, c.Redirect, 403)
+		for _, enable := range c.Enable {
+			if enable == "www" {
+				http.Redirect(w, r, c.Redirect, 403)
+			}
+		}
 	}
 	http.NotFound(w, r)
 }

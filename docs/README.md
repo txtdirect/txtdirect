@@ -30,6 +30,20 @@ For configuration examples for the caddy plugin look at our [examples section](/
 ### Location
 The TXT record must be accessible under the subdomain "\_redirect".
 
+### URLs
+* Please encode all URLs in the TXT record since the parser expects encoded URLs. In some cases, unencoded characters may break your configuration.
+* Most notably, ";" should be escaped as "%3B" in a URL since the parser will split the URL on the unencoded semicolon.
+
+* Examples:  
+    ; -> %3B  
+    ? -> %3F  
+    = -> %3D  
+`https://example.com/already/encoded? -> https://example.com/already/encoded%3F`
+
+* External Links:  
+    https://en.wikipedia.org/wiki/Percent-encoding  
+    https://tools.ietf.org/html/rfc3986#page-11
+
 ### type=host
 *v*
 * Mandatory

@@ -80,6 +80,10 @@ func (r *record) Parse(str string) error {
 			l = strings.TrimPrefix(l, "root=")
 			r.Root = l
 
+		case strings.HasPrefix(l, "from="):
+			l = strings.TrimPrefix(l, "from=")
+			r.From = l
+
 		default:
 			if r.To != "" {
 				return fmt.Errorf("multiple values without keys")

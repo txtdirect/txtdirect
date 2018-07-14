@@ -14,6 +14,7 @@ limitations under the License.
 package txtdirect
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -42,6 +43,7 @@ type record struct {
 type Config struct {
 	Enable   []string
 	Redirect string
+	Resolver string
 }
 
 func (r *record) Parse(str string) error {
@@ -115,7 +117,7 @@ func getBaseTarget(rec record) (string, int) {
 	return rec.To, rec.Code
 }
 
-func getRecord(host, path string) (record, error) {
+func getRecord(host, path string, ctx context.Context, c Config) (record, error) {
 	if strings.Contains(host, ":") {
 		hostSlice := strings.Split(host, ":")
 		host = hostSlice[0]
@@ -128,7 +130,14 @@ func getRecord(host, path string) (record, error) {
 	} else {
 		absoluteZone = strings.Join([]string{zone, "."}, "")
 	}
+
 	s, err := net.LookupTXT(absoluteZone)
+
+	if c.Resolver != "" {
+		net := net.Resolver{}
+		net.Dial(ctx, "tcp", c.Resolver)
+		s, err = net.LookupTXT(ctx, absoluteZone)
+	}
 
 	if err != nil {
 		return record{}, fmt.Errorf("could not get TXT record: %s", err)
@@ -186,7 +195,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	rec, err := getRecord(host, path)
+	rec, err := getRecord(host, path, r.Context(), c)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {
@@ -222,7 +231,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 		if path != "" {
 			zone, from, err := zoneFromPath(host, path, rec)
-			rec, err = getFinalRecord(zone, from)
+			rec, err = getFinalRecord(zone, from, r.Context(), c)
 			if err != nil {
 				log.Print("Fallback is triggerd because an error has occurred: ", err)
 				fallback(w, r, fallbackURL, code, c)

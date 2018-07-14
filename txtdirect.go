@@ -131,24 +131,26 @@ func getRecord(host, path string, ctx context.Context, c Config) (record, error)
 		absoluteZone = strings.Join([]string{zone, "."}, "")
 	}
 
-	s, err := net.LookupTXT(absoluteZone)
-
+	var txts []string
+	var err error
 	if c.Resolver != "" {
 		net := net.Resolver{}
 		net.Dial(ctx, "tcp", c.Resolver)
-		s, err = net.LookupTXT(ctx, absoluteZone)
+		txts, err = net.LookupTXT(ctx, absoluteZone)
+	} else {
+		txts, err = net.LookupTXT(absoluteZone)
 	}
 
 	if err != nil {
 		return record{}, fmt.Errorf("could not get TXT record: %s", err)
 	}
 
-	if len(s) != 1 {
-		return record{}, fmt.Errorf("could not parse TXT record with %d records", len(s))
+	if len(txts) != 1 {
+		return record{}, fmt.Errorf("could not parse TXT record with %d records", len(txts))
 	}
 
 	rec := record{}
-	if err = rec.Parse(s[0]); err != nil {
+	if err = rec.Parse(txts[0]); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 

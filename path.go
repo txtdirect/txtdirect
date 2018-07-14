@@ -57,12 +57,12 @@ func getFinalRecord(zone string, from int, ctx context.Context, c Config) (recor
 	var txts []string
 	var err error
 
-	txts, err = net.LookupTXT(zone)
-
 	if c.Resolver != "" {
 		net := net.Resolver{}
 		net.Dial(ctx, "tcp", c.Resolver)
 		txts, err = net.LookupTXT(ctx, zone)
+	} else {
+		txts, err = net.LookupTXT(zone)
 	}
 
 	// if nothing found, jump into wildcards

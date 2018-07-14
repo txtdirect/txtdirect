@@ -18,7 +18,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 )
@@ -78,19 +77,11 @@ func (r *record) Parse(str string) error {
 			r.Vcs = l
 
 		default:
-			_, err := url.ParseRequestURI(l)
-			if err != nil { // not a url
-				tuple := strings.Split(l, "=")
-				if len(tuple) != 2 {
-					return fmt.Errorf("arbitrary data now allowed")
-				}
-				continue
+			tuple := strings.Split(l, "=")
+			if len(tuple) != 2 {
+				return fmt.Errorf("arbitrary data now allowed")
 			}
-
-			if r.To != "" {
-				return fmt.Errorf("multiple values without keys")
-			}
-			r.To = l
+			continue
 		}
 	}
 

@@ -70,11 +70,12 @@ func getFinalRecord(zone string, from int, ctx context.Context, c Config) (recor
 		zoneSlice := strings.Split(zone, ".")
 		zoneSlice[i] = "_"
 		zone = strings.Join(zoneSlice, ".")
-		txts, err = net.LookupTXT(zone)
 		if c.Resolver != "" {
 			net := net.Resolver{}
 			net.Dial(ctx, "tcp", c.Resolver)
 			txts, err = net.LookupTXT(ctx, zone)
+		} else {
+			txts, err = net.LookupTXT(zone)
 		}
 	}
 	if err != nil || len(txts) == 0 {

@@ -49,7 +49,7 @@ func TestParse(t *testing.T) {
 			nil,
 		},
 		{
-			"v=txtv0;https://example.com/;code=302",
+			"v=txtv0;to=https://example.com/;code=302",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
@@ -59,7 +59,7 @@ func TestParse(t *testing.T) {
 			nil,
 		},
 		{
-			"v=txtv0;https://example.com/;code=302;vcs=hg;type=gometa",
+			"v=txtv0;to=https://example.com/;code=302;vcs=hg;type=gometa",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
@@ -70,7 +70,7 @@ func TestParse(t *testing.T) {
 			nil,
 		},
 		{
-			"v=txtv0;https://example.com/;code=302;type=gometa;vcs=git",
+			"v=txtv0;to=https://example.com/;code=302;type=gometa;vcs=git",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
@@ -86,14 +86,14 @@ func TestParse(t *testing.T) {
 			fmt.Errorf("could not parse status code"),
 		},
 		{
-			"v=txtv0;https://example.com/;https://google.com;code=test",
-			record{},
-			fmt.Errorf("multiple values without keys"),
-		},
-		{
 			"v=txtv1;to=https://example.com/;code=test",
 			record{},
 			fmt.Errorf("unhandled version 'txtv1'"),
+		},
+		{
+			"v=txtv0;https://example.com/",
+			record{},
+			fmt.Errorf("arbitrary data not allowed"),
 		},
 		{
 			"v=txtv0;to=https://example.com/caddy;type=path;code=302",

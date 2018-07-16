@@ -184,14 +184,13 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 }
 
 func customResolver(c Config) net.Resolver {
-	resolver := net.Resolver{
+	return net.Resolver{
 		PreferGo: true,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 			d := net.Dialer{}
-			return d.DialContext(ctx, "tcp", c.Resolver)
+			return d.DialContext(ctx, network, c.Resolver)
 		},
 	}
-	return resolver
 }
 
 // Redirect the request depending on the redirect record found

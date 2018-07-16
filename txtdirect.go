@@ -134,8 +134,7 @@ func getRecord(host, path string, ctx context.Context, c Config) (record, error)
 	var txts []string
 	var err error
 	if c.Resolver != "" {
-		net := net.Resolver{}
-		net.Dial(ctx, "tcp", c.Resolver)
+		net := customResolver(c)
 		txts, err = net.LookupTXT(ctx, absoluteZone)
 	} else {
 		txts, err = net.LookupTXT(absoluteZone)
@@ -182,6 +181,17 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 		}
 	}
 	http.NotFound(w, r)
+}
+
+func customResolver(c Config) net.Resolver {
+	resolver := net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{}
+			return d.DialContext(ctx, "tcp", c.Resolver)
+		},
+	}
+	return resolver
 }
 
 // Redirect the request depending on the redirect record found

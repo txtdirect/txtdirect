@@ -58,8 +58,7 @@ func getFinalRecord(zone string, from int, ctx context.Context, c Config) (recor
 	var err error
 
 	if c.Resolver != "" {
-		net := net.Resolver{}
-		net.Dial(ctx, "tcp", c.Resolver)
+		net := customResolver(c)
 		txts, err = net.LookupTXT(ctx, zone)
 	} else {
 		txts, err = net.LookupTXT(zone)
@@ -71,8 +70,7 @@ func getFinalRecord(zone string, from int, ctx context.Context, c Config) (recor
 		zoneSlice[i] = "_"
 		zone = strings.Join(zoneSlice, ".")
 		if c.Resolver != "" {
-			net := net.Resolver{}
-			net.Dial(ctx, "tcp", c.Resolver)
+			net := customResolver(c)
 			txts, err = net.LookupTXT(ctx, zone)
 		} else {
 			txts, err = net.LookupTXT(zone)

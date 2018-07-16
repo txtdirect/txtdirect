@@ -3,7 +3,6 @@ package txtdirect
 import (
 	"fmt"
 	"net"
-	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
@@ -73,18 +72,7 @@ func getFinalRecord(zone string, from int) (record, error) {
 	}
 
 	if rec.Type == "path" {
-		url, err := url.Parse(rec.To)
-		if err != nil {
-			return rec, fmt.Errorf("could not parse the url: %s", err)
-		}
-		zone, from, err := zoneFromPath(url.Host, url.Path, rec)
-		if err != nil {
-			return rec, fmt.Errorf("could not generate zone URI from path: %s", err)
-		}
-		rec, err = getFinalRecord(zone, from)
-		if err != nil {
-			return rec, fmt.Errorf("could not find the final record: %s", err)
-		}
+		return rec, fmt.Errorf("chaining path is not currently supported")
 	}
 
 	return rec, nil

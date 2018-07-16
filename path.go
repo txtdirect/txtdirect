@@ -74,6 +74,10 @@ func getFinalRecord(zone string, from int) (record, error) {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
+	if rec.Type == "path" {
+		return rec, fmt.Errorf("chaining path is not currently supported")
+	}
+
 	return rec, nil
 }
 

@@ -79,7 +79,7 @@ func (r *record) Parse(str string) error {
 		default:
 			tuple := strings.Split(l, "=")
 			if len(tuple) != 2 {
-				return fmt.Errorf("arbitrary data now allowed")
+				return fmt.Errorf("arbitrary data not allowed")
 			}
 			continue
 		}

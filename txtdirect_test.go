@@ -49,7 +49,7 @@ func TestParse(t *testing.T) {
 			nil,
 		},
 		{
-			"v=txtv0;https://example.com/;code=302",
+			"v=txtv0;to=https://example.com/;code=302",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
@@ -59,18 +59,18 @@ func TestParse(t *testing.T) {
 			nil,
 		},
 		{
-			"v=txtv0;https://example.com/;code=302;vcs=hg",
+			"v=txtv0;to=https://example.com/;code=302;vcs=hg;type=gometa",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
 				Vcs:     "hg",
-				Type:    "host",
+				Type:    "gometa",
 			},
 			nil,
 		},
 		{
-			"v=txtv0;https://example.com/;code=302;type=gometa;vcs=git",
+			"v=txtv0;to=https://example.com/;code=302;type=gometa;vcs=git",
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
@@ -86,14 +86,14 @@ func TestParse(t *testing.T) {
 			fmt.Errorf("could not parse status code"),
 		},
 		{
-			"v=txtv0;https://example.com/;https://google.com;code=test",
-			record{},
-			fmt.Errorf("multiple values without keys"),
-		},
-		{
 			"v=txtv1;to=https://example.com/;code=test",
 			record{},
 			fmt.Errorf("unhandled version 'txtv1'"),
+		},
+		{
+			"v=txtv0;https://example.com/",
+			record{},
+			fmt.Errorf("arbitrary data not allowed"),
 		},
 		{
 			"v=txtv0;to=https://example.com/caddy;type=path;code=302",
@@ -102,6 +102,16 @@ func TestParse(t *testing.T) {
 				To:      "https://example.com/caddy",
 				Type:    "path",
 				Code:    302,
+			},
+			nil,
+		},
+		{
+			"v=txtv0;to=https://example.com/;key=value",
+			record{
+				Version: "txtv0",
+				To:      "https://example.com/",
+				Code:    301,
+				Type:    "host",
 			},
 			nil,
 		},
@@ -161,7 +171,7 @@ func TestRedirectDefault(t *testing.T) {
 		rec := httptest.NewRecorder()
 		err = Redirect(rec, req, config)
 		if err != nil {
-			t.Errorf("Unexpected error: %s", err)
+			t.Errorf("test %d: Unexpected error: %s", i, err)
 		}
 	}
 }
@@ -187,7 +197,7 @@ func TestRedirectSuccess(t *testing.T) {
 		rec := httptest.NewRecorder()
 		err = Redirect(rec, req, config)
 		if err != nil {
-			t.Errorf("Unexpected error: %s", err)
+			t.Errorf("test %d: Unexpected error: %s", i, err)
 		}
 	}
 }
@@ -213,7 +223,7 @@ func TestRedirectFailure(t *testing.T) {
 		rec := httptest.NewRecorder()
 		err = Redirect(rec, req, config)
 		if err == nil {
-			t.Errorf("Expected error, got nil)")
+			t.Errorf("test %d: Expected error, got nil", i)
 		}
 	}
 }

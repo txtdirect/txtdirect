@@ -85,10 +85,11 @@ func (r *record) Parse(str string) error {
 			r.From = l
 
 		default:
-			if r.To != "" {
-				return fmt.Errorf("multiple values without keys")
+			tuple := strings.Split(l, "=")
+			if len(tuple) != 2 {
+				return fmt.Errorf("arbitrary data not allowed")
 			}
-			r.To = l
+			continue
 		}
 		if len(l) > 255 {
 			return fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
@@ -97,6 +98,10 @@ func (r *record) Parse(str string) error {
 
 	if r.Code == 0 {
 		r.Code = 301
+	}
+
+	if r.Vcs == "" && r.Type == "gometa" {
+		r.Vcs = "git"
 	}
 
 	if r.Type == "" {

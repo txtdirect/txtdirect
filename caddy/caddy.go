@@ -34,6 +34,8 @@ var allOptions = []string{"host", "gometa", "www"}
 func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	var enable []string
 	var redirect string
+	var resolver string
+
 	c.Next() // skip directive name
 	for c.NextBlock() {
 		option := c.Val()
@@ -64,6 +66,13 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 			}
 			redirect = toRedirect[0]
 
+		case "resolver":
+			resolverAddr := c.RemainingArgs()
+			if len(resolverAddr) != 1 {
+				return txtdirect.Config{}, c.ArgErr()
+			}
+			resolver = resolverAddr[0]
+
 		default:
 			return txtdirect.Config{}, c.ArgErr() // unhandled option
 		}
@@ -77,6 +86,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	config := txtdirect.Config{
 		Enable:   enable,
 		Redirect: redirect,
+		Resolver: resolver,
 	}
 	return config, nil
 }

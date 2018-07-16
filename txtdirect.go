@@ -14,6 +14,7 @@ limitations under the License.
 package txtdirect
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -42,6 +43,7 @@ type record struct {
 type Config struct {
 	Enable   []string
 	Redirect string
+	Resolver string
 }
 
 func (r *record) Parse(str string) error {
@@ -115,7 +117,7 @@ func getBaseTarget(rec record) (string, int) {
 	return rec.To, rec.Code
 }
 
-func getRecord(host, path string) (record, error) {
+func getRecord(host, path string, ctx context.Context, c Config) (record, error) {
 	if strings.Contains(host, ":") {
 		hostSlice := strings.Split(host, ":")
 		host = hostSlice[0]
@@ -128,18 +130,26 @@ func getRecord(host, path string) (record, error) {
 	} else {
 		absoluteZone = strings.Join([]string{zone, "."}, "")
 	}
-	s, err := net.LookupTXT(absoluteZone)
+
+	var txts []string
+	var err error
+	if c.Resolver != "" {
+		net := customResolver(c)
+		txts, err = net.LookupTXT(ctx, absoluteZone)
+	} else {
+		txts, err = net.LookupTXT(absoluteZone)
+	}
 
 	if err != nil {
 		return record{}, fmt.Errorf("could not get TXT record: %s", err)
 	}
 
-	if len(s) != 1 {
-		return record{}, fmt.Errorf("could not parse TXT record with %d records", len(s))
+	if len(txts) != 1 {
+		return record{}, fmt.Errorf("could not parse TXT record with %d records", len(txts))
 	}
 
 	rec := record{}
-	if err = rec.Parse(s[0]); err != nil {
+	if err = rec.Parse(txts[0]); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
@@ -173,6 +183,16 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 	http.NotFound(w, r)
 }
 
+func customResolver(c Config) net.Resolver {
+	return net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{}
+			return d.DialContext(ctx, network, c.Resolver)
+		},
+	}
+}
+
 // Redirect the request depending on the redirect record found
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
@@ -186,7 +206,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	rec, err := getRecord(host, path)
+	rec, err := getRecord(host, path, r.Context(), c)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {
@@ -222,7 +242,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 		if path != "" {
 			zone, from, err := zoneFromPath(host, path, rec)
-			rec, err = getFinalRecord(zone, from)
+			rec, err = getFinalRecord(zone, from, r.Context(), c)
 			if err != nil {
 				log.Print("Fallback is triggerd because an error has occurred: ", err)
 				fallback(w, r, fallbackURL, code, c)

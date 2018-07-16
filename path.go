@@ -1,6 +1,7 @@
 package txtdirect
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"regexp"
@@ -52,18 +53,28 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 	return strings.Join(url, "."), from, nil
 }
 
-func getFinalRecord(zone string, from int) (record, error) {
+func getFinalRecord(zone string, from int, ctx context.Context, c Config) (record, error) {
 	var txts []string
 	var err error
 
-	txts, err = net.LookupTXT(zone)
+	if c.Resolver != "" {
+		net := customResolver(c)
+		txts, err = net.LookupTXT(ctx, zone)
+	} else {
+		txts, err = net.LookupTXT(zone)
+	}
 
 	// if nothing found, jump into wildcards
 	for i := 1; i <= from && len(txts) == 0; i++ {
 		zoneSlice := strings.Split(zone, ".")
 		zoneSlice[i] = "_"
 		zone = strings.Join(zoneSlice, ".")
-		txts, err = net.LookupTXT(zone)
+		if c.Resolver != "" {
+			net := customResolver(c)
+			txts, err = net.LookupTXT(ctx, zone)
+		} else {
+			txts, err = net.LookupTXT(zone)
+		}
 	}
 	if err != nil || len(txts) == 0 {
 		return record{}, fmt.Errorf("could not get TXT record: %s", err)

@@ -50,18 +50,6 @@ func (r *record) Parse(str string) error {
 	s := strings.Split(str, ";")
 	for _, l := range s {
 		switch {
-		case strings.HasPrefix(l, "v="):
-			l = strings.TrimPrefix(l, "v=")
-			r.Version = l
-			if r.Version != "txtv0" {
-				return fmt.Errorf("unhandled version '%s'", r.Version)
-			}
-			log.Print("WARN: txtv0 is not suitable for production")
-
-		case strings.HasPrefix(l, "to="):
-			l = strings.TrimPrefix(l, "to=")
-			r.To = l
-
 		case strings.HasPrefix(l, "code="):
 			l = strings.TrimPrefix(l, "code=")
 			i, err := strconv.Atoi(l)
@@ -70,21 +58,33 @@ func (r *record) Parse(str string) error {
 			}
 			r.Code = i
 
-		case strings.HasPrefix(l, "type="):
-			l = strings.TrimPrefix(l, "type=")
-			r.Type = l
-
-		case strings.HasPrefix(l, "vcs="):
-			l = strings.TrimPrefix(l, "vcs=")
-			r.Vcs = l
+		case strings.HasPrefix(l, "from="):
+			l = strings.TrimPrefix(l, "from=")
+			r.From = l
 
 		case strings.HasPrefix(l, "root="):
 			l = strings.TrimPrefix(l, "root=")
 			r.Root = l
 
-		case strings.HasPrefix(l, "from="):
-			l = strings.TrimPrefix(l, "from=")
-			r.From = l
+		case strings.HasPrefix(l, "to="):
+			l = strings.TrimPrefix(l, "to=")
+			r.To = l
+
+		case strings.HasPrefix(l, "type="):
+			l = strings.TrimPrefix(l, "type=")
+			r.Type = l
+
+		case strings.HasPrefix(l, "v="):
+			l = strings.TrimPrefix(l, "v=")
+			r.Version = l
+			if r.Version != "txtv0" {
+				return fmt.Errorf("unhandled version '%s'", r.Version)
+			}
+			log.Print("WARN: txtv0 is not suitable for production")
+
+		case strings.HasPrefix(l, "vcs="):
+			l = strings.TrimPrefix(l, "vcs=")
+			r.Vcs = l
 
 		default:
 			tuple := strings.Split(l, "=")

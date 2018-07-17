@@ -40,15 +40,6 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	for c.NextBlock() {
 		option := c.Val()
 		switch option {
-		case "enable":
-			if enable != nil {
-				return txtdirect.Config{}, c.ArgErr()
-			}
-			enable = c.RemainingArgs()
-			if len(enable) == 0 {
-				return txtdirect.Config{}, c.ArgErr()
-			}
-
 		case "disable":
 			if enable != nil {
 				return txtdirect.Config{}, c.ArgErr()
@@ -58,6 +49,15 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				return txtdirect.Config{}, c.ArgErr()
 			}
 			enable = removeArrayFromArray(allOptions, toDisable)
+
+		case "enable":
+			if enable != nil {
+				return txtdirect.Config{}, c.ArgErr()
+			}
+			enable = c.RemainingArgs()
+			if len(enable) == 0 {
+				return txtdirect.Config{}, c.ArgErr()
+			}
 
 		case "redirect":
 			toRedirect := c.RemainingArgs()

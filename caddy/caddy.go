@@ -29,7 +29,7 @@ func init() {
 	})
 }
 
-var allOptions = []string{"host", "gometa", "www"}
+var allOptions = []string{"host", "path", "gometa", "www"}
 
 func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	var enable []string

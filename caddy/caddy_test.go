@@ -111,7 +111,7 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Enable: []string{"gometa", "www"},
+				Enable: []string{"path", "gometa", "www"},
 			},
 		},
 		{

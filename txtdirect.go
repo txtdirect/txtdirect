@@ -153,11 +153,6 @@ func getRecord(host, path string, ctx context.Context, c Config) (record, error)
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
-	if rec.To == "" {
-		s := []string{defaultProtocol, "://", defaultSub, ".", host}
-		rec.To = strings.Join(s, "")
-	}
-
 	return rec, nil
 }
 

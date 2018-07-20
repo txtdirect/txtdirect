@@ -124,24 +124,9 @@ func getRecord(host, path string, ctx context.Context, c Config) (record, error)
 	}
 	zone := strings.Join([]string{basezone, host}, ".")
 
-	var absoluteZone string
-	if strings.HasSuffix(zone, ".") {
-		absoluteZone = zone
-	} else {
-		absoluteZone = strings.Join([]string{zone, "."}, "")
-	}
-
-	var txts []string
-	var err error
-	if c.Resolver != "" {
-		net := customResolver(c)
-		txts, err = net.LookupTXT(ctx, absoluteZone)
-	} else {
-		txts, err = net.LookupTXT(absoluteZone)
-	}
-
+	txts, err := query(zone, ctx, c)
 	if err != nil {
-		return record{}, fmt.Errorf("could not get TXT record: %s", err)
+		return record{}, err
 	}
 
 	if len(txts) != 1 {
@@ -186,6 +171,28 @@ func customResolver(c Config) net.Resolver {
 			return d.DialContext(ctx, network, c.Resolver)
 		},
 	}
+}
+
+func query(zone string, ctx context.Context, c Config) ([]string, error) {
+	var absoluteZone string
+	if strings.HasSuffix(zone, ".") {
+		absoluteZone = zone
+	} else {
+		absoluteZone = strings.Join([]string{zone, "."}, "")
+	}
+
+	var txts []string
+	var err error
+	if c.Resolver != "" {
+		net := customResolver(c)
+		txts, err = net.LookupTXT(ctx, absoluteZone)
+	} else {
+		txts, err = net.LookupTXT(absoluteZone)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("could not get TXT record: %s", err)
+	}
+	return txts, nil
 }
 
 // Redirect the request depending on the redirect record found

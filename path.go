@@ -54,14 +54,9 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 }
 
 func getFinalRecord(zone string, from int, ctx context.Context, c Config) (record, error) {
-	var txts []string
-	var err error
-
-	if c.Resolver != "" {
-		net := customResolver(c)
-		txts, err = net.LookupTXT(ctx, zone)
-	} else {
-		txts, err = net.LookupTXT(zone)
+	txts, err := query(zone, ctx, c)
+	if err != nil {
+		return record{}, err
 	}
 
 	// if nothing found, jump into wildcards

@@ -52,6 +52,13 @@ txtdirect {
 }
 ```
 
+**Enable path based redirects:**  
+```
+txtdirect {
+    enable path
+}
+```
+
 **Enable go meta/vanity redirects:**  
 *pkg.example.com -> github.com/some/pkg.git*
 ```
@@ -87,49 +94,122 @@ txtdirect {
 For more details take a look at our [TXT-record specification](/docs/README.md#specification).
 
 ## host
+**Host based redirect using default redirection code**
 *example.com -> about.example.com 301*
 ```
 example.com                   3600 IN A      127.0.0.1
 _redirect.example.com         3600 IN TXT    "v=txtv0;to=https://about.example.com;type=host"
 ```
 
+**Host based redirect using explicit 301 redirection code**
 *www.example.com -> about.example.com 301*
 ```
 www.example.com               3600 IN CNAME  txtdirect.example.com.
 _redirect.www.example.com     3600 IN TXT    "v=txtv0;to=https://about.example.com;type=host;code=301"
 ```
 
+**Host based redirect using explicit 302 redirection code**
 *www.example.com -> about.example.com 302*
 ```
 www.example.com               3600 IN CNAME  txtdirect.example.com.
 _redirect.www.example.com     3600 IN TXT    "v=txtv0;to=https://about.example.com;type=host;code=302"
 ```
 
+**Host based redirect including path**
 *gophers.example.com -> example.com/gophers*
 ```
 gophers.example.com           3600 IN CNAME  txtdirect.example.com.
 _redirect.gophers.example.com 3600 IN TXT    "v=txtv0;to=https://example.com/gophers;type=host"
 ```
 
+<!--
+**Host based redirect including {url} placeholder**
 *gophers.example.com/1 -> example.com/gophers/1*
 ```
 gophers.example.com           3600 IN CNAME  txtdirect.example.com.
 _redirect.gophers.example.com 3600 IN TXT    "v=txtv0;to=https://example.com/gophers{uri};type=host"
 ```
 
+**Host based redirect including {file} placeholder**
 *placeholder.example.com/cat.png -> example.com/cat.png*
 ```
 placeholder.example.com              3600 IN CNAME  txtdirect.example.com.
 _redirect.placeholder.example.com    3600 IN TXT    "v=txtv0;to=https://example.com/{file};type=host"
 ```
+-->
 
 ## path
+**Path based redirect using default ordering**
+*example.com/firstMatch/secondMatch -> about.example.com*
+*example.com/firstMatch/noMatch -> defaults or 404*
+```
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;type=path"
+_redirect.secondmatch.firstmatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/;type=host"
+```
+
+**Path based redirect using default ordering**
+*example.com/firstMatch -> about.example.com*
+*example.com/noMatch -> defaults or 404*
+```
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;type=path"
+_redirect.firstmatch.example.com              3600 IN TXT    "v=txtv0;to=https://about.example.com/;type=host"
+```
+
+**Path based redirect using explicit ordering**
+*example.com/firstMatch/secondMatch -> about.example.com*
+*example.com/firstMatch/noMatch -> defaults or 404*
+```
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;from=/$1/$2/;type=path"
+_redirect.secondmatch.firstmatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/;type=host"
+```
+
+**Path based redirect using modified ordering**
+*example.com/firstMatch/secondMatch -> about.example.com*
+*example.com/firstMatch/noMatch -> defaults or 404*
+```
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;from=/$2/$1/;type=path"
+_redirect.firstmatch.secondmatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/;type=host"
+```
+
+**Path based redirect fallback on root/index**
+*example.com/ -> root.example.com*
+```
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;from=/$1/$2;root=https://root.example.com;type=path"
+_redirect.secondmatch.firstmatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/;type=host"
+```
+
+**Path based redirect path record fallback**
+*example.com/firstMatch/noMatch -> fallback.example.com*
+```
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;to=https://fallback.example.com;type=path"
+```
+
+**Path based redirect using wildcard**
+*example.com/firstMatch/secondMatch -> about.example.com*
+*example.com/firstMatch/randomString -> wildcard.example.com*
+*example.com/randomString/randomString -> full-wildcard.example.com*
+
+```
+example.com                                   3600 IN A      127.0.0.1
+_redirect.example.com                         3600 IN TXT    "v=txtv0;type=path"
+_redirect.secondmatch.firstmatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/;type=host"
+_redirect._.firstmatch.example.com            3600 IN TXT    "v=txtv0;to=https://wildcard.example.com/;type=host"
+_redirect._._.example.com                     3600 IN TXT    "v=txtv0;to=https://full-wildcard.example.com/;type=host"
+```
+
+<!--
 *example.com/firstMatch/secondMatch -> about.example.com/secondMatch/firstMatch*
 *example.com/firstMatch/noMatch -> 404*
 ```
 example.com                                   3600 IN A      127.0.0.1
 _redirect.example.com                         3600 IN TXT    "v=txtv0;from=/$1/$2;type=path"
-_redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/{2}/{1};type=host"
+_redirect.secondmatch.firstmatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/{2}/{1};type=host"
 ```
 
 *example.com/firstMatch/secondMatch -> about.example.com/secondMatch/firstMatch*
@@ -137,7 +217,7 @@ _redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https:/
 ```
 example.com                                   3600 IN A      127.0.0.1
 _redirect.example.com                         3600 IN TXT    "v=txtv0;from=/$1/$2;to=https://fallback.example.com;type=path"
-_redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/{2}/{1};type=host"
+_redirect.secondmatch.firstmatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/{2}/{1};type=host"
 ```
 
 *example.com/firstMatch/secondMatch -> about.example.com*
@@ -145,7 +225,7 @@ _redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https:/
 ```
 example.com                                   3600 IN A      127.0.0.1
 _redirect.example.com                         3600 IN TXT    "v=txtv0;re=\/(.*)\/(.*);to=https://fallback.example.com;type=path"
-_redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com;type=host"
+_redirect.secondmatch.firstmatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com;type=host"
 ```
 
 *example.com/some/thing -> catchall.example.com*
@@ -156,6 +236,7 @@ example.com                           3600 IN A      127.0.0.1
 _redirect.example.com                 3600 IN TXT    "v=txtv0;from=/$1/$2;type=path"
 _redirect._._.example.com             3600 IN TXT    "v=txtv0;to=https://catchall.example.com{uri};type=host"
 ```
+-->
 
 ## gometa
 *pkg.example.com -> github.com/some/repo*
@@ -164,13 +245,13 @@ pkg.example.com               3600 IN CNAME  txtdirect.example.com.
 _redirect.pkg.example.com     3600 IN TXT    "v=txtv0;to=https://github.com/some/repo;type=gometa"
 ```
 
+<!--
 *example.com/somePackage -> github.com/some/repo/somePackage*
 ```
 pkg.example.com               3600 IN CNAME  txtdirect.example.com.
 _redirect.pkg.example.com     3600 IN TXT    "v=txtv0;to=https://github.com/some/repo{uri};type=gometa"
 ```
 
-<!--
 ## gometa + path
 *example.com/pkg/fmt -> github.com/pkg/fmt*
 ```
@@ -185,7 +266,7 @@ _redirect._._.example.com       3600 IN TXT    "v=txtv0;to=https://fallback.exam
 ```
 example.com                                   3600 IN A      127.0.0.1
 _redirect.example.com                         3600 IN TXT    "v=txtv0;re=\/(.*)\/(.*);to=https://fallback.example.com;type=path"
-_redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https://github.com/somePackage/someFmt;type=gometa"
+_redirect.secondmatch.firstmatch.example.com  3600 IN TXT    "v=txtv0;to=https://github.com/somePackage/someFmt;type=gometa"
 _redirect._._.example.com                     3600 IN TXT    "v=txtv0;to=https://fallback.example.com;type=gometa"
 ```
 
@@ -242,7 +323,7 @@ _redirect._.user.example.com              3600 IN TXT    "v=txtv0;to=https://mir
 *example.com/failure/test -> 404*
 ```
 _redirect.example.com                           3600 IN TXT    "v=txtv0;re=\/(.*)\/(.*);type=path"
-_redirect.secondMatch.firstMatch.example.com    3600 IN TXT    "v=txtv0;to=https://github.com/user/repo;type=dep"
+_redirect.secondmatch.firstmatch.example.com    3600 IN TXT    "v=txtv0;to=https://github.com/user/repo;type=dep"
 ```
 
 *example.com/pkg/area51/test -> github.com/secret/package/test*

@@ -17,6 +17,7 @@ _2017_
   - Blacklist favicon redirects
   - Custom DNS resolver
   - Refactor fallbacks
+  - Remove Caddy telemetry
 -->
 
 # v0.1.0

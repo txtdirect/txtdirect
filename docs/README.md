@@ -21,10 +21,12 @@ For configuration examples for the caddy plugin look at our [examples section](/
 
 ## TXT record
 ### Basic requirements
-* TXT record key-value pairs must be delimited by semicolons ";"
+* Record must not exceed 255 characters
+* Record key-value pairs must be delimited by semicolons ";"
 * Key and value must be encoded using utf8
 * Punycode for domain names should be used
 * Ordering key-value pairs can be done
+* Arbitrary data/non key-value pairs can be used and will be ignored
 
 ### Location
 * TXT record must be accessible under the subdomain "\_redirect"

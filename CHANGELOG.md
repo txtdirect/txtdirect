@@ -12,7 +12,11 @@ _2017_
 [Examples](/tree/v0.2.0/examples)
 
 ## Changes since v0.1.0
-  - Update base files via reposeed
+  - Path based redirects
+  - Enforce absolute zones on DNS requests
+  - Blacklist favicon redirects
+  - Custom DNS resolver
+  - Refactor fallbacks
 -->
 
 # v0.1.0

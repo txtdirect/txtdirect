@@ -59,7 +59,7 @@ txtdirect {
   enable gometa
 }
 ```
-
+<!--
 # Placeholders
 {dir} 	        The directory of the requested file (from request URI)  
 {file} 	        The name of the requested file (from request URI)  
@@ -79,6 +79,7 @@ txtdirect {
 {scheme} 	      The protocol/scheme used (usually http or https)  
 {uri} 	        The request URI (includes path, query string, and fragment)  
 {uri_escaped} 	The query-escaped variant of {uri}  
+-->
 
 # TXT records
 "txtdirect.example.com" is your hosted TXTDIRECT instance and is usually provided as CNAME.
@@ -127,7 +128,7 @@ _redirect.placeholder.example.com    3600 IN TXT    "v=txtv0;to=https://example.
 *example.com/firstMatch/noMatch -> 404*
 ```
 example.com                                   3600 IN A      127.0.0.1
-_redirect.example.com                         3600 IN TXT    "v=txtv0;from=/$1/$2;;type=path"
+_redirect.example.com                         3600 IN TXT    "v=txtv0;from=/$1/$2;type=path"
 _redirect.secondMatch.firstMatch.example.com  3600 IN TXT    "v=txtv0;to=https://about.example.com/{2}/{1};type=host"
 ```
 
@@ -169,6 +170,7 @@ pkg.example.com               3600 IN CNAME  txtdirect.example.com.
 _redirect.pkg.example.com     3600 IN TXT    "v=txtv0;to=https://github.com/some/repo{uri};type=gometa"
 ```
 
+<!--
 ## gometa + path
 *example.com/pkg/fmt -> github.com/pkg/fmt*
 ```
@@ -279,7 +281,7 @@ _redirect.example.com             3600 IN TXT    "v=txtv0;from=/$1/$2;to=https:/
 _redirect._._.example.com         3600 IN TXT    "v=txtv0;to=https://hub.docker.com/{1}/{2};type=dockerv2"
 _redirect.area51.con.example.com  3600 IN TXT    "v=txtv0;to=https://hub.docker.com/secret/image;type=dockerv2"
 ```
-
+-->
 ---
 
 We are happy to get new contributions.

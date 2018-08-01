@@ -15,6 +15,7 @@ _2017_
   - Path based redirects
   - Enforce absolute zones on DNS requests
   - Blacklist favicon redirects
+  - Blacklist `_internal` gometa paths
   - Custom DNS resolver
   - Refactor fallbacks
   - Remove Caddy telemetry

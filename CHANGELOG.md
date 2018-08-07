@@ -1,6 +1,22 @@
 <!--
+# v0.3.0
+_2018_
+  - [Downloads for v0.3.0](https://github.com/txtdirect/txtdirect/releases/tag/v0.3.0)
+  - [Container build for v0.3.0](https://hub.docker.com/r/seetheprogress/txtdirect/tags/)
+  - [Changelog since v0.2.0](#changes-since-v020)
+  - [Documentation for v0.3.0](#documentation-for-v030)
+
+## Documentation for v0.2.0
+[Documentation](/tree/v0.3.0/docs)
+
+[Examples](/tree/v0.3.0/examples)
+
+## Changes since v0.2.0
+
+-->
+
 # v0.2.0
-_2017_
+_2018-08-07_
   - [Downloads for v0.2.0](https://github.com/txtdirect/txtdirect/releases/tag/v0.2.0)
   - [Container build for v0.2.0](https://hub.docker.com/r/seetheprogress/txtdirect/tags/)
   - [Changelog since v0.1.0](#changes-since-v010)
@@ -17,9 +33,10 @@ _2017_
   - Blacklist favicon redirects
   - Blacklist `_internal` gometa paths
   - Custom DNS resolver
-  - Refactor fallbacks
+  - Refactor fallbacks (root fallback, global fallback etc.)
   - Remove Caddy telemetry
--->
+  - Update docs
+  - Iterate on spec
 
 # v0.1.0
 _2017-10-12_

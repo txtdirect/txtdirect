@@ -257,3 +257,29 @@ func TestRedirectBlacklist(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err)
 	}
 }
+
+func TestParsePlaceholders(t *testing.T) {
+	tests := []struct {
+		url         string
+		placeholder string
+		expected    string
+	}{
+		{
+			"example.com{uri}",
+			"?test=test",
+			"example.com?test=test",
+		},
+		{
+			"example.com/{uri}/{uri}",
+			"?test=test",
+			"example.com/?test=test/?test=test",
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", "https://example.com"+test.placeholder, nil)
+		result := parsePlaceholders(test.url, req)
+		if result != test.expected {
+			t.Errorf("Expected %s, got %s", test.expected, result)
+		}
+	}
+}

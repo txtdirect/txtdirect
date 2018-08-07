@@ -19,6 +19,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -28,6 +29,8 @@ const (
 	defaultSub      = "www"
 	defaultProtocol = "https"
 )
+
+var PlaceholderRegex = regexp.MustCompile("{[~>?]?\\w+}")
 
 type record struct {
 	Version string
@@ -113,8 +116,23 @@ func (r *record) Parse(str string) error {
 	return nil
 }
 
-func getBaseTarget(rec record) (string, int) {
+func getBaseTarget(rec record, r *http.Request) (string, int) {
+	if strings.ContainsAny(rec.To, "{}") {
+		rec.To = parsePlaceholders(rec.To, r)
+	}
 	return rec.To, rec.Code
+}
+
+func parsePlaceholders(url string, r *http.Request) string {
+	placeholders := PlaceholderRegex.FindAllStringSubmatch(url, -1)
+	for _, placeholder := range placeholders {
+		switch placeholder[0] {
+		case "{uri}":
+			uri := []rune(r.URL.RequestURI())
+			url = strings.Replace(url, "{uri}", string(uri[1:]), -1)
+		}
+	}
+	return url
 }
 
 func getRecord(host, path string, ctx context.Context, c Config) (record, error) {
@@ -230,7 +248,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return fmt.Errorf("option disabled")
 	}
 
-	fallbackURL, code := getBaseTarget(rec)
+	fallbackURL, code := getBaseTarget(rec, r)
 
 	if rec.Type == "path" {
 		if path == "/" {
@@ -254,7 +272,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "host" {
-		to, code := getBaseTarget(rec)
+		to, code := getBaseTarget(rec, r)
 		http.Redirect(w, r, to, code)
 		return nil
 	}

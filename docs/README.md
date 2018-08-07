@@ -17,82 +17,86 @@ limitations under the License.
 For configuration examples for the caddy plugin look at our [examples section](/examples/README.md#configuration)
 
 # Specification
-*implementation does not yet implement the full specification*
+*The implementation and specification are a work in progress*
 
 ## TXT record
 ### Basic requirements
-* The TXT record must consist of multiple sections, delimited by semicolons ";"
-* Each section is a key=value pair
-* The key and value encoding is utf8
-* Punycode for domain names is permitted, but not required
-* The ordering of the tuples (a key-value pair) is arbitary
+* Record must not exceed 255 characters
+* Record key-value pairs must be delimited by semicolons ";"
+* Key and value must be encoded using utf8
+* Punycode for domain names should be used
+* Ordering key-value pairs can be done
+* Arbitrary data/non key-value pairs can be used and will be ignored
 
 ### Location
-The TXT record must be accessible under the subdomain "\_redirect".
+* TXT record must be accessible under the subdomain "\_redirect"
 
 ### URLs
-* Please encode all URLs in the TXT record since the parser expects encoded URLs. In some cases, unencoded characters may break your configuration.
-* Most notably, ";" should be escaped as "%3B" in a URL since the parser will split the URL on the unencoded semicolon.
+* All URLs must be encoded
+* ";" must be escaped as "%3B"
 
-* Examples:  
+Examples:  
     ; -> %3B  
     ? -> %3F  
     = -> %3D  
-`https://example.com/already/encoded? -> https://example.com/already/encoded%3F`
+`https://example.com/page/about=us -> https://example.com/page/about%3Dus`
 
-* External Links:  
+External Links:  
     https://en.wikipedia.org/wiki/Percent-encoding  
     https://tools.ietf.org/html/rfc3986#page-11
 
 ### type=host
 *v*
 * Mandatory
-* Possible values: "txtv0"
+* Permitted values: "txtv0"
 
 *to*
 * Recommended
-* Default: Last plain value "v=txtv0;to=example.com" == "v=txtv0;example.com"
-* Possible values: "absolute/relative URL"
+* Default: Fallbacks such as `www` or `redirect` config
+* Permitted values: "absolute/relative URL"
 
 *code*
 * Optional
 * Default: "301"
-* Possible values: "301", "302"
+* Permitted values: "301", "302"
 
 ### type=path
 *v*
 * Mandatory
-* Possible values: "txtv0"
+* Permitted values: "txtv0"
 
 *to*
 * Optional
-* Website address to redirect to for non special (dep, docker) users
+* Default: Fallbacks such as `www` or `redirect` config
+* General path fallback
+
+*root*
+* Optional
+* Default: Fallbacks such as `www` or `redirect` config
+* Root path fallback
 
 *from*
-* Possible values: "absolute/relative URL + simplified regex"
+* Permitted values: "simplified regex"
 
 *re*
-* Possible values: "absolute/relative URL + simplified regex"
+* Permitted values: "regex"
 
-Path forces the implementation to look up a new record.
-Each match from `from` or `re` is added as subdomain to be looked up:
-`from=/$1/$2` -> \_redirect.<2>.<1>
-
-Wildcards for catch all records are also possible, by providing "\_" as subdomain.
-The wildcards need to be subdomains under specific domains if used.
-`_redirect._.test` <-- is allowed
-`_redirect.test._` <-- is not allowed
+Wildcards for catch all records can be used by providing "\_" as subdomain.  
+Wildcards must be subdomains under a specific domain.
+  `_redirect._.test` <-- is allowed
+  `_redirect.test._` <-- is not allowed
   
 ### type=gometa
 *v*
 * Mandatory
-* Possible values: "txtv0"
+* Permitted values: "txtv0"
 
 *to*
 * Recommended
-* Default: Last plain value "v=txtv0;to=example.com" == "v=txtv0;example.com"
-* Possible values: "absolute URL being the repository"
+* Default: Fallbacks such as `www` or `redirect` config
+* Permitted values: "absolute URL for repository"
 
+<!--
 The specifics especially concerning the dep registry idea need to be fleshed out.
 
 ## type=dep
@@ -114,6 +118,7 @@ The specifics especially concerning the dep registry idea need to be fleshed out
 * Recommended
 * Default: Last plain value "v=txtv0;to=example.com" == "v=txtv0;example.com"
 * Possible values: "absolute/relative URL"
+-->
 
 [Full list of TXT record examples](/examples/README.md#txt-record)
 

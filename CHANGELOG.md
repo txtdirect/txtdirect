@@ -12,7 +12,13 @@ _2017_
 [Examples](/tree/v0.2.0/examples)
 
 ## Changes since v0.1.0
-  - Update base files via reposeed
+  - Path based redirects
+  - Enforce absolute zones on DNS requests
+  - Blacklist favicon redirects
+  - Blacklist `_internal` gometa paths
+  - Custom DNS resolver
+  - Refactor fallbacks
+  - Remove Caddy telemetry
 -->
 
 # v0.1.0

@@ -170,10 +170,12 @@ func contains(array []string, word string) bool {
 
 func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int, c Config) {
 	if fallback != "" {
+		log.Printf("[REDIRECT]: %s", fallback)
 		http.Redirect(w, r, fallback, code)
 	} else if c.Redirect != "" {
 		for _, enable := range c.Enable {
 			if enable == "www" {
+				log.Printf("[REDIRECT]: %s", c.Redirect)
 				http.Redirect(w, r, c.Redirect, 403)
 			}
 		}
@@ -222,6 +224,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	bl["/favicon.ico"] = true
 
 	if bl[path] {
+		log.Printf("[REDIRECT]: %s", strings.Join([]string{host, path}, ""))
 		http.Redirect(w, r, strings.Join([]string{host, path}, ""), 200)
 		return nil
 	}
@@ -230,12 +233,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {
+				log.Printf("[REDIRECT]: %s", c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
 				return nil
 			}
 			if contains(c.Enable, "www") {
-				s := []string{defaultProtocol, "://", defaultSub, ".", host}
-				http.Redirect(w, r, strings.Join(s, ""), 301)
+				s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", host}, "")
+				log.Printf("[REDIRECT]: %s", s)
+				http.Redirect(w, r, s, 301)
 				return nil
 			}
 			http.NotFound(w, r)
@@ -256,6 +261,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 				fallback(w, r, fallbackURL, code, c)
 				return nil
 			}
+			log.Printf("[REDIRECT]: %s", rec.Root)
 			http.Redirect(w, r, rec.Root, rec.Code)
 			return nil
 		}
@@ -273,6 +279,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "host" {
 		to, code := getBaseTarget(rec, r)
+		log.Printf("[REDIRECT]: %s", to)
 		http.Redirect(w, r, to, code)
 		return nil
 	}

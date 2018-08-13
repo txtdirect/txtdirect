@@ -14,12 +14,16 @@ limitations under the License.
 package caddy
 
 import (
+	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
 
 	"github.com/txtdirect/txtdirect"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func init() {
@@ -72,6 +76,27 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				return txtdirect.Config{}, c.ArgErr()
 			}
 			resolver = resolverAddr[0]
+
+		case "logfile":
+			logfile := c.RemainingArgs()
+			if len(logfile) != 1 {
+
+			}
+			switch logfile[0] {
+			case "stdout":
+				log.SetOutput(os.Stdout)
+			case "stderr":
+				log.SetOutput(os.Stderr)
+			case "":
+				log.SetOutput(ioutil.Discard)
+			default:
+				log.SetOutput(&lumberjack.Logger{
+					Filename:   logfile[0],
+					MaxSize:    100,
+					MaxAge:     14,
+					MaxBackups: 10,
+				})
+			}
 
 		default:
 			return txtdirect.Config{}, c.ArgErr() // unhandled option

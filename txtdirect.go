@@ -143,12 +143,7 @@ func parsePlaceholders(input string, r *http.Request) string {
 		case "{host}":
 			input = strings.Replace(input, "{host}", r.URL.Host, -1)
 		case "{hostonly}":
-			host, _, err := net.SplitHostPort(r.Host)
-			if err != nil {
-				input = strings.Replace(input, "{hostonly}", r.Host, -1)
-				continue
-			}
-			input = strings.Replace(input, "{hostonly}", host, -1)
+			input = strings.Replace(input, "{hostonly}", r.URL.Hostname(), -1)
 		case "{method}":
 			input = strings.Replace(input, "{method}", r.Method, -1)
 		case "{path}":
@@ -156,12 +151,7 @@ func parsePlaceholders(input string, r *http.Request) string {
 		case "{path_escaped}":
 			input = strings.Replace(input, "{path_escaped}", url.QueryEscape(r.URL.Path), -1)
 		case "{port}":
-			_, port, err := net.SplitHostPort(r.Host)
-			if err != nil {
-				input = strings.Replace(input, "{port}", "", -1)
-				continue
-			}
-			input = strings.Replace(input, "{port}", port, -1)
+			input = strings.Replace(input, "{port}", r.URL.Port(), -1)
 		case "{query}":
 			input = strings.Replace(input, "{query}", r.URL.RawQuery, -1)
 		case "{query_escaped}":

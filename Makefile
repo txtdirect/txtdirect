@@ -31,6 +31,7 @@ fetch-dependencies:
 	go get github.com/caddyserver/builds
 	go get github.com/miekg/caddy-prometheus
 	go get github.com/captncraig/caddy-realip
+	go get gopkg.in/natefinch/lumberjack.v2
 	go get -d -u
 
 docker:

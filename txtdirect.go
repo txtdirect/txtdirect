@@ -316,6 +316,10 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	fallbackURL, code := getBaseTarget(rec, r)
 
+	if rec.Re != "" && rec.From != "" {
+		fallback(w, r, fallbackURL, code, c)
+	}
+
 	if rec.Type == "path" {
 		if path == "/" {
 			if rec.Root == "" {

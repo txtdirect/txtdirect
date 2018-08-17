@@ -18,7 +18,10 @@ var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
 func zoneFromPath(host string, path string, rec record) (string, int, error) {
 	pathSubmatchs := PathRegex.FindAllStringSubmatch(path, -1)
 	if rec.Re != "" {
-		CustomRegex := regexp.MustCompile(rec.Re)
+		CustomRegex, err := regexp.Compile(rec.Re)
+		if err != nil {
+			log.Printf("<%s> [txtdirect]: the given regex doesn't work as expected: %s", time.Now().String(), rec.Re)
+		}
 		pathSubmatchs = CustomRegex.FindAllStringSubmatch(path, -1)
 	}
 	pathSlice := []string{}

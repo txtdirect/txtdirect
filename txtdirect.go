@@ -131,8 +131,7 @@ func parsePlaceholders(input string, r *http.Request) string {
 	for _, placeholder := range placeholders {
 		switch placeholder[0] {
 		case "{uri}":
-			uri := []rune(r.URL.RequestURI())
-			input = strings.Replace(input, "{uri}", string(uri[1:]), -1)
+			input = strings.Replace(input, "{uri}", r.URL.RequestURI(), -1)
 		case "{dir}":
 			dir, _ := path.Split(r.URL.Path)
 			input = strings.Replace(input, "{dir}", dir, -1)
@@ -148,7 +147,7 @@ func parsePlaceholders(input string, r *http.Request) string {
 		case "{method}":
 			input = strings.Replace(input, "{method}", r.Method, -1)
 		case "{path}":
-			input = strings.Replace(input, "{path}", r.URL.Path[1:], -1)
+			input = strings.Replace(input, "{path}", r.URL.Path, -1)
 		case "{path_escaped}":
 			input = strings.Replace(input, "{path_escaped}", url.QueryEscape(r.URL.Path), -1)
 		case "{port}":

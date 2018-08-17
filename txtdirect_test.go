@@ -266,27 +266,22 @@ func TestParsePlaceholders(t *testing.T) {
 	}{
 		{
 			"example.com{uri}",
-			"?test=test",
-			"example.com?test=test",
+			"/?test=test",
+			"example.com/?test=test",
 		},
 		{
-			"example.com/{uri}/{uri}",
-			"?test=test",
-			"example.com/?test=test/?test=test",
-		},
-		{
-			"example.com/{uri}/{~test}",
-			"?test=test",
+			"example.com{uri}/{~test}",
+			"/?test=test",
 			"example.com/?test=test/test",
 		},
 		{
-			"example.com/{uri}/{>Test}",
-			"?test=test",
+			"example.com{uri}/{>Test}",
+			"/?test=test",
 			"example.com/?test=test/test-header",
 		},
 		{
-			"example.com/{uri}/{?test}",
-			"?test=test",
+			"example.com{uri}/{?test}",
+			"/?test=test",
 			"example.com/?test=test/test",
 		},
 	}

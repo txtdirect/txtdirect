@@ -1,10 +1,8 @@
 package txtdirect
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"net"
 	"regexp"
 	"sort"
 	"strconv"
@@ -63,40 +61,6 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 	url := append(pathSlice, host)
 	url = append([]string{basezone}, url...)
 	return strings.Join(url, "."), from, nil
-}
-
-func getFinalRecord(zone string, from int, ctx context.Context, c Config) (record, error) {
-	txts, err := query(zone, ctx, c)
-	if err != nil {
-		return record{}, err
-	}
-
-	// if nothing found, jump into wildcards
-	for i := 1; i <= from && len(txts) == 0; i++ {
-		zoneSlice := strings.Split(zone, ".")
-		zoneSlice[i] = "_"
-		zone = strings.Join(zoneSlice, ".")
-		if c.Resolver != "" {
-			net := customResolver(c)
-			txts, err = net.LookupTXT(ctx, zone)
-		} else {
-			txts, err = net.LookupTXT(zone)
-		}
-	}
-	if err != nil || len(txts) == 0 {
-		return record{}, fmt.Errorf("could not get TXT record: %s", err)
-	}
-
-	rec := record{}
-	if err = rec.Parse(txts[0]); err != nil {
-		return rec, fmt.Errorf("could not parse record: %s", err)
-	}
-
-	if rec.Type == "path" {
-		return rec, fmt.Errorf("chaining path is not currently supported")
-	}
-
-	return rec, nil
 }
 
 func reverse(input []string) {

@@ -44,6 +44,7 @@ type record struct {
 	Vcs     string
 	From    string
 	Root    string
+	Re      string
 }
 
 // Config contains the middleware's configuration
@@ -68,6 +69,10 @@ func (r *record) Parse(str string) error {
 		case strings.HasPrefix(l, "from="):
 			l = strings.TrimPrefix(l, "from=")
 			r.From = l
+
+		case strings.HasPrefix(l, "re="):
+			l = strings.TrimPrefix(l, "re=")
+			r.Re = l
 
 		case strings.HasPrefix(l, "root="):
 			l = strings.TrimPrefix(l, "root=")
@@ -310,6 +315,10 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	fallbackURL, code := getBaseTarget(rec, r)
+
+	if rec.Re != "" && rec.From != "" {
+		fallback(w, r, fallbackURL, code, c)
+	}
 
 	if rec.Type == "path" {
 		if path == "/" {

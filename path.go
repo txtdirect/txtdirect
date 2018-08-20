@@ -3,11 +3,13 @@ package txtdirect
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var PathRegex = regexp.MustCompile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
@@ -15,9 +17,19 @@ var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
 
 func zoneFromPath(host string, path string, rec record) (string, int, error) {
 	pathSubmatchs := PathRegex.FindAllStringSubmatch(path, -1)
+	if rec.Re != "" {
+		CustomRegex, err := regexp.Compile(rec.Re)
+		if err != nil {
+			log.Printf("<%s> [txtdirect]: the given regex doesn't work as expected: %s", time.Now().String(), rec.Re)
+		}
+		pathSubmatchs = CustomRegex.FindAllStringSubmatch(path, -1)
+	}
 	pathSlice := []string{}
 	for _, v := range pathSubmatchs {
 		pathSlice = append(pathSlice, v[1])
+	}
+	if len(pathSlice) < 1 && rec.Re != "" {
+		log.Printf("<%s> [txtdirect]: custom regex doesn't work on %s", time.Now().String(), path)
 	}
 	from := len(pathSlice)
 	if rec.From != "" {

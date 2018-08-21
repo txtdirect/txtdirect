@@ -204,6 +204,24 @@ func contains(array []string, word string) bool {
 	return false
 }
 
+func getRecord(host, path string, ctx context.Context, c Config) (record, error) {
+	txts, err := query(host, ctx, c)
+	if err != nil {
+		return record{}, err
+	}
+
+	if len(txts) != 1 {
+		return record{}, fmt.Errorf("could not parse TXT record with %d records", len(txts))
+	}
+
+	rec := record{}
+	if err = rec.Parse(txts[0]); err != nil {
+		return rec, fmt.Errorf("could not parse record: %s", err)
+	}
+
+	return rec, nil
+}
+
 func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int, c Config) {
 	if fallback != "" {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), fallback)
@@ -229,30 +247,28 @@ func customResolver(c Config) net.Resolver {
 	}
 }
 
-func query(recordType string, host string, path string, zone string, from int, ctx context.Context, c Config) (record, error) {
-	var absoluteZone string
-	if recordType == "host" {
-		if strings.Contains(host, ":") {
-			hostSlice := strings.Split(host, ":")
-			host = hostSlice[0]
-		}
-		zone = strings.Join([]string{basezone, host}, ".")
-		if strings.HasSuffix(zone, ".") {
-			absoluteZone = zone
-		} else {
-			absoluteZone = strings.Join([]string{zone, "."}, "")
-		}
-	} else {
-		if strings.Contains(zone, ":") {
-			zoneSlice := strings.Split(zone, ":")
-			zone = zoneSlice[0]
-		}
-		if strings.HasSuffix(zone, ".") {
-			absoluteZone = zone
-		} else {
-			absoluteZone = strings.Join([]string{zone, "."}, "")
-		}
+func query(zone string, ctx context.Context, c Config) ([]string, error) {
+	// Removes port from zone
+	if strings.Contains(zone, ":") {
+		zoneSlice := strings.Split(zone, ":")
+		zone = zoneSlice[0]
 	}
+
+	var newZone string
+	if !strings.HasPrefix(zone, basezone) {
+		newZone = strings.Join([]string{basezone, zone}, ".")
+	} else {
+		newZone = strings.Join([]string{zone, "."}, "")
+	}
+
+	// Use absolute zone
+	var absoluteZone string
+	if strings.HasSuffix(newZone, ".") {
+		absoluteZone = newZone
+	} else {
+		absoluteZone = strings.Join([]string{newZone, "."}, "")
+	}
+
 	var txts []string
 	var err error
 	if c.Resolver != "" {
@@ -262,42 +278,9 @@ func query(recordType string, host string, path string, zone string, from int, c
 		txts, err = net.LookupTXT(absoluteZone)
 	}
 	if err != nil {
-		return record{}, fmt.Errorf("could not get TXT record: %s", err)
+		return nil, fmt.Errorf("could not get TXT record: %s", err)
 	}
-	if recordType == "path" {
-		// if nothing found, jump into wildcards
-		for i := 1; i <= from && len(txts) == 0; i++ {
-			zoneSlice := strings.Split(zone, ".")
-			zoneSlice[i] = "_"
-			zone = strings.Join(zoneSlice, ".")
-			if strings.HasSuffix(zone, ".") {
-				absoluteZone = zone
-			} else {
-				absoluteZone = strings.Join([]string{zone, "."}, "")
-			}
-			if c.Resolver != "" {
-				net := customResolver(c)
-				txts, err = net.LookupTXT(ctx, absoluteZone)
-			} else {
-				txts, err = net.LookupTXT(absoluteZone)
-			}
-		}
-		if err != nil || len(txts) == 0 {
-			return record{}, fmt.Errorf("could not get TXT record: %s", err)
-		}
-	}
-	if len(txts) != 1 {
-		return record{}, fmt.Errorf("could not parse TXT record with %d records", len(txts))
-	}
-	rec := record{}
-	if err = rec.Parse(txts[0]); err != nil {
-		return rec, fmt.Errorf("could not parse record: %s", err)
-	}
-	if recordType == "path" {
-		return rec, fmt.Errorf("chaining path is not currently supported")
-	}
-
-	return rec, nil
+	return txts, nil
 }
 
 // Redirect the request depending on the redirect record found
@@ -315,7 +298,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	rec, err := query("host", host, path, "", 0, r.Context(), c)
+	rec, err := getRecord(host, path, r.Context(), c)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {
@@ -358,7 +341,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 		if path != "" {
 			zone, from, err := zoneFromPath(host, path, rec)
-			rec, err = query("path", "", "", zone, from, r.Context(), c)
+			rec, err = getFinalRecord(zone, from, r.Context(), c)
 			if err != nil {
 				log.Print("Fallback is triggerd because an error has occurred: ", err)
 				fallback(w, r, fallbackURL, code, c)

@@ -343,7 +343,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			zone, from, err := zoneFromPath(host, path, rec)
 			rec, err = getFinalRecord(zone, from, r.Context(), c)
 			if err != nil {
-				log.Print("Fallback is triggerd because an error has occurred: ", err)
+				log.Print("Fallback is triggered because an error has occurred: ", err)
 				fallback(w, r, fallbackURL, code, c)
 				return err
 			}

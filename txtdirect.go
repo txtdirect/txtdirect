@@ -254,19 +254,16 @@ func query(zone string, ctx context.Context, c Config) ([]string, error) {
 		zone = zoneSlice[0]
 	}
 
-	var newZone string
 	if !strings.HasPrefix(zone, basezone) {
-		newZone = strings.Join([]string{basezone, zone}, ".")
-	} else {
-		newZone = zone
+		zone = strings.Join([]string{basezone, zone}, ".")
 	}
 
 	// Use absolute zone
 	var absoluteZone string
-	if strings.HasSuffix(newZone, ".") {
-		absoluteZone = newZone
+	if strings.HasSuffix(zone, ".") {
+		absoluteZone = zone
 	} else {
-		absoluteZone = strings.Join([]string{newZone, "."}, "")
+		absoluteZone = strings.Join([]string{zone, "."}, "")
 	}
 
 	var txts []string

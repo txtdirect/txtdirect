@@ -195,14 +195,17 @@ func parsePlaceholders(input string, r *http.Request) string {
 	return input
 }
 
-func getRecord(host, path string, ctx context.Context, c Config) (record, error) {
-	if strings.Contains(host, ":") {
-		hostSlice := strings.Split(host, ":")
-		host = hostSlice[0]
+func contains(array []string, word string) bool {
+	for _, w := range array {
+		if w == word {
+			return true
+		}
 	}
-	zone := strings.Join([]string{basezone, host}, ".")
+	return false
+}
 
-	txts, err := query(zone, ctx, c)
+func getRecord(host, path string, ctx context.Context, c Config) (record, error) {
+	txts, err := query(host, ctx, c)
 	if err != nil {
 		return record{}, err
 	}
@@ -217,15 +220,6 @@ func getRecord(host, path string, ctx context.Context, c Config) (record, error)
 	}
 
 	return rec, nil
-}
-
-func contains(array []string, word string) bool {
-	for _, w := range array {
-		if w == word {
-			return true
-		}
-	}
-	return false
 }
 
 func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int, c Config) {
@@ -254,6 +248,17 @@ func customResolver(c Config) net.Resolver {
 }
 
 func query(zone string, ctx context.Context, c Config) ([]string, error) {
+	// Removes port from zone
+	if strings.Contains(zone, ":") {
+		zoneSlice := strings.Split(zone, ":")
+		zone = zoneSlice[0]
+	}
+
+	if !strings.HasPrefix(zone, basezone) {
+		zone = strings.Join([]string{basezone, zone}, ".")
+	}
+
+	// Use absolute zone
 	var absoluteZone string
 	if strings.HasSuffix(zone, ".") {
 		absoluteZone = zone
@@ -335,7 +340,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			zone, from, err := zoneFromPath(host, path, rec)
 			rec, err = getFinalRecord(zone, from, r.Context(), c)
 			if err != nil {
-				log.Print("Fallback is triggerd because an error has occurred: ", err)
+				log.Print("Fallback is triggered because an error has occurred: ", err)
 				fallback(w, r, fallbackURL, code, c)
 				return err
 			}

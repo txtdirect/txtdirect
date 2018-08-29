@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"regexp"
 	"sort"
 	"strconv"
@@ -68,19 +67,12 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 func getFinalRecord(zone string, from int, ctx context.Context, c Config) (record, error) {
 	txts, err := query(zone, ctx, c)
 	if err != nil {
-		return record{}, err
-	}
-
-	// if nothing found, jump into wildcards
-	for i := 1; i <= from && len(txts) == 0; i++ {
-		zoneSlice := strings.Split(zone, ".")
-		zoneSlice[i] = "_"
-		zone = strings.Join(zoneSlice, ".")
-		if c.Resolver != "" {
-			net := customResolver(c)
-			txts, err = net.LookupTXT(ctx, zone)
-		} else {
-			txts, err = net.LookupTXT(zone)
+		// if nothing found, jump into wildcards
+		for i := 1; i <= from && len(txts) == 0; i++ {
+			zoneSlice := strings.Split(zone, ".")
+			zoneSlice[i] = "_"
+			zone = strings.Join(zoneSlice, ".")
+			txts, err = query(zone, ctx, c)
 		}
 	}
 	if err != nil || len(txts) == 0 {

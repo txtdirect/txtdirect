@@ -25,13 +25,17 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mholt/caddy/caddyhttp/proxy"
 )
 
 const (
 	basezone        = "_redirect"
 	defaultSub      = "www"
 	defaultProtocol = "https"
+	proxyKeepalive  = 30
 	logFormat       = "02/Jan/2006:15:04:05 -0700"
+	proxyTimeout    = 30 * time.Second
 )
 
 var PlaceholderRegex = regexp.MustCompile("{[~>?]?\\w+}")
@@ -345,6 +349,17 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 				return err
 			}
 		}
+	}
+
+	if rec.Type == "proxy" {
+		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), rec.From, rec.To)
+		u, err := url.Parse(rec.To)
+		if err != nil {
+			return err
+		}
+		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout)
+		reverseProxy.ServeHTTP(w, r, nil)
+		return nil
 	}
 
 	if rec.Type == "host" {

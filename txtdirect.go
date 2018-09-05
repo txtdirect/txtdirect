@@ -33,9 +33,9 @@ const (
 	basezone        = "_redirect"
 	defaultSub      = "www"
 	defaultProtocol = "https"
-	keepalive       = 30
+	proxyKeepalive  = 30
 	logFormat       = "02/Jan/2006:15:04:05 -0700"
-	timeout         = 30 * time.Second
+	proxyTimeout    = 30 * time.Second
 )
 
 var PlaceholderRegex = regexp.MustCompile("{[~>?]?\\w+}")
@@ -357,7 +357,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if err != nil {
 			return err
 		}
-		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", keepalive, timeout)
+		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout)
 		reverseProxy.ServeHTTP(w, r, nil)
 		return nil
 	}

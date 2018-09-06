@@ -56,6 +56,7 @@ type Config struct {
 	Enable   []string
 	Redirect string
 	Resolver string
+	Proxy    proxy.Proxy
 }
 
 func (r *record) Parse(str string) error {

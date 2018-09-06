@@ -21,6 +21,7 @@ import (
 
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"github.com/mholt/caddy/caddyhttp/proxy"
 
 	"github.com/txtdirect/txtdirect"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -39,6 +40,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	var enable []string
 	var redirect string
 	var resolver string
+	reverseProxy := proxy.Proxy{}
 
 	c.Next() // skip directive name
 	for c.NextBlock() {
@@ -77,6 +79,17 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 			}
 			resolver = resolverAddr[0]
 
+		case "proxy":
+			proxyAddr := c.RemainingArgs()
+			if len(proxyAddr) != 1 {
+				return txtdirect.Config{}, c.ArgErr()
+			}
+			upstreams, err := proxy.NewStaticUpstreams(c.Dispenser, proxyAddr[0])
+			if err != nil {
+				return txtdirect.Config{}, err
+			}
+			reverseProxy.Upstreams = upstreams
+
 		case "logfile":
 			logfile := c.RemainingArgs()
 			if len(logfile) != 1 {
@@ -112,6 +125,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 		Enable:   enable,
 		Redirect: redirect,
 		Resolver: resolver,
+		Proxy:    reverseProxy,
 	}
 	return config, nil
 }

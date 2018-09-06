@@ -33,8 +33,8 @@ const (
 	basezone        = "_redirect"
 	defaultSub      = "www"
 	defaultProtocol = "https"
-	proxyKeepalive  = 30
 	logFormat       = "02/Jan/2006:15:04:05 -0700"
+	proxyKeepalive  = 30
 	proxyTimeout    = 30 * time.Second
 )
 

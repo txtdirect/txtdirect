@@ -14,13 +14,30 @@ limitations under the License.
 package txtdirect
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/miekg/dns"
 )
+
+// Testing TXT records
+var txts = map[string]string{
+	"_redirect.about.txtdirect.": "v=txtv0;to=https://about.txtdirect.org",
+	"_redirect.pkg.txtdirect.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
+}
+
+// Testing DNS server port
+const port = 6000
+
+// Initialize dns server instance
+var server = &dns.Server{Addr: ":" + strconv.Itoa(port), Net: "udp"}
 
 func TestParse(t *testing.T) {
 	tests := []struct {
@@ -293,5 +310,70 @@ func TestParsePlaceholders(t *testing.T) {
 		if result != test.expected {
 			t.Errorf("Expected %s, got %s", test.expected, result)
 		}
+	}
+}
+
+func Test_query(t *testing.T) {
+	tests := []struct {
+		zone string
+		txt  string
+	}{
+		{
+			"_redirect.about.txtdirect.",
+			txts["_redirect.about.txtdirect."],
+		},
+		{
+			"_redirect.pkg.txtdirect.",
+			txts["_redirect.pkg.txtdirect."],
+		},
+	}
+	for _, test := range tests {
+		go RunDNSServer()
+		ctx := context.Background()
+		c := Config{
+			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+		}
+		resp, err := query(test.zone, ctx, c)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp[0] != txts[test.zone] {
+			t.Fatalf("Expected %s, got %s", txts[test.zone], resp[0])
+		}
+		server.Shutdown()
+	}
+}
+
+func parseDNSQuery(m *dns.Msg) {
+	for _, q := range m.Question {
+		switch q.Qtype {
+		case dns.TypeTXT:
+			log.Printf("Query for %s\n", q.Name)
+			m.Answer = append(m.Answer, &dns.TXT{
+				Hdr: dns.RR_Header{Name: q.Name, Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 60},
+				Txt: []string{txts[q.Name]},
+			})
+		}
+	}
+}
+
+func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
+	m := new(dns.Msg)
+	m.SetReply(r)
+	m.Compress = false
+
+	switch r.Opcode {
+	case dns.OpcodeQuery:
+		parseDNSQuery(m)
+	}
+
+	w.WriteMsg(m)
+}
+
+func RunDNSServer() {
+	dns.HandleFunc("txtdirect.", handleDNSRequest)
+	err := server.ListenAndServe()
+	if err != nil {
+		log.Fatalf("Failed to start server: %s\n ", err.Error())
 	}
 }

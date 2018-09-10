@@ -327,8 +327,8 @@ func Test_query(t *testing.T) {
 			txts["_redirect.pkg.txtdirect."],
 		},
 	}
+	go RunDNSServer()
 	for _, test := range tests {
-		go RunDNSServer()
 		ctx := context.Background()
 		c := Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
@@ -340,7 +340,6 @@ func Test_query(t *testing.T) {
 		if resp[0] != txts[test.zone] {
 			t.Fatalf("Expected %s, got %s", txts[test.zone], resp[0])
 		}
-		server.Shutdown()
 	}
 }
 
@@ -373,6 +372,7 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 func RunDNSServer() {
 	dns.HandleFunc("txtdirect.", handleDNSRequest)
 	err := server.ListenAndServe()
+	defer server.Shutdown()
 	if err != nil {
 		log.Fatalf("Failed to start server: %s\n ", err.Error())
 	}

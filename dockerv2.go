@@ -16,9 +16,6 @@ var regexs = []string{
 
 func generateDockerv2URI(path string, rec record) (string, error) {
 	uri := rec.To
-	if rec.Re == "" && rec.To == "" {
-		log.Printf("<%s> [txtdirect]: re= and to= fields are required in dockerv2 type.", time.Now().Format(logFormat))
-	}
 	Dockerv2Regex, err := regexp.Compile(rec.Re)
 	if err != nil {
 		log.Printf("<%s> [txtdirect]: the given regex doesn't work as expected: %s", time.Now().Format(logFormat), rec.Re)

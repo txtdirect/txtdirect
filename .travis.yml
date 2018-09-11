@@ -10,8 +10,9 @@ services:
 
 script:
   - go get -u github.com/mholt/caddy
-  - go get gopkg.in/natefinch/lumberjack.v2
-  - go test -v ./...
+  - go get -u github.com/natefinch/lumberjack
+  - go get -u github.com/miekg/dns
+  - go test -v -race ./...
   - make travis-build
 
 stages:

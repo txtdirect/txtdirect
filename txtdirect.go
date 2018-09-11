@@ -362,6 +362,15 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
+	if rec.Type == "dockerv2" {
+		uri, err := generateDockerv2URI(path, rec)
+		if err != nil {
+			return err
+		}
+		http.Redirect(w, r, uri, 302)
+		return nil
+	}
+
 	if rec.Type == "host" {
 		to, code := getBaseTarget(rec, r)
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), to)

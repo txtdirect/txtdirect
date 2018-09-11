@@ -8,12 +8,6 @@ import (
 	"time"
 )
 
-var regexs = []string{
-	"^/v2/_catalog$",
-	"^/v2/(.*)/tags/(.*)",
-	"^/v2/(.*)/manifests/(.*)",
-}
-
 func generateDockerv2URI(path string, rec record) (string, error) {
 	uri := rec.To
 	Dockerv2Regex, err := regexp.Compile(rec.Re)

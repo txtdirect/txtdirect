@@ -112,7 +112,7 @@ func (r *record) Parse(str string) error {
 		if len(l) > 255 {
 			return fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
 		}
-		if r.To == "dockerv2" && r.Re == "" && r.To == "" {
+		if r.Type == "dockerv2" && r.Re == "" && r.To == "" {
 			return fmt.Errorf("<%s> [txtdirect]: re= and to= fields are required in dockerv2 type", time.Now().Format(logFormat))
 		}
 	}

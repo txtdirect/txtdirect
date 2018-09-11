@@ -119,7 +119,8 @@ func TestParse(t *testing.T) {
 
 	for i, test := range tests {
 		r := record{}
-		err := r.Parse(test.txtRecord)
+		req, _ := http.NewRequest("GET", "http://example.com", nil)
+		err := r.Parse(test.txtRecord, req)
 
 		if err != nil {
 			if test.err == nil || !strings.HasPrefix(err.Error(), test.err.Error()) {

@@ -21,9 +21,9 @@ import (
 
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"github.com/natefinch/lumberjack"
 
 	"github.com/txtdirect/txtdirect"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func init() {

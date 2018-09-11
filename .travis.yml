@@ -11,7 +11,8 @@ services:
 script:
   - go get -u github.com/mholt/caddy
   - go get -u github.com/natefinch/lumberjack
-  - go test -v ./...
+  - go get -u github.com/miekg/dns
+  - go test -v -race ./...
   - make travis-build
 
 stages:

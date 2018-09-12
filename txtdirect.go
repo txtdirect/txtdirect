@@ -352,7 +352,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 	}
 
-	if rec.Type == "proxy" {
+	if rec.Type == "proxy" && rec.To != "" {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), rec.From, rec.To)
 		u, err := url.Parse(rec.To)
 		if err != nil {
@@ -360,6 +360,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout)
 		reverseProxy.ServeHTTP(w, r, nil)
+		return nil
+	}
+
+	if rec.Type == "proxy" && rec.To == "" {
+		to, _ := getBaseTarget(rec, r)
+		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), to)
+		proxy := c.Proxy
+		proxy.ServeHTTP(w, r)
 		return nil
 	}
 

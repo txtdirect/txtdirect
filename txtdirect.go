@@ -63,7 +63,6 @@ func (r *record) Parse(str string, req *http.Request) error {
 		switch {
 		case strings.HasPrefix(l, "code="):
 			l = strings.TrimPrefix(l, "code=")
-			l = parsePlaceholders(l, req)
 			i, err := strconv.Atoi(l)
 			if err != nil {
 				return fmt.Errorf("could not parse status code: %s", err)
@@ -77,12 +76,10 @@ func (r *record) Parse(str string, req *http.Request) error {
 
 		case strings.HasPrefix(l, "re="):
 			l = strings.TrimPrefix(l, "re=")
-			l = parsePlaceholders(l, req)
 			r.Re = l
 
 		case strings.HasPrefix(l, "root="):
 			l = strings.TrimPrefix(l, "root=")
-			l = parsePlaceholders(l, req)
 			r.Root = l
 
 		case strings.HasPrefix(l, "to="):
@@ -92,12 +89,10 @@ func (r *record) Parse(str string, req *http.Request) error {
 
 		case strings.HasPrefix(l, "type="):
 			l = strings.TrimPrefix(l, "type=")
-			l = parsePlaceholders(l, req)
 			r.Type = l
 
 		case strings.HasPrefix(l, "v="):
 			l = strings.TrimPrefix(l, "v=")
-			l = parsePlaceholders(l, req)
 			r.Version = l
 			if r.Version != "txtv0" {
 				return fmt.Errorf("unhandled version '%s'", r.Version)
@@ -106,7 +101,6 @@ func (r *record) Parse(str string, req *http.Request) error {
 
 		case strings.HasPrefix(l, "vcs="):
 			l = strings.TrimPrefix(l, "vcs=")
-			l = parsePlaceholders(l, req)
 			r.Vcs = l
 
 		default:

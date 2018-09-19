@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
@@ -64,7 +65,7 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 	return strings.Join(url, "."), from, nil
 }
 
-func getFinalRecord(zone string, from int, ctx context.Context, c Config) (record, error) {
+func getFinalRecord(zone string, from int, ctx context.Context, c Config, r *http.Request) (record, error) {
 	txts, err := query(zone, ctx, c)
 	if err != nil {
 		// if nothing found, jump into wildcards
@@ -80,7 +81,7 @@ func getFinalRecord(zone string, from int, ctx context.Context, c Config) (recor
 	}
 
 	rec := record{}
-	if err = rec.Parse(txts[0]); err != nil {
+	if err = rec.Parse(txts[0], r); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 

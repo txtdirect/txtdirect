@@ -20,7 +20,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -58,7 +57,7 @@ type Config struct {
 	Resolver string
 }
 
-func (r *record) Parse(str string) error {
+func (r *record) Parse(str string, req *http.Request) error {
 	s := strings.Split(str, ";")
 	for _, l := range s {
 		switch {
@@ -72,6 +71,7 @@ func (r *record) Parse(str string) error {
 
 		case strings.HasPrefix(l, "from="):
 			l = strings.TrimPrefix(l, "from=")
+			l = parsePlaceholders(l, req)
 			r.From = l
 
 		case strings.HasPrefix(l, "re="):
@@ -84,6 +84,7 @@ func (r *record) Parse(str string) error {
 
 		case strings.HasPrefix(l, "to="):
 			l = strings.TrimPrefix(l, "to=")
+			l = parsePlaceholders(l, req)
 			r.To = l
 
 		case strings.HasPrefix(l, "type="):
@@ -136,69 +137,6 @@ func getBaseTarget(rec record, r *http.Request) (string, int) {
 	return rec.To, rec.Code
 }
 
-func parsePlaceholders(input string, r *http.Request) string {
-	placeholders := PlaceholderRegex.FindAllStringSubmatch(input, -1)
-	for _, placeholder := range placeholders {
-		switch placeholder[0] {
-		case "{uri}":
-			input = strings.Replace(input, "{uri}", r.URL.RequestURI(), -1)
-		case "{dir}":
-			dir, _ := path.Split(r.URL.Path)
-			input = strings.Replace(input, "{dir}", dir, -1)
-		case "{file}":
-			_, file := path.Split(r.URL.Path)
-			input = strings.Replace(input, "{file}", file, -1)
-		case "{fragment}":
-			input = strings.Replace(input, "{fragment}", r.URL.Fragment, -1)
-		case "{host}":
-			input = strings.Replace(input, "{host}", r.URL.Host, -1)
-		case "{hostonly}":
-			input = strings.Replace(input, "{hostonly}", r.URL.Hostname(), -1)
-		case "{method}":
-			input = strings.Replace(input, "{method}", r.Method, -1)
-		case "{path}":
-			input = strings.Replace(input, "{path}", r.URL.Path, -1)
-		case "{path_escaped}":
-			input = strings.Replace(input, "{path_escaped}", url.QueryEscape(r.URL.Path), -1)
-		case "{port}":
-			input = strings.Replace(input, "{port}", r.URL.Port(), -1)
-		case "{query}":
-			input = strings.Replace(input, "{query}", r.URL.RawQuery, -1)
-		case "{query_escaped}":
-			input = strings.Replace(input, "{query_escaped}", url.QueryEscape(r.URL.RawQuery), -1)
-		case "{uri_escaped}":
-			input = strings.Replace(input, "{uri_escaped}", url.QueryEscape(r.URL.RequestURI()), -1)
-		case "{user}":
-			user, _, ok := r.BasicAuth()
-			if !ok {
-				input = strings.Replace(input, "{user}", "", -1)
-			}
-			input = strings.Replace(input, "{user}", user, -1)
-		}
-		if placeholder[0][1] == '>' {
-			want := placeholder[0][2 : len(placeholder[0])-1]
-			for key, values := range r.Header {
-				// Header placeholders (case-insensitive)
-				if strings.EqualFold(key, want) {
-					input = strings.Replace(input, placeholder[0], strings.Join(values, ","), -1)
-				}
-			}
-		}
-		if placeholder[0][1] == '~' {
-			name := placeholder[0][2 : len(placeholder[0])-1]
-			if cookie, err := r.Cookie(name); err == nil {
-				input = strings.Replace(input, placeholder[0], cookie.Value, -1)
-			}
-		}
-		if placeholder[0][1] == '?' {
-			query := r.URL.Query()
-			name := placeholder[0][2 : len(placeholder[0])-1]
-			input = strings.Replace(input, placeholder[0], query.Get(name), -1)
-		}
-	}
-	return input
-}
-
 func contains(array []string, word string) bool {
 	for _, w := range array {
 		if w == word {
@@ -208,7 +146,7 @@ func contains(array []string, word string) bool {
 	return false
 }
 
-func getRecord(host, path string, ctx context.Context, c Config) (record, error) {
+func getRecord(host, path string, ctx context.Context, c Config, r *http.Request) (record, error) {
 	txts, err := query(host, ctx, c)
 	if err != nil {
 		return record{}, err
@@ -219,7 +157,7 @@ func getRecord(host, path string, ctx context.Context, c Config) (record, error)
 	}
 
 	rec := record{}
-	if err = rec.Parse(txts[0]); err != nil {
+	if err = rec.Parse(txts[0], r); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
@@ -299,7 +237,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	rec, err := getRecord(host, path, r.Context(), c)
+	rec, err := getRecord(host, path, r.Context(), c, r)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {
@@ -342,7 +280,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 		if path != "" {
 			zone, from, err := zoneFromPath(host, path, rec)
-			rec, err = getFinalRecord(zone, from, r.Context(), c)
+			rec, err = getFinalRecord(zone, from, r.Context(), c, r)
 			if err != nil {
 				log.Print("Fallback is triggered because an error has occurred: ", err)
 				fallback(w, r, fallbackURL, code, c)

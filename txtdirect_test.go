@@ -132,11 +132,33 @@ func TestParse(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"v=txtv0;to={?url}",
+			record{
+				Version: "txtv0",
+				To:      "https://example.com/testing",
+				Code:    301,
+				Type:    "host",
+			},
+			nil,
+		},
+		{
+			"v=txtv0;to={?url};from={method}",
+			record{
+				Version: "txtv0",
+				To:      "https://example.com/testing",
+				Code:    301,
+				Type:    "host",
+				From:    "GET",
+			},
+			nil,
+		},
 	}
 
 	for i, test := range tests {
 		r := record{}
-		err := r.Parse(test.txtRecord)
+		req, _ := http.NewRequest("GET", "http://example.com?url=https://example.com/testing", nil)
+		err := r.Parse(test.txtRecord, req)
 
 		if err != nil {
 			if test.err == nil || !strings.HasPrefix(err.Error(), test.err.Error()) {

@@ -1,31 +1,6 @@
 package txtdirect
 
-import (
-	"fmt"
-	"log"
-	"regexp"
-	"strings"
-	"time"
-)
-
-func generateDockerv2URI(path string, rec record) (string, error) {
-	uri := rec.To
-	Dockerv2Regex, err := regexp.Compile(rec.Re)
-	if err != nil {
-		log.Printf("<%s> [txtdirect]: the given regex doesn't work as expected: %s", time.Now().Format(logFormat), rec.Re)
-	}
-	pathSubmatches := Dockerv2Regex.FindAllStringSubmatch(path, -1)
-	if len(pathSubmatches) < 1 {
-		log.Printf("<%s> [txtdirect]: can't extract submatches from %s, with %s", time.Now().Format(logFormat), path, rec.Re)
-	}
-	pathSlice := pathSubmatches[0][1:]
-
-	for i, v := range pathSlice {
-		uri = strings.Replace(uri, fmt.Sprintf("$%d", i+1), v, -1)
-	}
-	if len(pathSlice) < 1 && rec.Re != "" {
-		log.Printf("<%s> [txtdirect]: dockerv2 regex (%s) doesn't work on %s", time.Now().Format(logFormat), rec.Re, path)
-	}
-
-	return uri, nil
+func generateDockerv2URI(path string, rec record) (string, int) {
+	// TODO: parse path in future to support all docker apis
+	return rec.To, rec.Code
 }

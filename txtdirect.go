@@ -112,8 +112,8 @@ func (r *record) Parse(str string) error {
 		if len(l) > 255 {
 			return fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
 		}
-		if r.Type == "dockerv2" && r.Re == "" && r.To == "" {
-			return fmt.Errorf("<%s> [txtdirect]: re= and to= fields are required in dockerv2 type", time.Now().Format(logFormat))
+		if r.Type == "dockerv2" && r.To == "" {
+			return fmt.Errorf("<%s> [txtdirect]: to= field is required in dockerv2 type", time.Now().Format(logFormat))
 		}
 	}
 
@@ -366,11 +366,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "dockerv2" {
-		uri, err := generateDockerv2URI(path, rec)
-		if err != nil {
-			return err
-		}
-		http.Redirect(w, r, uri, 302)
+		uri, code := generateDockerv2URI(path, rec)
+		http.Redirect(w, r, uri, code)
 		return nil
 	}
 

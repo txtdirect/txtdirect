@@ -267,7 +267,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		fallback(w, r, fallbackURL, code, c)
 	}
 
-	if rec.Type == "path" {
+	if rec.Type == "path" && contains(c.Enable, rec.Type) {
 		if path == "/" {
 			if rec.Root == "" {
 				fallback(w, r, fallbackURL, code, c)
@@ -289,7 +289,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 	}
 
-	if rec.Type == "proxy" {
+	if rec.Type == "proxy" && contains(c.Enable, rec.Type) {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), rec.From, rec.To)
 		u, err := url.Parse(rec.To)
 		if err != nil {
@@ -300,14 +300,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	if rec.Type == "host" {
+	if rec.Type == "host" && contains(c.Enable, rec.Type) {
 		to, code := getBaseTarget(rec, r)
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), to)
 		http.Redirect(w, r, to, code)
 		return nil
 	}
 
-	if rec.Type == "gometa" {
+	if rec.Type == "gometa" && contains(c.Enable, rec.Type) {
 		return gometa(w, rec, host, path)
 	}
 

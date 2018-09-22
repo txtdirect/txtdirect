@@ -17,6 +17,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -32,15 +33,6 @@ var txts = map[string]string{
 	"_redirect.about.txtdirect.": "v=txtv0;to=https://about.txtdirect.org",
 	"_redirect.pkg.txtdirect.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
 }
-
-// DNS Server close signal channel
-var quit = make(chan struct{})
-
-// Testing DNS server port
-const port = 6000
-
-// Initialize dns server instance
-var server = &dns.Server{Addr: ":" + strconv.Itoa(port), Net: "udp"}
 
 func TestParse(t *testing.T) {
 	tests := []struct {
@@ -352,7 +344,10 @@ func Test_query(t *testing.T) {
 			txts["_redirect.pkg.txtdirect."],
 		},
 	}
-	go RunDNSServer()
+	// Random port for DNS server
+	port := rand.Intn(6999-6000) + 6000
+	go RunDNSServer(port)
+
 	for _, test := range tests {
 		ctx := context.Background()
 		c := Config{
@@ -366,7 +361,6 @@ func Test_query(t *testing.T) {
 			t.Fatalf("Expected %s, got %s", txts[test.zone], resp[0])
 		}
 	}
-	close(quit)
 }
 
 func parseDNSQuery(m *dns.Msg) {
@@ -395,18 +389,13 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(m)
 }
 
-func RunDNSServer() {
-	for {
-		select {
-		case <-quit:
-			return
-		default:
-			dns.HandleFunc("txtdirect.", handleDNSRequest)
-			err := server.ListenAndServe()
-			defer server.Shutdown()
-			if err != nil {
-				log.Fatalf("Failed to start server: %s\n ", err.Error())
-			}
-		}
+func RunDNSServer(port int) {
+	// Mock DNS Server with a random port
+	var server = &dns.Server{Addr: ":" + strconv.Itoa(port), Net: "udp"}
+	dns.HandleFunc("txtdirect.", handleDNSRequest)
+	err := server.ListenAndServe()
+	defer server.Shutdown()
+	if err != nil {
+		log.Fatalf("Failed to start server: %s\n ", err.Error())
 	}
 }

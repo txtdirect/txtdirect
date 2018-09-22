@@ -33,6 +33,9 @@ var txts = map[string]string{
 	"_redirect.pkg.txtdirect.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
 }
 
+// DNS Server close signal channel
+var quit = make(chan struct{})
+
 // Testing DNS server port
 const port = 6000
 
@@ -363,6 +366,7 @@ func Test_query(t *testing.T) {
 			t.Fatalf("Expected %s, got %s", txts[test.zone], resp[0])
 		}
 	}
+	close(quit)
 }
 
 func parseDNSQuery(m *dns.Msg) {
@@ -392,10 +396,17 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 }
 
 func RunDNSServer() {
-	dns.HandleFunc("txtdirect.", handleDNSRequest)
-	err := server.ListenAndServe()
-	defer server.Shutdown()
-	if err != nil {
-		log.Fatalf("Failed to start server: %s\n ", err.Error())
+	for {
+		select {
+		case <-quit:
+			return
+		default:
+			dns.HandleFunc("txtdirect.", handleDNSRequest)
+			err := server.ListenAndServe()
+			defer server.Shutdown()
+			if err != nil {
+				log.Fatalf("Failed to start server: %s\n ", err.Error())
+			}
+		}
 	}
 }

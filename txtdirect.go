@@ -289,7 +289,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 	}
 
-	if rec.Type == "proxy" {
+	if rec.Type == "proxy" && contains(c.Enable, rec.Type) {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), rec.From, rec.To)
 		to, _ := getBaseTarget(rec, r)
 		u, err := url.Parse(to)

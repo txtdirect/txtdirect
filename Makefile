@@ -31,7 +31,7 @@ fetch-dependencies:
 	go get github.com/caddyserver/builds
 	go get github.com/miekg/caddy-prometheus
 	go get github.com/captncraig/caddy-realip
-	go get github.com/natefinch/lumberjack
+	go get gopkg.in/natefinch/lumberjack.v2
 	go get github.com/miekg/dns
 	go get -d -u
 

@@ -19,9 +19,10 @@ import (
 	"net/http"
 	"os"
 
+	"gopkg.in/natefinch/lumberjack.v2"
+
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
-	"github.com/natefinch/lumberjack"
 
 	"github.com/txtdirect/txtdirect"
 )

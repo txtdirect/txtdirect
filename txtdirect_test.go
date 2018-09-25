@@ -33,7 +33,7 @@ var txts = map[string]string{
 	// type=host
 	"_redirect.e2e.txtdirect.":       "v=txtv0;to=https://e2e.txtdirect.org;type=host",
 	"_redirect.test.path.txtdirect.": "v=txtv0;to=https://path.e2e.txtdirect.org;type=host",
-	// type=pat
+	// type=path
 	"_redirect.path.txtdirect.": "v=txtv0;type=path",
 	// type=""
 	"_redirect.about.txtdirect.": "v=txtv0;to=https://about.txtdirect.org",

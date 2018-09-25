@@ -17,10 +17,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/rand"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -30,8 +30,25 @@ import (
 
 // Testing TXT records
 var txts = map[string]string{
+	// type=host
+	"_redirect.e2e.txtdirect.":       "v=txtv0;to=https://e2e.txtdirect.org;type=host",
+	"_redirect.test.path.txtdirect.": "v=txtv0;to=https://path.e2e.txtdirect.org;type=host",
+	// type=pat
+	"_redirect.path.txtdirect.": "v=txtv0;type=path",
+	// type=""
 	"_redirect.about.txtdirect.": "v=txtv0;to=https://about.txtdirect.org",
 	"_redirect.pkg.txtdirect.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
+}
+
+// Testing DNS server port
+const port = 6000
+
+// Initialize dns server instance
+var server = &dns.Server{Addr: ":" + strconv.Itoa(port), Net: "udp"}
+
+func TestMain(m *testing.M) {
+	go RunDNSServer()
+	os.Exit(m.Run())
 }
 
 func TestParse(t *testing.T) {
@@ -344,10 +361,6 @@ func Test_query(t *testing.T) {
 			txts["_redirect.pkg.txtdirect."],
 		},
 	}
-	// Random port for DNS server
-	port := rand.Intn(6999-6000) + 6000
-	go RunDNSServer(port)
-
 	for _, test := range tests {
 		ctx := context.Background()
 		c := Config{
@@ -389,9 +402,7 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(m)
 }
 
-func RunDNSServer(port int) {
-	// Mock DNS Server with a random port
-	var server = &dns.Server{Addr: ":" + strconv.Itoa(port), Net: "udp"}
+func RunDNSServer() {
 	dns.HandleFunc("txtdirect.", handleDNSRequest)
 	err := server.ListenAndServe()
 	defer server.Shutdown()

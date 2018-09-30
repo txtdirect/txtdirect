@@ -413,7 +413,7 @@ func RunDNSServer() {
 	}
 }
 
-func TestRedirectTypeHost(t *testing.T) {
+func TestRedirectE2e(t *testing.T) {
 	tests := []struct {
 		url      string
 		txt      string

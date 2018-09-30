@@ -35,6 +35,8 @@ var txts = map[string]string{
 	"_redirect.test.path.txtdirect.": "v=txtv0;to=https://path.e2e.txtdirect.org;type=host",
 	// type=path
 	"_redirect.path.txtdirect.": "v=txtv0;type=path",
+	// type=gometa
+	"_redirect.gometa.txtdirect.": "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
 	// type=""
 	"_redirect.about.txtdirect.": "v=txtv0;to=https://about.txtdirect.org",
 	"_redirect.pkg.txtdirect.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
@@ -407,6 +409,48 @@ func RunDNSServer() {
 	err := server.ListenAndServe()
 	defer server.Shutdown()
 	if err != nil {
-		log.Fatalf("Failed to start server: %s\n ", err.Error())
+		log.Printf("Failed to start server: %s\n ", err.Error())
+	}
+}
+
+func TestRedirectE2e(t *testing.T) {
+	tests := []struct {
+		url      string
+		txt      string
+		expected string
+		enable   []string
+	}{
+		{
+			"https://e2e.txtdirect",
+			txts["_redirect.path.txtdirect."],
+			"https://e2e.txtdirect.org",
+			[]string{"host"},
+		},
+		{
+			"https://path.txtdirect/test",
+			txts["_redirect.path.e2e.txtdirect."],
+			"https://path.e2e.txtdirect.org",
+			[]string{"path", "host"},
+		},
+		{
+			"https://gometa.txtdirect",
+			txts["_redirect.gometa.txtdirect."],
+			"https://pkg.txtdirect.org",
+			[]string{"gometa"},
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.url, nil)
+		resp := httptest.NewRecorder()
+		c := Config{
+			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Enable:   test.enable,
+		}
+		if err := Redirect(resp, req, c); err != nil {
+			t.Fatalf("Unexpected error occured: %s", err.Error())
+		}
+		if !strings.Contains(resp.Body.String(), test.expected) {
+			t.Fatalf("Expected %s to be in \"%s\"", test.expected, resp.Body.String())
+		}
 	}
 }

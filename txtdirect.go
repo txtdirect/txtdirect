@@ -364,10 +364,15 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "proxy" && rec.To == "" {
-		to, _ := getBaseTarget(rec, r)
+		to, code := getBaseTarget(rec, r)
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), to)
 		proxy := c.Proxy
 		proxy.ServeHTTP(w, r)
+		if err != nil {
+			log.Print("Fallback is triggered because an error has occurred: ", err)
+			fallback(w, r, fallbackURL, code, c)
+			return err
+		}
 		return nil
 	}
 

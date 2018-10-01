@@ -18,9 +18,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
-
-	"github.com/mholt/caddy/caddyfile"
 
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
@@ -87,12 +84,14 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 			if len(proxyArgs) == 0 {
 				return txtdirect.Config{}, c.ArgErr()
 			}
-			upstreams, err := proxy.NewStaticUpstreams(caddyfile.NewDispenser("caddy.test", strings.NewReader(`
-			proxy / google.com`)), "")
-			if err != nil {
-				return txtdirect.Config{}, err
+			upstreams := reverseProxy.Upstreams
+			for _, host := range proxyArgs {
+				newUpstreams, err := proxy.NewStaticUpstreams(c.Dispenser, host)
+				if err != nil {
+					return txtdirect.Config{}, err
+				}
+				upstreams = append(upstreams, newUpstreams...)
 			}
-			reverseProxy.Upstreams = upstreams
 		case "logfile":
 			logfile := c.RemainingArgs()
 			if len(logfile) != 1 {

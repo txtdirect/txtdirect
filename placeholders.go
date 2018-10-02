@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 )
 
@@ -25,6 +26,17 @@ func parsePlaceholders(input string, r *http.Request) string {
 			input = strings.Replace(input, "{host}", r.URL.Host, -1)
 		case "{hostonly}":
 			input = strings.Replace(input, "{hostonly}", r.URL.Hostname(), -1)
+		case "{label":
+			nStr := placeholder[0][6 : len(placeholder[0])-1] // get the integer N in "{labelN}"
+			n, err := strconv.Atoi(nStr)
+			if err != nil || n < 1 {
+				input = strings.Replace(input, placeholder[0], "", -1)
+			}
+			labels := strings.Split(r.Host, ".")
+			if n > len(labels) {
+				input = strings.Replace(input, placeholder[0], "", -1)
+			}
+			input = strings.Replace(input, placeholder[0], labels[n-1], -1)
 		case "{method}":
 			input = strings.Replace(input, "{method}", r.Method, -1)
 		case "{path}":

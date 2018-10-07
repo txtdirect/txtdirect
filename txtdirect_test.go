@@ -454,3 +454,39 @@ func TestRedirectE2e(t *testing.T) {
 		}
 	}
 }
+
+func TestConfigE2e(t *testing.T) {
+	tests := []struct {
+		url    string
+		txt    string
+		enable []string
+	}{
+		{
+			"https://e2e.txtdirect",
+			txts["_redirect.path.txtdirect."],
+			[]string{},
+		},
+		{
+			"https://path.txtdirect/test",
+			txts["_redirect.path.e2e.txtdirect."],
+			[]string{"host"},
+		},
+		{
+			"https://gometa.txtdirect",
+			txts["_redirect.gometa.txtdirect."],
+			[]string{"host"},
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.url, nil)
+		resp := httptest.NewRecorder()
+		c := Config{
+			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Enable:   test.enable,
+		}
+		err := Redirect(resp, req, c)
+		if err == nil && !strings.Contains(err.Error(), "option disabled") {
+			t.Fatalf("required option is not enabled, but there is no error returned")
+		}
+	}
+}

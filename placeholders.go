@@ -53,7 +53,7 @@ func parsePlaceholders(input string, r *http.Request) string {
 			if err != nil || n < 1 {
 				input = strings.Replace(input, placeholder[0], "", -1)
 			}
-			labels := strings.Split(r.Host, ".")
+			labels := strings.Split(r.URL.Hostname(), ".")
 			if n > len(labels) {
 				input = strings.Replace(input, placeholder[0], "", -1)
 			}

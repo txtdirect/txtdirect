@@ -16,7 +16,7 @@
     ```
 * Create DNS record file named `example.test`
     ```
-    @                  3600 IN SOA      ns.example.com (
+    @                  3600 IN SOA      ns.example.com domains.example.com. (
                                           2010101010   ; serial
                                           5m           ; refresh
                                           5m           ; retry

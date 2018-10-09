@@ -16,22 +16,34 @@
     ```
 * Create DNS record file named `example.test`
     ```
-    @                  3600 IN SOA      ns.example.com domains.example.com. (
-                                          2010101010   ; serial
+    @                  3600 IN SOA      ns.example.test. domains.example.test. (
+                                          2017101010   ; serial
                                           5m           ; refresh
                                           5m           ; retry
                                           1w           ; expire
                                           12h    )     ; minimum
-    @                  86400 IN NS      ns.example.com.
-    @                  86400 IN NS      ns.example.com.
+
+    @                  86400 IN NS      ns.example.test.
+    @                  86400 IN NS      ns.example.test.
 
     @                     60 IN A       127.0.0.1
-    _redirect             60 IN TXT     "v=txtv0;to=full-wildcard.worked.example.test;root=http//root.worked.example.test;type=path;code=302"
-    _redirect.two.one     60 IN TXT     "v=txtv0;to=two-one.worked.example.test;type=host;code=302"
-    redirect..one         60 IN TXT     "v=txtv0;to=two-wildcard.worked.example.test;type=host;code=302"
-    redirect.._           60 IN TXT     "v=txtv0;to=two-one-wildcard.worked.example.test;type=host;code=302"
-    _redirect.nohost      60 IN TXT     "v=txtv0;to=nohost.worked.example.test;code=302"
-    _redirect.host        60 IN TXT     "v=txtv0;host.worked.example.test;type=host;code=302"
+
+    _redirect             60 IN TXT     "v=txtv0;to=http://full-wildcard.worked.example.test;root=http://root.worked.example.test;type=path;code=302"
+
+    _redirect.two.one     60 IN TXT     "v=txtv0;to=http://google.com;type=proxy;code=302"
+
+    _redirect._.one       60 IN TXT     "v=txtv0;to=http://two-wildcard.worked.example.test;type=host;code=302"
+
+    _redirect._._         60 IN TXT     "v=txtv0;to=http://two-one-wildcard.worked.example.test;type=host;code=302"
+
+    nohost 60 IN A       127.0.0.1
+    _redirect.nohost      60 IN TXT     "v=txtv0;to=http://nohost.worked.example.test;code=302"
+
+    host 60 IN A       127.0.0.1
+    _redirect.host        60 IN TXT     "v=txtv0;to=http://host.worked.example.test;type=host;code=302"
+
+    kubernetes 60 IN A       127.0.0.1
+    _redirect.kubernetes  60 IN TXT     "v=txtv0;to=http://worked.example.test/{label1};type=host;code=302"
     ```
 * Create a caddyfile named `caddy.test`
     ```

@@ -122,6 +122,9 @@ The specifics especially concerning the dep registry idea need to be fleshed out
 
 [Full list of TXT record examples](/examples/README.md#txt-record)
 
+## Local Configuration
+For instructions on how to set up TXTDirect in order to run and test it locally, look at our [testing section](/docs/testing/README.md)
+
 ---
 
 Start your first contribution with some documentation.

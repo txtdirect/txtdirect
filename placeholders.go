@@ -1,6 +1,7 @@
 package txtdirect
 
 import (
+	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -51,10 +52,16 @@ func parsePlaceholders(input string, r *http.Request) string {
 			nStr := placeholder[0][6 : len(placeholder[0])-1] // get the integer N in "{labelN}"
 			n, err := strconv.Atoi(nStr)
 			if err != nil || n < 1 {
+				if err == nil {
+					log.Print("{label0} is not supported")
+				} else {
+					log.Print(err)
+				}
 				input = strings.Replace(input, placeholder[0], "", -1)
 			}
 			labels := strings.Split(r.URL.Hostname(), ".")
 			if n > len(labels) {
+				log.Printf("Cannot parse a label greater than %d", len(labels))
 				input = strings.Replace(input, placeholder[0], "", -1)
 			}
 			input = strings.Replace(input, placeholder[0], labels[n-1], -1)

@@ -48,6 +48,8 @@ func parsePlaceholders(input string, r *http.Request) string {
 			}
 			input = strings.Replace(input, "{user}", user, -1)
 		}
+		/* For multi-level tlds such as example.co.uk, "co" is treated as 
+		a subzone from a DNS perspective and would be used as {label1} */
 		if strings.HasPrefix(placeholder[0], "{label") {
 			nStr := placeholder[0][6 : len(placeholder[0])-1] // get the integer N in "{labelN}"
 			n, err := strconv.Atoi(nStr)

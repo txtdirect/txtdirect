@@ -16,7 +16,7 @@ var dockerRegexs = map[string]string{
 var DockerRegex = regexp.MustCompile("^\\/v2\\/(.*\\/(tags|manifests|blobs)\\/.*|_catalog$)")
 
 func generateDockerv2URI(path string, rec record) (string, int) {
-	if path != "" {
+	if path != "/" {
 		regexType := DockerRegex.FindAllStringSubmatch(path, -1)[0]
 		pathRegex, err := regexp.Compile(dockerRegexs[regexType[len(regexType)-1]])
 		if err != nil {

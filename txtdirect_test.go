@@ -348,7 +348,10 @@ func TestParsePlaceholders(t *testing.T) {
 		req := httptest.NewRequest("GET", "https://example.com"+test.placeholder, nil)
 		req.AddCookie(&http.Cookie{Name: "test", Value: "test"})
 		req.Header.Add("Test", "test-header")
-		result := parsePlaceholders(test.url, req)
+		result, err := parsePlaceholders(test.url, req)
+		if err != nil {
+			t.Fatal(err)
+		}
 		if result != test.expected {
 			t.Errorf("Expected %s, got %s", test.expected, result)
 		}

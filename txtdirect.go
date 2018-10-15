@@ -71,7 +71,10 @@ func (r *record) Parse(str string, req *http.Request) error {
 
 		case strings.HasPrefix(l, "from="):
 			l = strings.TrimPrefix(l, "from=")
-			l = parsePlaceholders(l, req)
+			l, err := parsePlaceholders(l, req)
+			if err != nil {
+				return err
+			}
 			r.From = l
 
 		case strings.HasPrefix(l, "re="):
@@ -84,7 +87,10 @@ func (r *record) Parse(str string, req *http.Request) error {
 
 		case strings.HasPrefix(l, "to="):
 			l = strings.TrimPrefix(l, "to=")
-			l = parsePlaceholders(l, req)
+			l, err := parsePlaceholders(l, req)
+			if err != nil {
+				return err
+			}
 			r.To = l
 
 		case strings.HasPrefix(l, "type="):
@@ -130,11 +136,15 @@ func (r *record) Parse(str string, req *http.Request) error {
 	return nil
 }
 
-func getBaseTarget(rec record, r *http.Request) (string, int) {
+func getBaseTarget(rec record, r *http.Request) (string, int, error) {
 	if strings.ContainsAny(rec.To, "{}") {
-		rec.To = parsePlaceholders(rec.To, r)
+		to, err := parsePlaceholders(rec.To, r)
+		if err != nil {
+			return "", 0, err
+		}
+		rec.To = to
 	}
-	return rec.To, rec.Code
+	return rec.To, rec.Code, nil
 }
 
 func contains(array []string, word string) bool {
@@ -262,7 +272,10 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return fmt.Errorf("option disabled")
 	}
 
-	fallbackURL, code := getBaseTarget(rec, r)
+	fallbackURL, code, err := getBaseTarget(rec, r)
+	if err != nil {
+		return err
+	}
 
 	if rec.Re != "" && rec.From != "" {
 		fallback(w, r, fallbackURL, code, c)
@@ -293,7 +306,12 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "proxy" && contains(c.Enable, rec.Type) {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), rec.From, rec.To)
-		to, _ := getBaseTarget(rec, r)
+		to, _, err := getBaseTarget(rec, r)
+		if err != nil {
+			log.Print("Fallback is triggered because an error has occurred: ", err)
+			fallback(w, r, fallbackURL, code, c)
+			return err
+		}
 		u, err := url.Parse(to)
 		if err != nil {
 			return err
@@ -304,7 +322,12 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "host" && contains(c.Enable, rec.Type) {
-		to, code := getBaseTarget(rec, r)
+		to, code, err := getBaseTarget(rec, r)
+		if err != nil {
+			log.Print("Fallback is triggered because an error has occurred: ", err)
+			fallback(w, r, fallbackURL, code, c)
+			return err
+		}
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), to)
 		http.Redirect(w, r, to, code)
 		return nil

@@ -1,7 +1,7 @@
 package txtdirect
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"net/url"
 	"path"
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func parsePlaceholders(input string, r *http.Request) string {
+func parsePlaceholders(input string, r *http.Request) (string, error) {
 	placeholders := PlaceholderRegex.FindAllStringSubmatch(input, -1)
 	for _, placeholder := range placeholders {
 		switch placeholder[0] {
@@ -54,17 +54,14 @@ func parsePlaceholders(input string, r *http.Request) string {
 			nStr := placeholder[0][6 : len(placeholder[0])-1] // get the integer N in "{labelN}"
 			n, err := strconv.Atoi(nStr)
 			if err != nil {
-				log.Print(err)
-				input = strings.Replace(input, placeholder[0], "", -1)
+				return "", err
 			}
 			if n < 1 {
-				log.Print("{label0} is not supported")
-				input = strings.Replace(input, placeholder[0], "", -1)
+				return "", fmt.Errorf("{label0} is not supported")
 			}
 			labels := strings.Split(r.URL.Hostname(), ".")
 			if n > len(labels) {
-				log.Printf("Cannot parse a label greater than %d", len(labels))
-				input = strings.Replace(input, placeholder[0], "", -1)
+				return "", fmt.Errorf("Cannot parse a label greater than %d", len(labels))
 			}
 			input = strings.Replace(input, placeholder[0], labels[n-1], -1)
 		}
@@ -89,5 +86,5 @@ func parsePlaceholders(input string, r *http.Request) string {
 			input = strings.Replace(input, placeholder[0], query.Get(name), -1)
 		}
 	}
-	return input
+	return input, nil
 }

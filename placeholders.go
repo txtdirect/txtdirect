@@ -1,9 +1,11 @@
 package txtdirect
 
 import (
+	"log"
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 )
 
@@ -45,6 +47,26 @@ func parsePlaceholders(input string, r *http.Request) string {
 				input = strings.Replace(input, "{user}", "", -1)
 			}
 			input = strings.Replace(input, "{user}", user, -1)
+		}
+		/* For multi-level tlds such as example.co.uk, "co" is treated as
+		a subzone from a DNS perspective and would be used as {label1} */
+		if strings.HasPrefix(placeholder[0], "{label") {
+			nStr := placeholder[0][6 : len(placeholder[0])-1] // get the integer N in "{labelN}"
+			n, err := strconv.Atoi(nStr)
+			if err != nil {
+				log.Print(err)
+				input = strings.Replace(input, placeholder[0], "", -1)
+			}
+			if n < 1 {
+				log.Print("{label0} is not supported")
+				input = strings.Replace(input, placeholder[0], "", -1)
+			}
+			labels := strings.Split(r.URL.Hostname(), ".")
+			if n > len(labels) {
+				log.Printf("Cannot parse a label greater than %d", len(labels))
+				input = strings.Replace(input, placeholder[0], "", -1)
+			}
+			input = strings.Replace(input, placeholder[0], labels[n-1], -1)
 		}
 		if placeholder[0][1] == '>' {
 			want := placeholder[0][2 : len(placeholder[0])-1]

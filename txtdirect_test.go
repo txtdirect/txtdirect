@@ -31,15 +31,21 @@ import (
 // Testing TXT records
 var txts = map[string]string{
 	// type=host
-	"_redirect.e2e.txtdirect.":       "v=txtv0;to=https://e2e.txtdirect.org;type=host",
-	"_redirect.test.path.txtdirect.": "v=txtv0;to=https://path.e2e.txtdirect.org;type=host",
+	"_redirect.host.e2e.test.":           "v=txtv0;to=https://plain.host.test;type=host;code=302",
+	"_redirect.nocode.host.e2e.test.":    "v=txtv0;to=https://nocode.host.test;type=host",
+	"_redirect.noversion.host.e2e.test.": "to=https://noversion.host.test;type=host",
+	"_redirect.noto.host.e2e.test.":      "v=txtv0;type=host",
 	// type=path
-	"_redirect.path.txtdirect.": "v=txtv0;type=path",
+	"_redirect.path.e2e.test.":           "v=txtv0;to=https://fallback.path.test;root=https://root.fallback.test;type=path",
+	"_redirect.nocode.path.e2e.test.":    "v=txtv0;to=https://nocode.fallback.path.test;type=host",
+	"_redirect.noversion.path.e2e.test.": "to=https://noversion.fallback.path.test;type=path",
+	"_redirect.noto.path.e2e.test.":      "v=txtv0;type=path",
+	"_redirect.noroot.path.e2e.test.":    "v=txtv0;to=https://noroot.fallback.path.test;type=path;code=302",
 	// type=gometa
-	"_redirect.gometa.txtdirect.": "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
+	"_redirect.pkg.txtdirect.test.": "v=txtv0;to=https://github.com/txtdirect/txtdirect;type=gometa;vcs=git",
 	// type=""
-	"_redirect.about.txtdirect.": "v=txtv0;to=https://about.txtdirect.org",
-	"_redirect.pkg.txtdirect.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
+	"_redirect.about.test.": "v=txtv0;to=https://about.txtdirect.org",
+	"_redirect.pkg.test.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
 }
 
 // Testing DNS server port
@@ -355,12 +361,12 @@ func Test_query(t *testing.T) {
 		txt  string
 	}{
 		{
-			"_redirect.about.txtdirect.",
-			txts["_redirect.about.txtdirect."],
+			"_redirect.about.test.",
+			txts["_redirect.about.test."],
 		},
 		{
-			"_redirect.pkg.txtdirect.",
-			txts["_redirect.pkg.txtdirect."],
+			"_redirect.pkg.test.",
+			txts["_redirect.pkg.test."],
 		},
 	}
 	for _, test := range tests {
@@ -405,7 +411,7 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 }
 
 func RunDNSServer() {
-	dns.HandleFunc("txtdirect.", handleDNSRequest)
+	dns.HandleFunc("test.", handleDNSRequest)
 	err := server.ListenAndServe()
 	defer server.Shutdown()
 	if err != nil {
@@ -421,21 +427,63 @@ func TestRedirectE2e(t *testing.T) {
 		enable   []string
 	}{
 		{
-			"https://e2e.txtdirect",
-			txts["_redirect.path.txtdirect."],
-			"https://e2e.txtdirect.org",
+			"https://host.e2e.test",
+			txts["_redirect.host.e2e.test"],
+			"https://plain.host.test",
 			[]string{"host"},
 		},
 		{
-			"https://path.txtdirect/test",
-			txts["_redirect.path.e2e.txtdirect."],
-			"https://path.e2e.txtdirect.org",
+			"https://nocode.host.e2e.test",
+			txts["_redirect.nocode.host.e2e.test."],
+			"https://nocode.host.test",
+			[]string{"host"},
+		},
+		{
+			"https://noversion.host.e2e.test",
+			txts["_redirect.noversion.host.e2e.test."],
+			"https://noversion.host.test",
+			[]string{"host"},
+		},
+		{
+			"https://noto.host.e2e.test",
+			txts["_redirect.noto.host.e2e.test."],
+			"",
+			[]string{"host"},
+		},
+		{
+			"https://path.e2e.test/",
+			txts["_redirect.path.e2e.test."],
+			"https://root.fallback.test",
 			[]string{"path", "host"},
 		},
 		{
-			"https://gometa.txtdirect",
-			txts["_redirect.gometa.txtdirect."],
-			"https://pkg.txtdirect.org",
+			"https://path.e2e.test/nocode",
+			txts["_redirect.nocode.path.e2e.test."],
+			"https://nocode.fallback.path.test",
+			[]string{"path", "host"},
+		},
+		{
+			"https://path.e2e.test/noversion",
+			txts["_redirect.noversion.path.e2e.test."],
+			"https://fallback.path.test",
+			[]string{"path", "host"},
+		},
+		{
+			"https://path.e2e.test/noto",
+			txts["_redirect.noto.path.e2e.test."],
+			"",
+			[]string{"path", "host"},
+		},
+		{
+			"https://path.e2e.test/noroot",
+			txts["_redirect.noroot.path.e2e.test."],
+			"https://fallback.path.test",
+			[]string{"path", "host"},
+		},
+		{
+			"https://pkg.txtdirect.test",
+			txts["_redirect.pkg.txtdirect.test."],
+			"https://github.com/txtdirect/txtdirect",
 			[]string{"gometa"},
 		},
 	}

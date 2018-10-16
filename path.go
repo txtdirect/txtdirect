@@ -16,6 +16,9 @@ var PathRegex = regexp.MustCompile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
 var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
 
 func zoneFromPath(host string, path string, rec record) (string, int, error) {
+	if strings.ContainsAny(path, ".") {
+		path = strings.Replace(path, ".", "-", -1)
+	}
 	pathSubmatchs := PathRegex.FindAllStringSubmatch(path, -1)
 	if rec.Re != "" {
 		CustomRegex, err := regexp.Compile(rec.Re)

@@ -175,8 +175,9 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 				http.Redirect(w, r, c.Redirect, 403)
 			}
 		}
+	} else {
+		http.NotFound(w, r)
 	}
-	http.NotFound(w, r)
 }
 
 func customResolver(c Config) net.Resolver {
@@ -265,6 +266,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Re != "" && rec.From != "" {
 		fallback(w, r, fallbackURL, code, c)
+		return nil
 	}
 
 	if rec.Type == "path" && contains(c.Enable, rec.Type) {
@@ -284,7 +286,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			if err != nil {
 				log.Print("Fallback is triggered because an error has occurred: ", err)
 				fallback(w, r, fallbackURL, code, c)
-				return err
+				return nil
 			}
 		}
 	}

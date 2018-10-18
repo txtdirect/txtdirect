@@ -46,3 +46,17 @@ func TestParsePlaceholders(t *testing.T) {
 		}
 	}
 }
+
+func TestParseSubdomainPlaceholder(t *testing.T) {
+	url := "{label1}.example.com"
+	placeholder := "kubernetes"
+	expected := "kubernetes.example.com"
+	req := httptest.NewRequest("GET", "https://"+placeholder+".example.com", nil)
+	result, err := parsePlaceholders(url, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result != expected {
+		t.Errorf("Expected %s, got %s", expected, result)
+	}
+}

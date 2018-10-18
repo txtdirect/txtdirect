@@ -60,3 +60,23 @@ func TestParseSubdomainPlaceholder(t *testing.T) {
 		t.Errorf("Expected %s, got %s", expected, result)
 	}
 }
+
+func TestParseLabelLessThanOneFails(t *testing.T) {
+	url := "{label0}.example.com"
+	placeholder := "kubernetes"
+	req := httptest.NewRequest("GET", "https://"+placeholder+".example.com", nil)
+	_, err := parsePlaceholders(url, req)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+}
+
+func TestParseLabelTooHighFails(t *testing.T) {
+	url := "{label9000}.example.com"
+	placeholder := "kubernetes"
+	req := httptest.NewRequest("GET", "https://"+placeholder+".example.com", nil)
+	_, err := parsePlaceholders(url, req)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+}

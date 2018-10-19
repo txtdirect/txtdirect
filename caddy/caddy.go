@@ -18,12 +18,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
-
 	"github.com/txtdirect/txtdirect"
 )
 
@@ -40,6 +40,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	var enable []string
 	var redirect string
 	var resolver string
+	var prometheus txtdirect.Prometheus
 
 	c.Next() // skip directive name
 	for c.NextBlock() {
@@ -99,6 +100,40 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				})
 			}
 
+		case "prometheus":
+			for c.Next() {
+				if c.Val() == "}" {
+					break
+				}
+				if c.Val() == "{" {
+					continue
+				}
+				switch c.Val() {
+				case "enable":
+					args := c.RemainingArgs()
+					value, err := strconv.ParseBool(args[0])
+					if err != nil {
+						return txtdirect.Config{}, c.ArgErr()
+					}
+					prometheus.Enable = value
+				case "address":
+					// TODO: validate the given address
+					args := c.RemainingArgs()
+					prometheus.Address = args[0]
+				case "path":
+					args := c.RemainingArgs()
+					prometheus.Path = args[0]
+				case "serve":
+					args := c.RemainingArgs()
+					prometheus.Serve = args[0]
+				case "hostname":
+					args := c.RemainingArgs()
+					prometheus.Hostname = args[0]
+				default:
+					return txtdirect.Config{}, c.ArgErr() // unhandled option for prometheus
+				}
+			}
+
 		default:
 			return txtdirect.Config{}, c.ArgErr() // unhandled option
 		}
@@ -110,9 +145,10 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	}
 
 	config := txtdirect.Config{
-		Enable:   enable,
-		Redirect: redirect,
-		Resolver: resolver,
+		Enable:     enable,
+		Redirect:   redirect,
+		Resolver:   resolver,
+		Prometheus: prometheus,
 	}
 	return config, nil
 }

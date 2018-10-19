@@ -52,9 +52,10 @@ type record struct {
 
 // Config contains the middleware's configuration
 type Config struct {
-	Enable   []string
-	Redirect string
-	Resolver string
+	Enable     []string
+	Redirect   string
+	Resolver   string
+	Prometheus Prometheus
 }
 
 func (r *record) Parse(str string, req *http.Request) error {

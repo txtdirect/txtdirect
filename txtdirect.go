@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/mholt/caddy/caddyhttp/proxy"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -179,11 +180,13 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 	if fallback != "" {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), fallback)
 		http.Redirect(w, r, fallback, code)
+		RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
 	} else if c.Redirect != "" {
 		for _, enable := range c.Enable {
 			if enable == "www" {
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), c.Redirect)
 				http.Redirect(w, r, c.Redirect, 403)
+				RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
 			}
 		}
 	} else {
@@ -236,8 +239,13 @@ func query(zone string, ctx context.Context, c Config) ([]string, error) {
 
 // Redirect the request depending on the redirect record found
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
+	if strings.Contains(r.URL.Path, "/metrics") {
+		promhttp.Handler().ServeHTTP(w, r)
+		return nil
+	}
 	host := r.Host
 	path := r.URL.Path
+	RequestsCount.WithLabelValues(host).Add(1)
 
 	bl := make(map[string]bool)
 	bl["/favicon.ico"] = true
@@ -246,6 +254,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		redirect := strings.Join([]string{host, path}, "")
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), redirect)
 		http.Redirect(w, r, redirect, 200)
+		RequestsByStatus.WithLabelValues(host, "200").Add(1)
 		return nil
 	}
 
@@ -255,15 +264,18 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			if c.Redirect != "" {
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
+				RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
 				return nil
 			}
 			if contains(c.Enable, "www") {
 				s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", host}, "")
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), s)
 				http.Redirect(w, r, s, 301)
+				RequestsByStatus.WithLabelValues(host, "301").Add(1)
 				return nil
 			}
 			http.NotFound(w, r)
+			RequestsByStatus.WithLabelValues(host, string(http.StatusNotFound)).Add(1)
 			return nil
 		}
 		return err
@@ -291,6 +303,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			}
 			log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), rec.Root)
 			http.Redirect(w, r, rec.Root, rec.Code)
+			RequestsByStatus.WithLabelValues(host, string(rec.Code)).Add(1)
 			return nil
 		}
 
@@ -331,6 +344,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), to)
 		http.Redirect(w, r, to, code)
+		RequestsByStatus.WithLabelValues(host, string(code)).Add(1)
 		return nil
 	}
 

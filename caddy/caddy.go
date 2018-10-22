@@ -168,6 +168,7 @@ func setup(c *caddy.Controller) error {
 		}
 	}
 	cfg.AddMiddleware(mid)
+	txtdirect.InitPrometheus()
 	return nil
 }
 

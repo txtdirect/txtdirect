@@ -25,7 +25,7 @@ var (
 	RequestsByStatus = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
 		Name:      "total_returned_statuses_per_host",
-		Help:      "Total requests per host",
+		Help:      "Total returned statuses per host",
 	}, []string{"host", "status"})
 )
 

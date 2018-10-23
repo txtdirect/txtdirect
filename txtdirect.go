@@ -180,13 +180,17 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 	if fallback != "" {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), fallback)
 		http.Redirect(w, r, fallback, code)
-		RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
+		if c.Prometheus.Enable {
+			RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
+		}
 	} else if c.Redirect != "" {
 		for _, enable := range c.Enable {
 			if enable == "www" {
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusForbidden)
-				RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
+				if c.Prometheus.Enable {
+					RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
+				}
 			}
 		}
 	} else {
@@ -245,8 +249,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 	host := r.Host
 	path := r.URL.Path
-	RequestsCount.WithLabelValues(host).Add(1)
-
+	if c.Prometheus.Enable {
+		RequestsCount.WithLabelValues(host).Add(1)
+	}
 	bl := make(map[string]bool)
 	bl["/favicon.ico"] = true
 
@@ -254,7 +259,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		redirect := strings.Join([]string{host, path}, "")
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), redirect)
 		http.Redirect(w, r, redirect, http.StatusOK)
-		RequestsByStatus.WithLabelValues(host, string(http.StatusOK)).Add(1)
+		if c.Prometheus.Enable {
+			RequestsByStatus.WithLabelValues(host, string(http.StatusOK)).Add(1)
+		}
 		return nil
 	}
 
@@ -264,18 +271,24 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			if c.Redirect != "" {
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
-				RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
+				if c.Prometheus.Enable {
+					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
+				}
 				return nil
 			}
 			if contains(c.Enable, "www") {
 				s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", host}, "")
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), s)
 				http.Redirect(w, r, s, http.StatusMovedPermanently)
-				RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
+				if c.Prometheus.Enable {
+					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
+				}
 				return nil
 			}
 			http.NotFound(w, r)
-			RequestsByStatus.WithLabelValues(host, string(http.StatusNotFound)).Add(1)
+			if c.Prometheus.Enable {
+				RequestsByStatus.WithLabelValues(host, string(http.StatusNotFound)).Add(1)
+			}
 			return nil
 		}
 		return err
@@ -303,7 +316,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			}
 			log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), rec.Root)
 			http.Redirect(w, r, rec.Root, rec.Code)
-			RequestsByStatus.WithLabelValues(host, string(rec.Code)).Add(1)
+			if c.Prometheus.Enable {
+				RequestsByStatus.WithLabelValues(host, string(rec.Code)).Add(1)
+			}
 			return nil
 		}
 
@@ -344,7 +359,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), to)
 		http.Redirect(w, r, to, code)
-		RequestsByStatus.WithLabelValues(host, string(code)).Add(1)
+		if c.Prometheus.Enable {
+			RequestsByStatus.WithLabelValues(host, string(code)).Add(1)
+		}
 		return nil
 	}
 

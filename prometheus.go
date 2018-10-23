@@ -12,7 +12,6 @@ type Prometheus struct {
 	Enable   bool
 	Address  string
 	Path     string
-	Serve    string
 	Hostname string
 }
 

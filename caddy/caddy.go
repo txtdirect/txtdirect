@@ -123,9 +123,6 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				case "path":
 					args := c.RemainingArgs()
 					prometheus.Path = args[0]
-				case "serve":
-					args := c.RemainingArgs()
-					prometheus.Serve = args[0]
 				case "hostname":
 					args := c.RemainingArgs()
 					prometheus.Hostname = args[0]

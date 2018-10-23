@@ -124,7 +124,7 @@ func (r *record) Parse(str string, req *http.Request) error {
 	}
 
 	if r.Code == 0 {
-		r.Code = 301
+		r.Code = http.StatusMovedPermanently
 	}
 
 	if r.Vcs == "" && r.Type == "gometa" {
@@ -185,8 +185,8 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 		for _, enable := range c.Enable {
 			if enable == "www" {
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), c.Redirect)
-				http.Redirect(w, r, c.Redirect, 403)
-				RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
+				http.Redirect(w, r, c.Redirect, http.StatusForbidden)
+				RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
 			}
 		}
 	} else {
@@ -253,8 +253,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if bl[path] {
 		redirect := strings.Join([]string{host, path}, "")
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), redirect)
-		http.Redirect(w, r, redirect, 200)
-		RequestsByStatus.WithLabelValues(host, "200").Add(1)
+		http.Redirect(w, r, redirect, http.StatusOK)
+		RequestsByStatus.WithLabelValues(host, string(http.StatusOK)).Add(1)
 		return nil
 	}
 
@@ -270,8 +270,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			if contains(c.Enable, "www") {
 				s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", host}, "")
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), s)
-				http.Redirect(w, r, s, 301)
-				RequestsByStatus.WithLabelValues(host, "301").Add(1)
+				http.Redirect(w, r, s, http.StatusMovedPermanently)
+				RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
 				return nil
 			}
 			http.NotFound(w, r)

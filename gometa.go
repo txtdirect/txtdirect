@@ -15,9 +15,9 @@ package txtdirect
 
 import (
 	"fmt"
-	"strings"
 	"html/template"
 	"net/http"
+	"strings"
 )
 
 var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
@@ -28,6 +28,9 @@ var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 </html>`))
 
 func gometa(w http.ResponseWriter, r record, host, path string) error {
+	if r.Vcs == "" {
+		r.Vcs = "git"
+	}
 	if path == "/" {
 		path = ""
 	}

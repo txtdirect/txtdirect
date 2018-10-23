@@ -125,10 +125,6 @@ func (r *record) Parse(str string, req *http.Request) error {
 		r.Code = 301
 	}
 
-	if r.Vcs == "" && r.Type == "gometa" {
-		r.Vcs = "git"
-	}
-
 	if r.Type == "" {
 		r.Type = "host"
 	}

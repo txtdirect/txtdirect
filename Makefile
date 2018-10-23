@@ -34,6 +34,7 @@ fetch-dependencies:
 	go get gopkg.in/natefinch/lumberjack.v2
 	go get github.com/miekg/dns
 	go get -d -u
+	go get github.com/prometheus/client_golang/...
 
 docker:
 	docker build -t seetheprogress/txtdirect:$(TAG)-$(BUILD_REF) .

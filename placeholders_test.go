@@ -38,6 +38,11 @@ func TestParsePlaceholders(t *testing.T) {
 			"example.com/directory/",
 		},
 		{
+			"example.com/directory/{file}",
+			"https://example.com/directory/file.pdf",
+			"example.com/directory/file.pdf",
+		},
+		{
 			"subdomain.example.com/{label1}",
 			"https://subdomain.example.com/subdomain",
 			"subdomain.example.com/subdomain",

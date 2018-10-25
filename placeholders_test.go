@@ -63,9 +63,9 @@ func TestParsePlaceholders(t *testing.T) {
 }
 
 func TestParseLabelLessThanOneFails(t *testing.T) {
-	url := "{label0}.example.com"
-	placeholder := "kubernetes"
-	req := httptest.NewRequest("GET", "https://"+placeholder+".example.com", nil)
+	url := "example.com/{label0}"
+	uri := "test"
+	req := httptest.NewRequest("GET", "https://example.com"+uri, nil)
 	_, err := parsePlaceholders(url, req)
 	if err == nil {
 		t.Errorf("Expected error, got nil")
@@ -73,9 +73,9 @@ func TestParseLabelLessThanOneFails(t *testing.T) {
 }
 
 func TestParseLabelTooHighFails(t *testing.T) {
-	url := "{label9000}.example.com"
-	placeholder := "kubernetes"
-	req := httptest.NewRequest("GET", "https://"+placeholder+".example.com", nil)
+	url := "example.com/{label9000}"
+	uri := "test"
+	req := httptest.NewRequest("GET", "https://example.com"+uri, nil)
 	_, err := parsePlaceholders(url, req)
 	if err == nil {
 		t.Errorf("Expected error, got nil")

@@ -8,9 +8,9 @@ import (
 
 func TestParsePlaceholders(t *testing.T) {
 	tests := []struct {
-		url         string
-		placeholder string
-		expected    string
+		url      string
+		uri      string
+		expected string
 	}{
 		{
 			"example.com{uri}",
@@ -49,7 +49,7 @@ func TestParsePlaceholders(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		req := httptest.NewRequest("GET", "https://subdomain.example.com"+test.placeholder, nil)
+		req := httptest.NewRequest("GET", "https://subdomain.example.com"+test.uri, nil)
 		req.AddCookie(&http.Cookie{Name: "test", Value: "test"})
 		req.Header.Add("Test", "test-header")
 		result, err := parsePlaceholders(test.url, req)

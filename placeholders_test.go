@@ -33,6 +33,11 @@ func TestParsePlaceholders(t *testing.T) {
 			"example.com/?test=test/test",
 		},
 		{
+			"example.com{dir}",
+			"https://example.com/directory/test",
+			"example.com/directory/",
+		},
+		{
 			"subdomain.example.com/{label1}",
 			"https://subdomain.example.com/subdomain",
 			"subdomain.example.com/subdomain",

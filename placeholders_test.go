@@ -67,20 +67,25 @@ func TestParsePlaceholders(t *testing.T) {
 	}
 }
 
-func TestParseLabelLessThanOneFails(t *testing.T) {
-	url := "example.com/{label0}"
-	req := httptest.NewRequest("GET", "https://example.com/test", nil)
-	_, err := parsePlaceholders(url, req)
-	if err == nil {
-		t.Errorf("Expected error, got nil")
+func TestParsePlaceholdersFails(t *testing.T) {
+	tests := []struct {
+		url       string
+		requested string
+	}{
+		{
+			"example.com/{label0}",
+			"https://example.com/test",
+		},
+		{
+			"example.com/{label9000}",
+			"https://example.com/test",
+		},
 	}
-}
-
-func TestParseLabelTooHighFails(t *testing.T) {
-	url := "example.com/{label9000}"
-	req := httptest.NewRequest("GET", "https://example.com/test", nil)
-	_, err := parsePlaceholders(url, req)
-	if err == nil {
-		t.Errorf("Expected error, got nil")
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.requested, nil)
+		_, err := parsePlaceholders(test.url, req)
+		if err == nil {
+			t.Errorf("Expected error, got nil")
+		}
 	}
 }

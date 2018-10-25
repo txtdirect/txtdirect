@@ -32,9 +32,24 @@ func TestParsePlaceholders(t *testing.T) {
 			"/?test=test",
 			"example.com/?test=test/test",
 		},
+		{
+			"subdomain.example.com/{label1}",
+			"/subdomain",
+			"subdomain.example.com/subdomain",
+		},
+		{
+			"subdomain.example.com/{label2}",
+			"/example",
+			"subdomain.example.com/example",
+		},
+		{
+			"subdomain.example.com/{label3}",
+			"/com",
+			"subdomain.example.com/com",
+		},
 	}
 	for _, test := range tests {
-		req := httptest.NewRequest("GET", "https://example.com"+test.placeholder, nil)
+		req := httptest.NewRequest("GET", "https://subdomain.example.com"+test.placeholder, nil)
 		req.AddCookie(&http.Cookie{Name: "test", Value: "test"})
 		req.Header.Add("Test", "test-header")
 		result, err := parsePlaceholders(test.url, req)
@@ -44,20 +59,6 @@ func TestParsePlaceholders(t *testing.T) {
 		if result != test.expected {
 			t.Errorf("Expected %s, got %s", test.expected, result)
 		}
-	}
-}
-
-func TestParseSubdomainPlaceholder(t *testing.T) {
-	url := "{label1}.example.com"
-	placeholder := "kubernetes"
-	expected := "kubernetes.example.com"
-	req := httptest.NewRequest("GET", "https://"+placeholder+".example.com", nil)
-	result, err := parsePlaceholders(url, req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if result != expected {
-		t.Errorf("Expected %s, got %s", expected, result)
 	}
 }
 

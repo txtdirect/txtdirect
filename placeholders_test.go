@@ -48,6 +48,16 @@ func TestParsePlaceholders(t *testing.T) {
 			"example.com/?test=fragment",
 		},
 		{
+			"example.com/{host}",
+			"https://project.example.com:8080",
+			"example.com/project.example.com:8080",
+		},
+		{
+			"example.com/{hostonly}",
+			"https://project.example.com",
+			"example.com/project.example.com",
+		},
+		{
 			"subdomain.example.com/{label1}",
 			"https://subdomain.example.com/subdomain",
 			"subdomain.example.com/subdomain",

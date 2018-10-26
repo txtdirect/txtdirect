@@ -73,6 +73,11 @@ func TestParsePlaceholders(t *testing.T) {
 			"example.com%2Fpath_escaped",
 		},
 		{
+			"example.com:{port}",
+			"https://example.com:8080",
+			"example.com:8080",
+		},
+		{
 			"subdomain.example.com/{label1}",
 			"https://subdomain.example.com/subdomain",
 			"subdomain.example.com/subdomain",

@@ -26,7 +26,6 @@ import (
 	"time"
 
 	"github.com/mholt/caddy/caddyhttp/proxy"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -243,10 +242,10 @@ func query(zone string, ctx context.Context, c Config) ([]string, error) {
 
 // Redirect the request depending on the redirect record found
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
-	if strings.Contains(r.URL.Path, "/metrics") {
-		promhttp.Handler().ServeHTTP(w, r)
-		return nil
-	}
+	// if strings.Contains(r.URL.Path, "/metrics") {
+	// 	promhttp.Handler().ServeHTTP(w, r)
+	// 	return nil
+	// }
 	host := r.Host
 	path := r.URL.Path
 	if c.Prometheus.Enable {

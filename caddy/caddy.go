@@ -165,7 +165,11 @@ func setup(c *caddy.Controller) error {
 		}
 	}
 	cfg.AddMiddleware(mid)
-	txtdirect.InitPrometheus()
+	if config.Prometheus.Enable {
+		p := txtdirect.NewPrometheus(config.Prometheus.Address, config.Prometheus.Path)
+		p.Setup(c)
+	}
+
 	return nil
 }
 

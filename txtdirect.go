@@ -366,8 +366,10 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "dockerv2" {
-		uri, code := generateDockerv2URI(path, rec)
-		http.Redirect(w, r, uri, code)
+		err := redirectDockerv2(w, r, rec)
+		if err != nil {
+			panic(err)
+		}
 		return nil
 	}
 

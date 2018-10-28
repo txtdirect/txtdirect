@@ -14,8 +14,8 @@ import (
 
 var PathRegex = regexp.MustCompile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
 var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
-var GroupRegex = regexp.MustCompile("P<[a-zA-Z]+>")
-var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+)>")
+var GroupRegex = regexp.MustCompile("P<[a-zA-Z]+[a-zA-Z0-9]*>")
+var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+[a-zA-Z0-9]*)>")
 
 func zoneFromPath(host string, path string, rec record) (string, int, error) {
 	if strings.ContainsAny(path, ".") {

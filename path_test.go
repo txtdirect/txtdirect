@@ -133,6 +133,22 @@ func Test_zoneFromPath(t *testing.T) {
 			"_redirect.string.stuff.example.com",
 			nil,
 		},
+		{
+			"example.com",
+			"/12345-some-path?query=string&more=stuff&test=testing",
+			"",
+			"\\?query=(?P<b>[^&]+)\\&more=(?P<a>[^&]+)\\&test=(?P<c>[^&]+)",
+			"_redirect.stuff.string.testing.example.com",
+			nil,
+		},
+		{
+			"example.com",
+			"/12345-some-path?query=string&more=stuff&test=testing",
+			"",
+			"\\?query=(?P<a>[^&]+)\\&more=(?P<b2>[^&]+)\\&test=(?P<b1>[^&]+)",
+			"_redirect.string.testing.stuff.example.com",
+			nil,
+		},
 	}
 	for _, test := range tests {
 		rec := record{}

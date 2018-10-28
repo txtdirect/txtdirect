@@ -30,18 +30,15 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 		pathSubmatchs = CustomRegex.FindAllStringSubmatch(path, -1)
 		if GroupRegex.MatchString(rec.Re) {
 			pathSlice := []string{}
-			ordered := make(map[string]string)
+			unordered := make(map[string]string)
 			for _, item := range pathSubmatchs[0] {
 				pathSlice = append(pathSlice, item)
 			}
 			order := GroupOrderRegex.FindAllStringSubmatch(rec.Re, -1)
 			for i, group := range order {
-				ordered[group[1]] = pathSlice[i+1]
+				unordered[group[1]] = pathSlice[i+1]
 			}
-			url := []string{}
-			for _, v := range ordered {
-				url = append(url, v)
-			}
+			url := sortMap(unordered)
 			from := len(pathSlice)
 			url = append(url, host)
 			url = append([]string{basezone}, url...)
@@ -121,4 +118,18 @@ func reverse(input []string) {
 	for i := 0; i < len(input)/2; i++ {
 		input[i], input[last-i] = input[last-i], input[i]
 	}
+}
+
+func sortMap(m map[string]string) []string {
+	var keys []string
+	var result []string
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		result = append(result, m[k])
+	}
+	return result
 }

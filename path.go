@@ -14,6 +14,8 @@ import (
 
 var PathRegex = regexp.MustCompile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
 var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
+var GroupRegex = regexp.MustCompile("P<[a-zA-Z]+>")
+var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+)>")
 
 func zoneFromPath(host string, path string, rec record) (string, int, error) {
 	if strings.ContainsAny(path, ".") {
@@ -26,6 +28,25 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 			log.Printf("<%s> [txtdirect]: the given regex doesn't work as expected: %s", time.Now().String(), rec.Re)
 		}
 		pathSubmatchs = CustomRegex.FindAllStringSubmatch(path, -1)
+		if GroupRegex.MatchString(rec.Re) {
+			pathSlice := []string{}
+			ordered := make(map[string]string)
+			for _, item := range pathSubmatchs[0] {
+				pathSlice = append(pathSlice, item)
+			}
+			order := GroupOrderRegex.FindAllStringSubmatch(rec.Re, -1)
+			for i, group := range order {
+				ordered[group[1]] = pathSlice[i+1]
+			}
+			url := []string{}
+			for _, v := range ordered {
+				url = append(url, v)
+			}
+			from := len(pathSlice)
+			url = append(url, host)
+			url = append([]string{basezone}, url...)
+			return strings.Join(url, "."), from, nil
+		}
 	}
 	pathSlice := []string{}
 	for _, v := range pathSubmatchs {

@@ -47,7 +47,7 @@ func TestGometa(t *testing.T) {
 			expected: `<!DOCTYPE html>
 <html>
 <head>
-<meta name="go-import" content="empty.com/test  ">
+<meta name="go-import" content="empty.com/test git ">
 </head>
 </html>`,
 		},

@@ -78,6 +78,11 @@ func TestParsePlaceholders(t *testing.T) {
 			"example.com/test/querykey=queryvalue&anotherquerykey=anothervalue",
 		},
 		{
+			"example.com/test/{query_escaped}",
+			"https://example.com/test/?querykey=queryvalue&anotherquerykey=anothervalue",
+			"example.com/test/querykey%3Dqueryvalue%26anotherquerykey%3Danothervalue",
+		},
+		{
 			"about.example.com/{label1}",
 			"https://about.example.com",
 			"about.example.com/about",

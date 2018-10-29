@@ -39,6 +39,7 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 				unordered[group[1]] = pathSlice[i+1]
 			}
 			url := sortMap(unordered)
+			reverse(url)
 			from := len(pathSlice)
 			url = append(url, host)
 			url = append([]string{basezone}, url...)

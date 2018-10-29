@@ -130,7 +130,7 @@ func Test_zoneFromPath(t *testing.T) {
 			"/12345-some-path?query=string&more=stuff",
 			"",
 			"\\?query=(?P<a>[^&]+)\\&more=(?P<b>[^&]+)",
-			"_redirect.string.stuff.example.com",
+			"_redirect.stuff.string.example.com",
 			nil,
 		},
 		{
@@ -138,7 +138,7 @@ func Test_zoneFromPath(t *testing.T) {
 			"/12345-some-path?query=string&more=stuff&test=testing",
 			"",
 			"\\?query=(?P<b>[^&]+)\\&more=(?P<a>[^&]+)\\&test=(?P<c>[^&]+)",
-			"_redirect.stuff.string.testing.example.com",
+			"_redirect.testing.string.stuff.example.com",
 			nil,
 		},
 		{
@@ -146,7 +146,7 @@ func Test_zoneFromPath(t *testing.T) {
 			"/12345-some-path?query=string&more=stuff&test=testing",
 			"",
 			"\\?query=(?P<a>[^&]+)\\&more=(?P<b2>[^&]+)\\&test=(?P<b1>[^&]+)",
-			"_redirect.string.testing.stuff.example.com",
+			"_redirect.stuff.testing.string.example.com",
 			nil,
 		},
 	}

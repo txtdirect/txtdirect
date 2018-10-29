@@ -18,6 +18,11 @@ func TestParsePlaceholders(t *testing.T) {
 			"example.com/about/test/file.html?query=string&another=value#even-a-fragment",
 		},
 		{
+			"example.com{uri_escaped}",
+			"https://example.com/about/test/file.html?query=string&another=value#even-a-fragment",
+			"example.com%2Fabout%2Ftest%2Ffile.html%3Fquery%3Dstring%26another%3Dvalue%23even-a-fragment",
+		},
+		{
 			"example.com/{~test}",
 			"https://example.com/?test=test",
 			"example.com/test",

@@ -8,7 +8,7 @@ import (
 )
 
 var dockerRegexs = map[string]string{
-	"v2":        "/v2/?",
+	"v2":        "^\\/?v2\\/?$",
 	"_catalog":  "^/v2/_catalog$",
 	"tags":      "^/v2/(.*)/tags/(.*)",
 	"manifests": "^/v2/(.*)/manifests/(.*)",
@@ -23,7 +23,7 @@ func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error 
 	if err != nil {
 		panic(err)
 	}
-	if v2Regex.Match([]byte(path)) {
+	if v2Regex.MatchString(path) {
 		_, err := w.Write([]byte(http.StatusText(http.StatusOK)))
 		return err
 	}

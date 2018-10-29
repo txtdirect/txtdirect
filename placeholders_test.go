@@ -88,6 +88,11 @@ func TestParsePlaceholders(t *testing.T) {
 			"example.com/test/querykey%3Dqueryvalue%26anotherquerykey%3Danothervalue",
 		},
 		{
+			"example.com/{user}",
+			"https://example.com/user1",
+			"example.com/user1",
+		},
+		{
 			"about.example.com/{label1}",
 			"https://about.example.com",
 			"about.example.com/about",
@@ -107,6 +112,7 @@ func TestParsePlaceholders(t *testing.T) {
 		req := httptest.NewRequest("GET", test.requested, nil)
 		req.AddCookie(&http.Cookie{Name: "test", Value: "test"})
 		req.Header.Add("Test", "test-header")
+		req.SetBasicAuth("user1", "password")
 		result, err := parsePlaceholders(test.url, req)
 		if err != nil {
 			t.Fatal(err)

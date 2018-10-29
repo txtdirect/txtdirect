@@ -64,8 +64,8 @@ func TestParsePlaceholders(t *testing.T) {
 		},
 		{
 			"example.com{path}",
-			"https://example.com/path",
-			"example.com/path",
+			"https://example.com/this-is-a-test-path/api/v1/",
+			"example.com/this-is-a-test-path/api/v1/",
 		},
 		{
 			"example.com{path_escaped}",

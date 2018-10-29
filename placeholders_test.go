@@ -136,6 +136,10 @@ func TestParsePlaceholdersFails(t *testing.T) {
 			"example.com/{label9000}",
 			"https://example.com/test",
 		},
+		{
+			"example.com/{labelxyz}",
+			"https://example.com/test",
+		},
 	}
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.requested, nil)

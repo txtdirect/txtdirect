@@ -57,7 +57,7 @@ type Config struct {
 	Resolver string
 }
 
-func (r *record) Parse(str string, req *http.Request) error {
+func (r *record) Parse(str string, req *http.Request, c Config) error {
 	s := strings.Split(str, ";")
 	for _, l := range s {
 		switch {
@@ -129,6 +129,10 @@ func (r *record) Parse(str string, req *http.Request) error {
 		r.Type = "host"
 	}
 
+	if !contains(c.Enable, r.Type) {
+		return fmt.Errorf("%s type is not enabled in configuration", r.Type)
+	}
+
 	return nil
 }
 
@@ -163,7 +167,7 @@ func getRecord(host, path string, ctx context.Context, c Config, r *http.Request
 	}
 
 	rec := record{}
-	if err = rec.Parse(txts[0], r); err != nil {
+	if err = rec.Parse(txts[0], r, c); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
@@ -278,7 +282,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	if rec.Type == "path" && contains(c.Enable, rec.Type) {
+	if rec.Type == "path" {
 		if path == "/" {
 			if rec.Root == "" {
 				fallback(w, r, fallbackURL, code, c)
@@ -300,7 +304,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 	}
 
-	if rec.Type == "proxy" && contains(c.Enable, rec.Type) {
+	if rec.Type == "proxy" {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), rec.From, rec.To)
 		to, _, err := getBaseTarget(rec, r)
 		if err != nil {
@@ -317,7 +321,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	if rec.Type == "host" && contains(c.Enable, rec.Type) {
+	if rec.Type == "host" {
 		to, code, err := getBaseTarget(rec, r)
 		if err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
@@ -329,7 +333,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	if rec.Type == "gometa" && contains(c.Enable, rec.Type) {
+	if rec.Type == "gometa" {
 		return gometa(w, rec, host, path)
 	}
 

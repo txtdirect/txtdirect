@@ -177,8 +177,11 @@ func TestParse(t *testing.T) {
 
 	for i, test := range tests {
 		r := record{}
+		c := Config{
+			Enable: []string{test.expected.Type},
+		}
 		req, _ := http.NewRequest("GET", "http://example.com?url=https://example.com/testing", nil)
-		err := r.Parse(test.txtRecord, req)
+		err := r.Parse(test.txtRecord, req, c)
 
 		if err != nil {
 			if test.err == nil || !strings.HasPrefix(err.Error(), test.err.Error()) {

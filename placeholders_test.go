@@ -14,23 +14,23 @@ func TestParsePlaceholders(t *testing.T) {
 	}{
 		{
 			"example.com{uri}",
-			"https://example.com/?test=test",
-			"example.com/?test=test",
+			"https://example.com/about/test/file.html?query=string&another=value#even-a-fragment",
+			"example.com/about/test/file.html?query=string&another=value#even-a-fragment",
 		},
 		{
-			"example.com{uri}/{~test}",
+			"example.com/{~test}",
 			"https://example.com/?test=test",
-			"example.com/?test=test/test",
+			"example.com/test",
 		},
 		{
-			"example.com{uri}/{>Test}",
+			"example.com/{>Test}",
 			"https://example.com/?test=test",
-			"example.com/?test=test/test-header",
+			"example.com/test-header",
 		},
 		{
-			"example.com{uri}/{?test}",
+			"example.com/{?test}",
 			"https://example.com/?test=test",
-			"example.com/?test=test/test",
+			"example.com/test",
 		},
 		{
 			"example.com{dir}",

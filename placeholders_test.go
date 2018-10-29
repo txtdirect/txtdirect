@@ -78,19 +78,19 @@ func TestParsePlaceholders(t *testing.T) {
 			"example.com:8080",
 		},
 		{
-			"subdomain.example.com/{label1}",
-			"https://subdomain.example.com/subdomain",
-			"subdomain.example.com/subdomain",
+			"about.example.com/{label1}",
+			"https://about.example.com",
+			"about.example.com/about",
 		},
 		{
-			"subdomain.example.com/{label2}",
-			"https://subdomain.example.com/example",
-			"subdomain.example.com/example",
+			"about.example.com/{label2}",
+			"https://about.example.com",
+			"about.example.com/example",
 		},
 		{
-			"subdomain.example.com/{label3}",
-			"https://subdomain.example.com/com",
-			"subdomain.example.com/com",
+			"about.example.com/{label3}",
+			"https://about.example.com/com",
+			"about.example.com/com",
 		},
 	}
 	for _, test := range tests {

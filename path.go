@@ -84,7 +84,7 @@ func getFinalRecord(zone string, from int, ctx context.Context, c Config, r *htt
 	}
 
 	rec := record{}
-	if err = rec.Parse(txts[0], r); err != nil {
+	if err = rec.Parse(txts[0], r, c); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 

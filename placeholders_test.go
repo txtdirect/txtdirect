@@ -43,11 +43,6 @@ func TestParsePlaceholders(t *testing.T) {
 			"example.com/directory/file.pdf",
 		},
 		{
-			"example.com/?test={fragment}",
-			"https://example.com/?test=#fragment",
-			"example.com/?test=fragment",
-		},
-		{
 			"example.com/{host}",
 			"https://project.example.com:8080",
 			"example.com/project.example.com:8080",
@@ -97,7 +92,6 @@ func TestParsePlaceholders(t *testing.T) {
 		req := httptest.NewRequest("GET", test.requested, nil)
 		req.AddCookie(&http.Cookie{Name: "test", Value: "test"})
 		req.Header.Add("Test", "test-header")
-		req.URL.Fragment = "fragment"
 		result, err := parsePlaceholders(test.url, req)
 		if err != nil {
 			t.Fatal(err)

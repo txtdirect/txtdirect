@@ -28,6 +28,7 @@ func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error 
 		return err
 	}
 	if path != "/" {
+		fmt.Println(path)
 		regexType := DockerRegex.FindAllStringSubmatch(path, -1)[0]
 		pathRegex, err := regexp.Compile(dockerRegexs[regexType[len(regexType)-1]])
 		if err != nil {

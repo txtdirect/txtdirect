@@ -1,6 +1,9 @@
 package txtdirect
 
 import (
+	"fmt"
+	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -11,12 +14,12 @@ func Test_generateDockerv2URI(t *testing.T) {
 		expected string
 	}{
 		{
-			"",
+			"/v2/",
 			record{
 				To:   "docker.io/seetheprogress/txtdirect:latest",
 				Code: 302,
 			},
-			"docker.io/seetheprogress/txtdirect:latest",
+			"OK",
 		},
 		{
 			"/v2/testing/tags/docker",
@@ -49,9 +52,14 @@ func Test_generateDockerv2URI(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		uri, _ := generateDockerv2URI(test.path, test.rec)
-		if uri != test.expected {
-			t.Fatalf("Expected %s, got %s", test.expected, uri)
+		req := httptest.NewRequest("GET", fmt.Sprintf("https://example.com%s", test.path), nil)
+		resp := httptest.NewRecorder()
+		err := redirectDockerv2(resp, req, test.rec)
+		if err != nil {
+			t.Errorf("Unexpected error happened: %s", err)
+		}
+		if !strings.Contains(resp.Body.String(), test.expected) {
+			t.Errorf("Expected %s, got %s:", test.expected, resp.Body.String())
 		}
 	}
 }

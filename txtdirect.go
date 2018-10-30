@@ -57,6 +57,10 @@ type Config struct {
 	Resolver string
 }
 
+// Parse takes a string containing the DNS TXT record and returns
+// a TXTDirect record struct instance.
+// It will return an error if the DNS TXT record is not standard or
+// if the record type is not enabled in the TXTDirect's config.
 func (r *record) Parse(str string, req *http.Request, c Config) error {
 	s := strings.Split(str, ";")
 	for _, l := range s {
@@ -136,6 +140,8 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 	return nil
 }
 
+// getBaseTarget parses the placeholder in the given record's To= field
+// and returns the final address and http status code
 func getBaseTarget(rec record, r *http.Request) (string, int, error) {
 	if strings.ContainsAny(rec.To, "{}") {
 		to, err := parsePlaceholders(rec.To, r)
@@ -147,6 +153,8 @@ func getBaseTarget(rec record, r *http.Request) (string, int, error) {
 	return rec.To, rec.Code, nil
 }
 
+// contains checks the given slice to see if an item exists
+// in that slice or not
 func contains(array []string, word string) bool {
 	for _, w := range array {
 		if w == word {
@@ -156,6 +164,10 @@ func contains(array []string, word string) bool {
 	return false
 }
 
+// getRecord uses the given host and path to find a TXT record
+// and then parses the txt record and returns a TXTDirect record
+// struct instance It returns an error when it can't find any txt
+// records or if the TXT record is not standard.
 func getRecord(host, path string, ctx context.Context, c Config, r *http.Request) (record, error) {
 	txts, err := query(host, ctx, c)
 	if err != nil {
@@ -174,6 +186,9 @@ func getRecord(host, path string, ctx context.Context, c Config, r *http.Request
 	return rec, nil
 }
 
+// fallback redirects the request to the given fallback address
+// and if it's not provided it will check txtdirect config for
+// default fallback address
 func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int, c Config) {
 	if fallback != "" {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), fallback)
@@ -190,6 +205,8 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 	}
 }
 
+// customResolver returns a net.Resolver instance based
+// on the given txtdirect config to use a custom DNS resolver.
 func customResolver(c Config) net.Resolver {
 	return net.Resolver{
 		PreferGo: true,
@@ -200,6 +217,8 @@ func customResolver(c Config) net.Resolver {
 	}
 }
 
+// query checkes the given zone using net.LookupTXT to
+// find TXT records in that zone
 func query(zone string, ctx context.Context, c Config) ([]string, error) {
 	// Removes port from zone
 	if strings.Contains(zone, ":") {

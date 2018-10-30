@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+// parsePlaceholders gets a string input and looks for placeholders inside
+// the string. it will then replace them with the actual data from the request
 func parsePlaceholders(input string, r *http.Request) (string, error) {
 	placeholders := PlaceholderRegex.FindAllStringSubmatch(input, -1)
 	for _, placeholder := range placeholders {

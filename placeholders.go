@@ -23,8 +23,6 @@ func parsePlaceholders(input string, r *http.Request) (string, error) {
 		case "{file}":
 			_, file := path.Split(r.URL.Path)
 			input = strings.Replace(input, "{file}", file, -1)
-		case "{fragment}":
-			input = strings.Replace(input, "{fragment}", r.URL.Fragment, -1)
 		case "{host}":
 			input = strings.Replace(input, "{host}", r.URL.Host, -1)
 		case "{hostonly}":

@@ -14,6 +14,8 @@ import (
 
 var PathRegex = regexp.MustCompile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
 var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
+var GroupRegex = regexp.MustCompile("P<[a-zA-Z]+[a-zA-Z0-9]*>")
+var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+[a-zA-Z0-9]*)>")
 
 // zoneFromPath generates a DNS zone with the given host and path
 // It will use custom regex to parse the path if it's provided in
@@ -29,6 +31,23 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 			log.Printf("<%s> [txtdirect]: the given regex doesn't work as expected: %s", time.Now().String(), rec.Re)
 		}
 		pathSubmatchs = CustomRegex.FindAllStringSubmatch(path, -1)
+		if GroupRegex.MatchString(rec.Re) {
+			pathSlice := []string{}
+			unordered := make(map[string]string)
+			for _, item := range pathSubmatchs[0] {
+				pathSlice = append(pathSlice, item)
+			}
+			order := GroupOrderRegex.FindAllStringSubmatch(rec.Re, -1)
+			for i, group := range order {
+				unordered[group[1]] = pathSlice[i+1]
+			}
+			url := sortMap(unordered)
+			reverse(url)
+			from := len(pathSlice)
+			url = append(url, host)
+			url = append([]string{basezone}, url...)
+			return strings.Join(url, "."), from, nil
+		}
 	}
 	pathSlice := []string{}
 	for _, v := range pathSubmatchs {
@@ -106,4 +125,18 @@ func reverse(input []string) {
 	for i := 0; i < len(input)/2; i++ {
 		input[i], input[last-i] = input[last-i], input[i]
 	}
+}
+
+func sortMap(m map[string]string) []string {
+	var keys []string
+	var result []string
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		result = append(result, m[k])
+	}
+	return result
 }

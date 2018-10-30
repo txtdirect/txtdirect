@@ -15,6 +15,9 @@ import (
 var PathRegex = regexp.MustCompile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
 var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
 
+// zoneFromPath generates a DNS zone with the given host and path
+// It will use custom regex to parse the path if it's provided in
+// the given record.
 func zoneFromPath(host string, path string, rec record) (string, int, error) {
 	if strings.ContainsAny(path, ".") {
 		path = strings.Replace(path, ".", "-", -1)
@@ -68,6 +71,8 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 	return strings.Join(url, "."), from, nil
 }
 
+// getFinalRecord finds the final TXT record for the given zone.
+// It will try wildcards if the first zone return error
 func getFinalRecord(zone string, from int, ctx context.Context, c Config, r *http.Request) (record, error) {
 	txts, err := query(zone, ctx, c)
 	if err != nil {
@@ -95,6 +100,7 @@ func getFinalRecord(zone string, from int, ctx context.Context, c Config, r *htt
 	return rec, nil
 }
 
+// reverse reverses the order of the array
 func reverse(input []string) {
 	last := len(input) - 1
 	for i := 0; i < len(input)/2; i++ {

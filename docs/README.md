@@ -45,6 +45,8 @@ External Links:
     https://en.wikipedia.org/wiki/Percent-encoding  
     https://tools.ietf.org/html/rfc3986#page-11
 
+For multi-level tlds such as `example.co.uk`, "co" is treated as a subzone from a DNS perspective and would be used as {label1}
+
 ### type=host
 *v*
 * Mandatory

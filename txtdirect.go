@@ -41,14 +41,15 @@ const (
 var PlaceholderRegex = regexp.MustCompile("{[~>?]?\\w+}")
 
 type record struct {
-	Version string
-	To      string
-	Code    int
-	Type    string
-	Vcs     string
-	From    string
-	Root    string
-	Re      string
+	Version    string
+	To         string
+	Code       int
+	Type       string
+	Vcs        string
+	From       string
+	Root       string
+	Re         string
+	ModVersion string
 }
 
 // Config contains the middleware's configuration
@@ -81,6 +82,10 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 				return err
 			}
 			r.From = l
+
+		case strings.HasPrefix(l, "modversion="):
+			l = strings.TrimPrefix(l, "modversion=")
+			r.ModVersion = l
 
 		case strings.HasPrefix(l, "re="):
 			l = strings.TrimPrefix(l, "re=")
@@ -336,7 +341,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if err != nil {
 			return err
 		}
-		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout, fallbackDelay)
+		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout)
 		reverseProxy.ServeHTTP(w, r, nil)
 		return nil
 	}
@@ -355,6 +360,10 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "gometa" {
 		return gometa(w, rec, host, path)
+	}
+
+	if rec.Type == "gomod" {
+		return gomods(w, host, path, rec)
 	}
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)

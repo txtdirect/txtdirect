@@ -41,15 +41,14 @@ const (
 var PlaceholderRegex = regexp.MustCompile("{[~>?]?\\w+}")
 
 type record struct {
-	Version    string
-	To         string
-	Code       int
-	Type       string
-	Vcs        string
-	From       string
-	Root       string
-	Re         string
-	ModVersion string
+	Version string
+	To      string
+	Code    int
+	Type    string
+	Vcs     string
+	From    string
+	Root    string
+	Re      string
 }
 
 // Config contains the middleware's configuration
@@ -57,6 +56,7 @@ type Config struct {
 	Enable   []string
 	Redirect string
 	Resolver string
+	ModProxy ModProxy
 }
 
 // Parse takes a string containing the DNS TXT record and returns
@@ -82,10 +82,6 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 				return err
 			}
 			r.From = l
-
-		case strings.HasPrefix(l, "modversion="):
-			l = strings.TrimPrefix(l, "modversion=")
-			r.ModVersion = l
 
 		case strings.HasPrefix(l, "re="):
 			l = strings.TrimPrefix(l, "re=")

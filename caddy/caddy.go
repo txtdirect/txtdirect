@@ -40,6 +40,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	var enable []string
 	var redirect string
 	var resolver string
+	var modproxy txtdirect.ModProxy
 
 	c.Next() // skip directive name
 	for c.NextBlock() {
@@ -99,6 +100,26 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				})
 			}
 
+		case "modproxy":
+			for c.Next() {
+				if c.Val() == "}" {
+					break
+				}
+				if c.Val() == "{" {
+					continue
+				}
+				switch c.Val() {
+				case "path":
+					args := c.RemainingArgs()
+					modproxy.Path = args[0]
+				case "cache":
+					args := c.RemainingArgs()
+					modproxy.Cache = args[0]
+				default:
+					return txtdirect.Config{}, c.ArgErr() // unhandled option for prometheus
+				}
+			}
+
 		default:
 			return txtdirect.Config{}, c.ArgErr() // unhandled option
 		}
@@ -113,6 +134,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 		Enable:   enable,
 		Redirect: redirect,
 		Resolver: resolver,
+		ModProxy: modproxy,
 	}
 	return config, nil
 }

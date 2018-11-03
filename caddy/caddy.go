@@ -18,6 +18,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
@@ -109,6 +110,13 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 					continue
 				}
 				switch c.Val() {
+				case "enable":
+					args := c.RemainingArgs()
+					value, err := strconv.ParseBool(args[0])
+					if err != nil {
+						return txtdirect.Config{}, c.ArgErr()
+					}
+					modproxy.Enable = value
 				case "path":
 					args := c.RemainingArgs()
 					modproxy.Path = args[0]

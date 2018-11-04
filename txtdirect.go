@@ -260,7 +260,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	path := r.URL.Path
 
 	if strings.Contains(path, c.ModProxy.Path) {
-		return gomods(w, host, path)
+		return gomods(w, host, path, c)
 	}
 
 	bl := make(map[string]bool)

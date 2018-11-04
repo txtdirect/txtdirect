@@ -259,6 +259,10 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
 	path := r.URL.Path
 
+	if strings.Contains(path, c.ModProxy.Path) {
+		return gomods(w, host, path)
+	}
+
 	bl := make(map[string]bool)
 	bl["/favicon.ico"] = true
 
@@ -356,10 +360,6 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "gometa" {
 		return gometa(w, rec, host, path)
-	}
-
-	if rec.Type == "gomod" {
-		return gomods(w, host, path, rec)
 	}
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)

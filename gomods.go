@@ -2,16 +2,28 @@ package txtdirect
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	"gopkg.in/src-d/go-git.v4"
 )
 
 type ModProxy struct {
 	Enable bool
 	Path   string
 	Cache  string
+}
+
+type Module struct {
+	Path      string
+	Version   string
+	LocalPath string
+}
+
+type ModuleHandler interface {
+	fetch() error
+	zip() error
 }
 
 func gomods(w http.ResponseWriter, host, path string, c Config) error {
@@ -25,22 +37,47 @@ func gomods(w http.ResponseWriter, host, path string, c Config) error {
 		}
 		moduleName = strings.Join([]string{moduleName, v}, "/")
 	}
-	log.Println(fileName)
+	localPath := fmt.Sprintf("%s/%s", c.ModProxy.Cache, moduleName)
+	m := Module{
+		Path:      moduleName,
+		LocalPath: localPath,
+		Version:   strings.Split(fileName, ".")[1], // Gets version number from last part of the path
+	}
+	err := m.fetch()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func modExists(name string, c Config) bool {
-	path := fmt.Sprintf("%s/%s", c.ModProxy.Cache, name)
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		return true
+func (m Module) fetch() error {
+	if _, err := os.Stat(m.LocalPath); !os.IsNotExist(err) {
+		err := os.MkdirAll(m.LocalPath, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("unable to create directory: %s", m.LocalPath)
+		}
+		// TODO: Support Auth for private modules
+		_, err = git.PlainClone(m.LocalPath, false, &git.CloneOptions{
+			URL:      fmt.Sprintf("https://%s", m.Path),
+			Progress: os.Stdout,
+		})
+		if err != nil {
+			return fmt.Errorf("unable to clone the module's repository: %s", err.Error())
+		}
+		return nil
 	}
-	return false
-}
-
-func createModDir(path string) error {
-	err := os.MkdirAll(path, os.ModePerm)
+	// TODO: Change working branch based on the requested version
+	r, err := git.PlainOpen(m.LocalPath)
 	if err != nil {
-		return fmt.Errorf("unable to create directory: %s", path)
+		return fmt.Errorf("unable to open the module's repository: %s", err.Error())
+	}
+	w, err := r.Worktree()
+	if err != nil {
+		return fmt.Errorf("unable to get module's current branch: %s", err.Error())
+	}
+	err = w.Pull(&git.PullOptions{RemoteName: "origin"})
+	if err != nil {
+		return fmt.Errorf("unable to get module's latest changes: %s", err.Error())
 	}
 	return nil
 }

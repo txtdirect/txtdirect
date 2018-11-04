@@ -26,8 +26,8 @@ type ModuleHandler interface {
 	zip() error
 }
 
-func gomods(w http.ResponseWriter, host, path string, c Config) error {
-	pathSlice := strings.Split(path, "/")[2:] // [2:] ignores proxy's base url and the empty slice item
+func gomods(w http.ResponseWriter, path string, c Config) error {
+	pathSlice := strings.Split(path, "/")[1:] // [1:] ignores the empty slice item
 	var moduleName string
 	var fileName string
 	for k, v := range pathSlice {
@@ -37,9 +37,9 @@ func gomods(w http.ResponseWriter, host, path string, c Config) error {
 		}
 		moduleName = strings.Join([]string{moduleName, v}, "/")
 	}
-	localPath := fmt.Sprintf("%s/%s", c.ModProxy.Cache, moduleName)
+	localPath := fmt.Sprintf("%s/%s", c.ModProxy.Cache, moduleName[1:])
 	m := Module{
-		Path:      moduleName,
+		Path:      moduleName[1:], // [1:] ignores "/" at the beginning of url
 		LocalPath: localPath,
 		Version:   strings.Split(fileName, ".")[1], // Gets version number from last part of the path
 	}

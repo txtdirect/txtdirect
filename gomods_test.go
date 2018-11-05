@@ -16,6 +16,18 @@ func Test_gomods(t *testing.T) {
 			path:     "/github.com/okkur/reposeed-server/@v/list",
 			expected: "https://github.com/okkur/reposeed-server/@v/list",
 		},
+		{
+			path:     "/github.com/okkur/reposeed-server/@v/v1.0.0.info",
+			expected: "https://github.com/okkur/reposeed-server/@v/v1.0.0.info",
+		},
+		{
+			path:     "/github.com/okkur/reposeed-server/@v/v1.0.0.mod",
+			expected: "https://github.com/okkur/reposeed-server/@v/v1.0.0.mod",
+		},
+		{
+			path:     "/github.com/okkur/reposeed-server/@v/v1.0.0.zip",
+			expected: "https://github.com/okkur/reposeed-server/@v/v1.0.0.zip",
+		},
 	}
 	for _, test := range tests {
 		w := httptest.NewRecorder()

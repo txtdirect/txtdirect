@@ -55,16 +55,14 @@ func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error
 }
 
 func (m Module) proxy(w http.ResponseWriter, r *http.Request, fileName string) error {
-	if fileName == "list" {
-		u, err := url.Parse(fmt.Sprintf("https://%s/@v/%s", m.Path, fileName))
-		if err != nil {
-			return fmt.Errorf("unable to parse the url: %s", err.Error())
-		}
-		r.URL.Path = "" // FIXME: Reconsider this part
-		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout)
-		reverseProxy.ServeHTTP(w, r, nil)
-		return nil
+	u, err := url.Parse(fmt.Sprintf("https://%s/@v/%s", m.Path, fileName))
+	if err != nil {
+		return fmt.Errorf("unable to parse the url: %s", err.Error())
 	}
+	r.URL.Path = "" // FIXME: Reconsider this part
+	reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout)
+	reverseProxy.ServeHTTP(w, r, nil)
+	return nil
 }
 
 func (m Module) fetch() error {

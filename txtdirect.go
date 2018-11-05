@@ -359,7 +359,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "gomods" {
-		return gomods(w, path, c)
+		return gomods(w, r, path, c)
 	}
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)

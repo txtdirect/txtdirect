@@ -1,6 +1,7 @@
 package txtdirect
 
 import (
+	"fmt"
 	"net/http/httptest"
 	"testing"
 )
@@ -13,15 +14,19 @@ func Test_gomods(t *testing.T) {
 	}{
 		{
 			path:     "/github.com/okkur/reposeed-server/@v/list",
-			expected: "",
+			expected: "https://github.com/okkur/reposeed-server/@v/list",
 		},
 	}
 	for _, test := range tests {
 		w := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", fmt.Sprintf("https://example.com%s", test.path), nil)
 		c := Config{}
-		err := gomods(w, test.path, c)
+		err := gomods(w, r, test.path, c)
 		if err != nil {
 			t.Errorf("ERROR: %e", err)
+		}
+		if r.URL.String() != test.expected {
+			t.Errorf("Expected %s, got %s", test.expected, r.URL.String())
 		}
 	}
 }

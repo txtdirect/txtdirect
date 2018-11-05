@@ -3,9 +3,11 @@ package txtdirect
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
+	"github.com/mholt/caddy/caddyhttp/proxy"
 	"gopkg.in/src-d/go-git.v4"
 )
 
@@ -22,11 +24,12 @@ type Module struct {
 }
 
 type ModuleHandler interface {
+	proxy() error
 	fetch() error
 	zip() error
 }
 
-func gomods(w http.ResponseWriter, path string, c Config) error {
+func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error {
 	pathSlice := strings.Split(path, "/")[1:] // [1:] ignores the empty slice item
 	var moduleName string
 	var fileName string
@@ -41,13 +44,27 @@ func gomods(w http.ResponseWriter, path string, c Config) error {
 	m := Module{
 		Path:      moduleName[1:], // [1:] ignores "/" at the beginning of url
 		LocalPath: localPath,
-		Version:   strings.Split(fileName, ".")[1], // Gets version number from last part of the path
+		Version:   strings.Split(fileName, ".")[0], // Gets version number from last part of the path
 	}
-	err := m.fetch()
+	err := m.proxy(w, r, fileName)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to proxy the request: %s", err.Error())
 	}
+
 	return nil
+}
+
+func (m Module) proxy(w http.ResponseWriter, r *http.Request, fileName string) error {
+	if fileName == "list" {
+		u, err := url.Parse(fmt.Sprintf("https://%s/@v/%s", m.Path, fileName))
+		if err != nil {
+			return fmt.Errorf("unable to parse the url: %s", err.Error())
+		}
+		r.URL.Path = "" // FIXME: Reconsider this part
+		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout)
+		reverseProxy.ServeHTTP(w, r, nil)
+		return nil
+	}
 }
 
 func (m Module) fetch() error {

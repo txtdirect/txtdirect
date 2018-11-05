@@ -61,7 +61,9 @@ func (m Module) proxy(w http.ResponseWriter, r *http.Request, fileName string) e
 	}
 	r.URL.Path = "" // FIXME: Reconsider this part
 	reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout)
-	reverseProxy.ServeHTTP(w, r, nil)
+	if err := reverseProxy.ServeHTTP(w, r, nil); err != nil {
+		return err
+	}
 	return nil
 }
 

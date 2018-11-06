@@ -60,7 +60,7 @@ func (m Module) proxy(w http.ResponseWriter, r *http.Request, fileName string) e
 		return fmt.Errorf("unable to parse the url: %s", err.Error())
 	}
 	r.URL.Path = "" // FIXME: Reconsider this part
-	reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout)
+	reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout, fallbackDelay)
 	if err := reverseProxy.ServeHTTP(w, r, nil); err != nil {
 		return err
 	}

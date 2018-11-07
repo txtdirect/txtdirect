@@ -121,8 +121,28 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 					args := c.RemainingArgs()
 					modproxy.Path = args[0]
 				case "cache":
-					args := c.RemainingArgs()
-					modproxy.Cache = args[0]
+					for c.Next() {
+						if c.Val() == "}" {
+							break
+						}
+						if c.Val() == "{" {
+							continue
+						}
+						switch c.Val() {
+						case "enable":
+							args := c.RemainingArgs()
+							value, err := strconv.ParseBool(args[0])
+							if err != nil {
+								return txtdirect.Config{}, c.ArgErr()
+							}
+							modproxy.Cache.Enable = value
+						case "type":
+							args := c.RemainingArgs()
+							modproxy.Cache.Type = args[0]
+						default:
+							return txtdirect.Config{}, c.ArgErr() // unhandled option for prometheus
+						}
+					}
 				default:
 					return txtdirect.Config{}, c.ArgErr() // unhandled option for prometheus
 				}

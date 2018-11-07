@@ -14,7 +14,10 @@ import (
 type ModProxy struct {
 	Enable bool
 	Path   string
-	Cache  string
+	Cache  struct {
+		Enable bool
+		Type   string
+	}
 }
 
 type Module struct {

@@ -35,6 +35,32 @@ The proposed solution is to add advanced proxy request support by using multiple
 * The single txt record character limit would need to be circumvented by using multiple txt records that are merged together
 * With this implementation, there are potential bandwidth and UI impacts as well as security risks (whitelisting may be needed)
 
+Each proxy request would need the following information in order for advanced proxy requests to work:
+```
+    www.example.com {
+        policy name [value]
+        fail_timeout duration
+        max_fails integer
+        max_conns integer
+        try_duration duration
+        try_interval duration
+        health_check path
+        health_check_port port
+        health_check_interval interval_duration
+        health_check_timeout timeout_duration
+        header_upstream name value
+        header_downstream name value
+        keepalive number
+        timeout duration
+        without prefix
+        except ignored_paths...
+        upstream to
+        insecure_skip_verify
+        preset
+    }
+```
+This information would then be parsed and passed to the appropriate function that serves the proxy request.
+
 ### Risks and Mitigations
 * This section needs more discussion. Whitelisting is an option for mitigating the potential security risks.
 

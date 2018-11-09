@@ -66,7 +66,9 @@ Each proxy request would need the following information in order for advanced pr
 This information would then be parsed and passed to the appropriate function that serves the proxy request.
 
 ### Risks and Mitigations
-* This section needs more discussion. Whitelisting is an option for mitigating the potential security risks.
+* Whitelisting could be a way to address potential bandwidth impacts
+* Using default values per instance as well as setting maximums for default values would be a way to prevent users from working around specific values
+* In order to address potential exposure of authentication information in the configuration, that authentication information could be encrypted with a specific seed that only the user and the instance knows
 
 ## Graduation Criteria
 * Verify that all relevant tests pass

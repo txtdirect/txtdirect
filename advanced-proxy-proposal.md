@@ -26,7 +26,7 @@ The current implementation of TXTDirect has a PoC that supports [basic proxy req
 The proposed solution is to add advanced proxy request support by moving the necessary additional configuration into txt records. This would be a workaround that is an alternative to adding more configuration to the current proxy type.
 
 ### Use Cases
-* TXTDirect supports all advanced proxy request functionality that is supported by caddy
+* TXTDirect would support the advanced proxy request functionality from caddy after determining which of those features can and should be supported. This may be a subset of the advanced proxy features that caddy supports.
 * The user experience would be unchanged for basic proxy requests as basic proxying is supported in the configuration. For advanced proxy requests, users would configure advanced proxy requests via the txt records as outlined in the TXTDirect documentation once advanced proxy support is added.
 
 ### Implementation Details

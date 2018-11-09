@@ -80,3 +80,4 @@ This information would then be parsed and passed to the appropriate function tha
 
 ## Alternatives
 * Enabling advanced proxy requests in the config instance
+* Don't support advanced proxy requests

@@ -30,7 +30,7 @@ The proposed solution is to add advanced proxy request support by moving the nec
 * The user experience would be unchanged for basic proxy requests as basic proxying is supported in the configuration. For advanced proxy requests, users would configure advanced proxy requests via the txt records as outlined in the TXTDirect documentation once advanced proxy support is added.
 
 ### Implementation Details
-* Parsing of txt records will be more complex when merging multiple txt records
+* Using multiple txt records for advanced proxy requests will require changes to txt record retrieval and the multiple txt records would need to be merged
 * The potential for an exposed config (such as one containing authentication) will need to be addressed
 * The single txt record character limit would need to be circumvented by using multiple txt records that are merged together
 * With this implementation, there are potential bandwidth and UI impacts as well as security risks (whitelisting may be needed)

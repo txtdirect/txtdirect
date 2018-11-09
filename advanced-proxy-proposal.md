@@ -3,6 +3,7 @@
 * [Summary](#summary)
 * [Motivation](#motivation)
     * [Goals](#goals)
+    * [Non-Goals](#non-goals)
 * [Proposal](#proposal)
     * <a name="usecases"></a>[Use Cases](#use-cases)
     * <a name="implementationdetails"></a>[Implementation Details](#implementation-details)
@@ -21,6 +22,9 @@ The current implementation of TXTDirect has a PoC that supports [basic proxy req
 ### Goals
 * Enable advanced proxy request support without having the data in the instance config
 * Support advanced proxying while mitigating potential impacts such as bandwidth, UI and security risks
+
+### Non-Goals
+* Address potential for an exposed configuration (such as one containing authentication)
 
 ## Proposal
 The proposed solution is to add advanced proxy request support by moving the necessary additional configuration into txt records. This would be a workaround that is an alternative to adding more configuration to the current proxy type.

@@ -75,7 +75,7 @@ This information would then be parsed and passed to the appropriate function tha
 * Add additional tests, including e2e tests
 
 ## Drawbacks
-* More complex txt record parsing will be necessary
+* More complex handling of txt records will be necessary since multiple txt records will be used that get merged together
 * The need to mitigate all the potential performance and security impacts outlined above
 
 ## Alternatives

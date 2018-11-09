@@ -12,7 +12,7 @@
 * [Alternatives](#alternatives)
 
 ## Summary
-The current implementation of TXTDirect redirects the user, but does not enable proxy requests. In order to implement proxy request support, including advanced features, it is necessary to first determine whether user configurable proxy requests should be parsed from the configuration or by using txt records. This proposal outlines the pros and cons of using a txt record based approach for enabling proxy requests.
+The current implementation of TXTDirect has a PoC that supports [basic proxy requests](https://github.com/txtdirect/txtdirect/blob/master/txtdirect.go#L327). In order to implement advanced proxy request support, including advanced features, it is necessary to first determine whether user configurable proxy requests should be parsed from the configuration or by using txt records. This proposal outlines the pros and cons of using a txt record based approach for enabling proxy requests.
 
 ## Motivation
 * By moving advanced proxy requests into multiple txt records, it would allow for more features and flexibility such as circumventing the maximum txt record character limit

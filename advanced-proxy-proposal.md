@@ -37,7 +37,7 @@ The proposed solution is to add advanced proxy request support by moving the nec
 * Using multiple txt records for advanced proxy requests will require changes to txt record retrieval and the multiple txt records would need to be merged
 * The potential for an exposed config (such as one containing authentication) will need to be addressed
 * The single txt record character limit would need to be circumvented by using multiple txt records that are merged together
-* With this implementation, there are potential bandwidth and UI impacts as well as security risks (whitelisting may be needed)
+* With this implementation, there are potential bandwidth (whitelisting may be needed) and UI impacts as well as security risks. One potential security risk is that the configuration would be openly accessible and could potentially reveal the backend servers.
 
 Each proxy request would need the following information in order for advanced proxy requests to work:
 ```

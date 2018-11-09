@@ -27,7 +27,7 @@ The proposed solution is to add advanced proxy request support by moving the nec
 
 ### Use Cases
 * TXTDirect supports all advanced proxy request functionality that is supported by caddy
-* By default, the user experience would be unchanged. For more advanced uses, existing users would need to modify the txt records as outlined in the TXTDirect documentation.
+* The user experience would be unchanged for basic proxy requests as basic proxying is supported in the configuration. For advanced proxy requests, users would configure advanced proxy requests via the txt records as outlined in the TXTDirect documentation once advanced proxy support is added.
 
 ### Implementation Details
 * Parsing of txt records will be more complex when merging multiple txt records

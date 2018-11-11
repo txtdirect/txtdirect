@@ -33,6 +33,9 @@ func Test_gomods(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", fmt.Sprintf("https://example.com%s", test.path), nil)
 		c := Config{}
+		c.ModProxy.Cache.Enable = true
+		c.ModProxy.Cache.Type = "local"
+		c.ModProxy.Cache.Path = "/home/erbesharat/.test"
 		err := gomods(w, r, test.path, c)
 		if err != nil {
 			t.Errorf("ERROR: %e", err)

@@ -139,6 +139,9 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 						case "type":
 							args := c.RemainingArgs()
 							modproxy.Cache.Type = args[0]
+						case "path":
+							args := c.RemainingArgs()
+							modproxy.Cache.Path = args[0]
 						default:
 							return txtdirect.Config{}, c.ArgErr() // unhandled option for prometheus
 						}

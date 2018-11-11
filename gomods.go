@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 
+	"github.com/txtdirect/txtdirect/pkg/cache"
+
 	"github.com/mholt/caddy/caddyhttp/proxy"
-	"gopkg.in/src-d/go-git.v4"
 )
 
 type ModProxy struct {
@@ -17,6 +17,7 @@ type ModProxy struct {
 	Cache  struct {
 		Enable bool
 		Type   string
+		Path   string
 	}
 }
 
@@ -28,7 +29,7 @@ type Module struct {
 
 type ModuleHandler interface {
 	proxy() error
-	fetch() error
+	cache() error
 	zip() error
 }
 
@@ -43,13 +44,23 @@ func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error
 		}
 		moduleName = strings.Join([]string{moduleName, v}, "/")
 	}
-	localPath := fmt.Sprintf("%s/%s", c.ModProxy.Cache, moduleName[1:])
+	localPath := fmt.Sprintf("%s/%s", c.ModProxy.Cache.Path, moduleName[1:])
 	m := Module{
 		Path:      moduleName[1:], // [1:] ignores "/" at the beginning of url
 		LocalPath: localPath,
 		Version:   strings.Split(fileName, ".")[0], // Gets version number from last part of the path
 	}
-	err := m.proxy(w, r, fileName)
+	u, err := url.Parse(fmt.Sprintf("https://%s/@v/%s", m.Path, fileName))
+	if err != nil {
+		return fmt.Errorf("unable to parse the url: %s", err.Error())
+	}
+	if c.ModProxy.Cache.Enable {
+		err = m.cache(u, c)
+		if err != nil {
+			return fmt.Errorf("unable to cache the file on %s storage: %s", c.ModProxy.Cache.Type, err.Error())
+		}
+	}
+	err = m.proxy(w, r, u)
 	if err != nil {
 		return fmt.Errorf("unable to proxy the request: %s", err.Error())
 	}
@@ -57,11 +68,7 @@ func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error
 	return nil
 }
 
-func (m Module) proxy(w http.ResponseWriter, r *http.Request, fileName string) error {
-	u, err := url.Parse(fmt.Sprintf("https://%s/@v/%s", m.Path, fileName))
-	if err != nil {
-		return fmt.Errorf("unable to parse the url: %s", err.Error())
-	}
+func (m Module) proxy(w http.ResponseWriter, r *http.Request, u *url.URL) error {
 	r.URL.Path = "" // FIXME: Reconsider this part
 	reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout, fallbackDelay)
 	if err := reverseProxy.ServeHTTP(w, r, nil); err != nil {
@@ -70,34 +77,14 @@ func (m Module) proxy(w http.ResponseWriter, r *http.Request, fileName string) e
 	return nil
 }
 
-func (m Module) fetch() error {
-	if _, err := os.Stat(m.LocalPath); !os.IsNotExist(err) {
-		err := os.MkdirAll(m.LocalPath, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("unable to create directory: %s", m.LocalPath)
+func (m Module) cache(u *url.URL, c Config) error {
+	switch c.ModProxy.Cache.Type {
+	case "local":
+		if err := cache.Local(m.Path, m.LocalPath, m.Version); err != nil {
+			return err
 		}
-		// TODO: Support Auth for private modules
-		_, err = git.PlainClone(m.LocalPath, false, &git.CloneOptions{
-			URL:      fmt.Sprintf("https://%s", m.Path),
-			Progress: os.Stdout,
-		})
-		if err != nil {
-			return fmt.Errorf("unable to clone the module's repository: %s", err.Error())
-		}
-		return nil
-	}
-	// TODO: Change working branch based on the requested version
-	r, err := git.PlainOpen(m.LocalPath)
-	if err != nil {
-		return fmt.Errorf("unable to open the module's repository: %s", err.Error())
-	}
-	w, err := r.Worktree()
-	if err != nil {
-		return fmt.Errorf("unable to get module's current branch: %s", err.Error())
-	}
-	err = w.Pull(&git.PullOptions{RemoteName: "origin"})
-	if err != nil {
-		return fmt.Errorf("unable to get module's latest changes: %s", err.Error())
+	default:
+		return fmt.Errorf("unable to identify the %s storage", c.ModProxy.Cache.Type)
 	}
 	return nil
 }

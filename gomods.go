@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/txtdirect/txtdirect/pkg/cache"
-
 	"github.com/mholt/caddy/caddyhttp/proxy"
 )
 
@@ -29,7 +27,6 @@ type Module struct {
 
 type ModuleHandler interface {
 	proxy() error
-	cache() error
 	zip() error
 }
 
@@ -54,12 +51,6 @@ func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error
 	if err != nil {
 		return fmt.Errorf("unable to parse the url: %s", err.Error())
 	}
-	if c.ModProxy.Cache.Enable {
-		err = m.cache(u, c)
-		if err != nil {
-			return fmt.Errorf("unable to cache the file on %s storage: %s", c.ModProxy.Cache.Type, err.Error())
-		}
-	}
 	err = m.proxy(w, r, u)
 	if err != nil {
 		return fmt.Errorf("unable to proxy the request: %s", err.Error())
@@ -73,18 +64,6 @@ func (m Module) proxy(w http.ResponseWriter, r *http.Request, u *url.URL) error 
 	reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout, fallbackDelay)
 	if err := reverseProxy.ServeHTTP(w, r, nil); err != nil {
 		return err
-	}
-	return nil
-}
-
-func (m Module) cache(u *url.URL, c Config) error {
-	switch c.ModProxy.Cache.Type {
-	case "local":
-		if err := cache.Local(m.Path, m.LocalPath, m.Version); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("unable to identify the %s storage", c.ModProxy.Cache.Type)
 	}
 	return nil
 }

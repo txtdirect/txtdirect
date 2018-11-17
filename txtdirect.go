@@ -172,7 +172,14 @@ func contains(array []string, word string) bool {
 func getRecord(host, path string, ctx context.Context, c Config, r *http.Request) (record, error) {
 	txts, err := query(host, ctx, c)
 	if err != nil {
-		return record{}, err
+		// if nothing found, jump into wildcards
+		hostSlice := strings.Split(host, ".")
+		hostSlice[0] = "_"
+		host = strings.Join(hostSlice, ".")
+		txts, err = query(host, ctx, c)
+		if err != nil {
+			return record{}, err
+		}
 	}
 
 	if len(txts) != 1 {

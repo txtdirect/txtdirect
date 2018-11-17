@@ -34,6 +34,7 @@ const (
 	defaultSub      = "www"
 	defaultProtocol = "https"
 	proxyKeepalive  = 30
+	fallbackDelay   = 300 * time.Millisecond
 	logFormat       = "02/Jan/2006:15:04:05 -0700"
 	proxyTimeout    = 30 * time.Second
 )
@@ -360,7 +361,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if err != nil {
 			return err
 		}
-		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout)
+		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout, fallbackDelay)
 		reverseProxy.ServeHTTP(w, r, nil)
 		return nil
 	}

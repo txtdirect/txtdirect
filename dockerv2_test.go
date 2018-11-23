@@ -22,33 +22,42 @@ func Test_generateDockerv2URI(t *testing.T) {
 			"OK",
 		},
 		{
-			"/v2/testing/tags/docker",
+			"/v2/random/container/tags/latest",
 			record{
-				To:   "https://gcr.io/v2/my_bucket/$1/tags/$2",
+				To:   "https://gcr.io/testing/container",
 				Code: 302,
 			},
-			"https://gcr.io/v2/my_bucket/testing/tags/docker",
+			"https://gcr.io/v2/testing/container/tags/latest",
 		},
 		{
-			"/v2/testing/manifests/docker",
+			"/v2/random/container/tags/latest",
 			record{
-				To: "https://gcr.io/v2/my_bucket/$1/manifests/$2",
+				To:   "https://gcr.io/",
+				Code: 302,
 			},
-			"https://gcr.io/v2/my_bucket/testing/manifests/docker",
+			"https://gcr.io/v2/random/container/tags/latest",
 		},
 		{
-			"/v2/testing/blobs/docker",
+			"/v2/random/container/_catalog",
 			record{
-				To: "https://gcr.io/v2/my_bucket/$1/blobs/$2",
+				To:   "https://gcr.io/",
+				Code: 302,
 			},
-			"https://gcr.io/v2/my_bucket/testing/blobs/docker",
+			"https://gcr.io/v2/random/container/_catalog",
 		},
 		{
-			"/v2/_catalog",
+			"/v2/random/container/manifests/v3.0.0",
 			record{
-				To: "https://gcr.io/v2/_catalog",
+				To: "https://gcr.io/testing/container",
 			},
-			"https://gcr.io/v2/_catalog",
+			"https://gcr.io/v2/testing/container/manifests/v3.0.0",
+		},
+		{
+			"/v2/random/container/manifests/v3.0.0",
+			record{
+				To: "https://gcr.io/testing/container:v2.0.0",
+			},
+			"https://gcr.io/v2/testing/container/manifests/v2.0.0",
 		},
 	}
 	for _, test := range tests {

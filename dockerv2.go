@@ -36,7 +36,7 @@ func createDockerv2URI(to string, path string) (string, error) {
 		return "", err
 	}
 
-	if uri.Path == "/" {
+	if uri.Path == "/" || uri.Path == "" {
 		uri.Path = path
 		return uri.String(), nil
 	}

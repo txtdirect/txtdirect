@@ -347,7 +347,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "dockerv2" {
 		err := redirectDockerv2(w, r, rec)
 		if err != nil {
-			panic(err)
+			log.Printf("<%s> [txtdirect]: couldn't redirect to the requested container: %s", time.Now().Format(logFormat), err.Error())
+			fallback(w, r, fallbackURL, code, c)
 		}
 		return nil
 	}

@@ -1,10 +1,12 @@
 package txtdirect
 
 import (
+	"log"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var dockerRegexes = map[string]*regexp.Regexp{
@@ -14,6 +16,10 @@ var dockerRegexes = map[string]*regexp.Regexp{
 
 func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error {
 	path := r.URL.Path
+	if !strings.Contains(path, "/v2") {
+		log.Printf("<%s> [txtdirect]: unrecognized path for dockerv2: %s", time.Now().Format(logFormat), path)
+		fallback(w, r, rec.Root, http.StatusPermanentRedirect, Config{})
+	}
 	if dockerRegexes["v2"].MatchString(path) {
 		w.Header().Set("Docker-Distribution-Api-Version", "registry/2.0")
 		_, err := w.Write([]byte(http.StatusText(http.StatusOK)))

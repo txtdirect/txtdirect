@@ -10,7 +10,7 @@ build: fetch-dependencies
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e "s/\/\/ This is where other plugins get plugged in (imported)/_ \"github.com\/txtdirect\/txtdirect\/caddy\"/" -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/miekg\/caddy-prometheus"' -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/captncraig\/caddy-realip"' -- {} +
-	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e 's/const enableTelemetry = true/const enableTelemetry = false/' -- {} +
+	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e 's/var EnableTelemetry = true/var EnableTelemetry = false/' -- {} +
 	cd caddy-copy/caddy && \
 	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w"
 	mv caddy-copy/caddy/caddy ./$(BIN)
@@ -21,7 +21,7 @@ travis-build: fetch-dependencies
 	find caddy/caddymain -name 'run.go' -type f -exec sed -i -e "s/\/\/ This is where other plugins get plugged in (imported)/_ \"github.com\/txtdirect\/txtdirect\/caddy\"/" -- {} + && \
 	find caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/miekg\/caddy-prometheus"' -- {} + && \
 	find caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/captncraig\/caddy-realip"' -- {} + && \
-	find caddy/caddymain -name 'run.go' -type f -exec sed -i -e 's/const enableTelemetry = true/const enableTelemetry = false/' -- {} + && \
+	find caddy/caddymain -name 'run.go' -type f -exec sed -i -e 's/var EnableTelemetry = true/var EnableTelemetry = false/' -- {} + && \
 	cd caddy && \
 	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w"
 	mv $$GOPATH/src/github.com/mholt/caddy/caddy/caddy txtdirect

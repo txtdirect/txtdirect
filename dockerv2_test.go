@@ -16,18 +16,10 @@ func Test_generateDockerv2URI(t *testing.T) {
 		{
 			"/v2/",
 			record{
-				To:   "docker.io/seetheprogress/txtdirect:latest",
+				To:   "https://gcr.io/seetheprogress/txtdirect:latest",
 				Code: 302,
 			},
 			"OK",
-		},
-		{
-			"/v2/random/container/tags/latest",
-			record{
-				To:   "https://gcr.io/testing/container",
-				Code: 302,
-			},
-			"https://gcr.io/v2/testing/container/tags/latest",
 		},
 		{
 			"/v2/random/container/tags/latest",
@@ -38,26 +30,53 @@ func Test_generateDockerv2URI(t *testing.T) {
 			"https://gcr.io/v2/random/container/tags/latest",
 		},
 		{
+			"/v2/random/container/tags/v2.0.0",
+			record{
+				To:   "https://gcr.io/",
+				Code: 302,
+			},
+			"https://gcr.io/v2/random/container/tags/v2.0.0",
+		},
+		{
+			"/v2/testing/container/tags/v3.0.0",
+			record{
+				To:   "https://gcr.io/testing/container:v2.0.0",
+				Code: 302,
+			},
+			"https://gcr.io/v2/testing/container/tags/v2.0.0",
+		},
+		{
+			"/v2/testing/container/tags/v2.0.0",
+			record{
+				To:   "https://gcr.io/testing/container",
+				Code: 302,
+			},
+			"https://gcr.io/v2/testing/container/tags/v2.0.0",
+		},
+		{
+			"/v2/random/container/tags/latest",
+			record{
+				To:   "https://gcr.io/testing/container:v2.0.0",
+				Code: 302,
+			},
+			"https://gcr.io/v2/testing/container/tags/v2.0.0",
+		},
+
+		{
+			"/v2/random/container/tags/v2.0.0",
+			record{
+				To:   "https://gcr.io/testing/container",
+				Code: 302,
+			},
+			"https://gcr.io/v2/testing/container/tags/v2.0.0",
+		},
+		{
 			"/v2/random/container/_catalog",
 			record{
 				To:   "https://gcr.io/",
 				Code: 302,
 			},
 			"https://gcr.io/v2/random/container/_catalog",
-		},
-		{
-			"/v2/random/container/manifests/v3.0.0",
-			record{
-				To: "https://gcr.io/testing/container",
-			},
-			"https://gcr.io/v2/testing/container/manifests/v3.0.0",
-		},
-		{
-			"/v2/random/container/manifests/v3.0.0",
-			record{
-				To: "https://gcr.io/testing/container:v2.0.0",
-			},
-			"https://gcr.io/v2/testing/container/manifests/v2.0.0",
 		},
 	}
 	for _, test := range tests {

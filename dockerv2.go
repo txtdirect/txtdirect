@@ -16,9 +16,14 @@ var dockerRegexes = map[string]*regexp.Regexp{
 
 func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error {
 	path := r.URL.Path
-	if !strings.Contains(path, "/v2") {
+	if !strings.HasPrefix(path, "/v2") {
 		log.Printf("<%s> [txtdirect]: unrecognized path for dockerv2: %s", time.Now().Format(logFormat), path)
-		fallback(w, r, rec.Root, http.StatusPermanentRedirect, Config{})
+		if path == "" || path == "/" {
+			fallback(w, r, rec.Root, http.StatusPermanentRedirect, Config{})
+			return nil
+		}
+		fallback(w, r, rec.Website, http.StatusPermanentRedirect, Config{})
+		return nil
 	}
 	if dockerRegexes["v2"].MatchString(path) {
 		w.Header().Set("Docker-Distribution-Api-Version", "registry/2.0")

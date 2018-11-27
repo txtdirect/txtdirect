@@ -81,13 +81,12 @@ func Test_generateDockerv2URI(t *testing.T) {
 		{
 			"/random/path",
 			record{
-				To:   "https://gcr.io/",
-				Code: 302,
-				Root: "https://fallback.test",
+				To:      "https://gcr.io/",
+				Code:    302,
+				Website: "https://fallback.test",
 			},
 			"https://fallback.test",
 		},
-
 		{
 			"",
 			record{

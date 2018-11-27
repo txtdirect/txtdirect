@@ -165,11 +165,11 @@ func contains(array []string, word string) bool {
 	return false
 }
 
-// getRecord uses the given host and path to find a TXT record
+// getRecord uses the given host to find a TXT record
 // and then parses the txt record and returns a TXTDirect record
-// struct instance It returns an error when it can't find any txt
+// struct instance. It returns an error when it can't find any txt
 // records or if the TXT record is not standard.
-func getRecord(host, path string, ctx context.Context, c Config, r *http.Request) (record, error) {
+func getRecord(host string, ctx context.Context, c Config, r *http.Request) (record, error) {
 	txts, err := query(host, ctx, c)
 	if err != nil {
 		// if nothing found, jump into wildcards
@@ -285,7 +285,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	rec, err := getRecord(host, path, r.Context(), c, r)
+	rec, err := getRecord(host, r.Context(), c, r)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {

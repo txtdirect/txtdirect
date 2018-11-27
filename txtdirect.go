@@ -46,6 +46,7 @@ type record struct {
 	Code    int
 	Type    string
 	Vcs     string
+	Website string
 	From    string
 	Root    string
 	Re      string
@@ -113,6 +114,10 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 		case strings.HasPrefix(l, "vcs="):
 			l = strings.TrimPrefix(l, "vcs=")
 			r.Vcs = l
+
+		case strings.HasPrefix(l, "website="):
+			l = strings.TrimPrefix(l, "website=")
+			r.Website = l
 
 		default:
 			tuple := strings.Split(l, "=")
@@ -347,7 +352,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "dockerv2" {
 		err := redirectDockerv2(w, r, rec)
 		if err != nil {
-			panic(err)
+			log.Printf("<%s> [txtdirect]: couldn't redirect to the requested container: %s", time.Now().Format(logFormat), err.Error())
+			fallback(w, r, fallbackURL, code, c)
 		}
 		return nil
 	}

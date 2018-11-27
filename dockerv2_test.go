@@ -78,6 +78,24 @@ func Test_generateDockerv2URI(t *testing.T) {
 			},
 			"https://gcr.io/v2/random/container/_catalog",
 		},
+		{
+			"/random/path",
+			record{
+				To:      "https://gcr.io/",
+				Code:    302,
+				Website: "https://fallback.test",
+			},
+			"https://fallback.test",
+		},
+		{
+			"",
+			record{
+				To:   "https://gcr.io/",
+				Code: 302,
+				Root: "https://fallback.test",
+			},
+			"https://fallback.test",
+		},
 	}
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", fmt.Sprintf("https://example.com%s", test.path), nil)

@@ -235,7 +235,7 @@ func customResolver(c Config) net.Resolver {
 	}
 }
 
-// query checkes the given zone using net.LookupTXT to
+// query checks the given zone using net.LookupTXT to
 // find TXT records in that zone
 func query(zone string, ctx context.Context, c Config) ([]string, error) {
 	// Removes port from zone

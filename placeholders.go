@@ -28,7 +28,13 @@ func parsePlaceholders(input string, r *http.Request) (string, error) {
 		case "{host}":
 			input = strings.Replace(input, "{host}", r.Host, -1)
 		case "{hostonly}":
-			input = strings.Replace(input, "{hostonly}", r.Host, -1)
+			// Removes port from host
+			var host string
+			if strings.Contains(r.Host, ":") {
+				hostSlice := strings.Split(r.Host, ":")
+				host = hostSlice[0]
+			}
+			input = strings.Replace(input, "{hostonly}", host, -1)
 		case "{method}":
 			input = strings.Replace(input, "{method}", r.Method, -1)
 		case "{path}":
@@ -61,7 +67,13 @@ func parsePlaceholders(input string, r *http.Request) (string, error) {
 			if n < 1 {
 				return "", fmt.Errorf("{label0} is not supported")
 			}
-			labels := strings.Split(r.Host, ".")
+			// Removes port from host
+			var host string
+			if strings.Contains(r.Host, ":") {
+				hostSlice := strings.Split(r.Host, ":")
+				host = hostSlice[0]
+			}
+			labels := strings.Split(host, ".")
 			if n > len(labels) {
 				return "", fmt.Errorf("Cannot parse a label greater than %d", len(labels))
 			}

@@ -172,23 +172,16 @@ func contains(array []string, word string) bool {
 func getRecord(host string, ctx context.Context, c Config, r *http.Request) (record, error) {
 	txts, err := query(host, ctx, c)
 	if err != nil {
-		// if nothing found, jump into wildcards
-		hostSlice := strings.Split(host, ".")
-		hostSlice[0] = "_"
-		host = strings.Join(hostSlice, ".")
-		txts, err = query(host, ctx, c)
-		if err != nil {
-			return record{}, err
-		}
-		if txts[0] == "" {
-			// if record empty, jump into wildcards again
+		log.Printf("Initial DNS query failed: %s", err)
+		if err != nil || txts[0] == "" {
+			// if error present or record empty, jump into wildcards
 			hostSlice := strings.Split(host, ".")
 			hostSlice[0] = "_"
 			host = strings.Join(hostSlice, ".")
 			txts, err = query(host, ctx, c)
-			if err != nil {
-				return record{}, err
-			}
+		}
+		if err != nil {
+			return record{}, err
 		}
 	}
 

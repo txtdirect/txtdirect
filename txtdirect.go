@@ -231,8 +231,10 @@ func customResolver(c Config) net.Resolver {
 // query checks the given zone using net.LookupTXT to
 // find TXT records in that zone
 func query(zone string, ctx context.Context, c Config) ([]string, error) {
+	// Removes port from zone
 	if strings.Contains(zone, ":") {
-		return nil, fmt.Errorf("zone should not have a port: %s", zone)
+		zoneSlice := strings.Split(zone, ":")
+		zone = zoneSlice[0]
 	}
 
 	if !strings.HasPrefix(zone, basezone) {

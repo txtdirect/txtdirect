@@ -1,7 +1,6 @@
 package txtdirect
 
 import (
-	"net"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -30,9 +29,10 @@ func parsePlaceholders(input string, r *http.Request) (string, error) {
 			input = strings.Replace(input, "{host}", r.Host, -1)
 		case "{hostonly}":
 			// Removes port from host
-			host, _, err := net.SplitHostPort(r.Host)
-			if err != nil {
-				return "", err
+			var host string
+			if strings.Contains(r.Host, ":") {
+				hostSlice := strings.Split(r.Host, ":")
+				host = hostSlice[0]
 			}
 			input = strings.Replace(input, "{hostonly}", host, -1)
 		case "{method}":
@@ -68,9 +68,10 @@ func parsePlaceholders(input string, r *http.Request) (string, error) {
 				return "", fmt.Errorf("{label0} is not supported")
 			}
 			// Removes port from host
-			host, _, err := net.SplitHostPort(r.Host)
-			if err != nil {
-				return "", err
+			var host string
+			if strings.Contains(r.Host, ":") {
+				hostSlice := strings.Split(r.Host, ":")
+				host = hostSlice[0]
 			}
 			labels := strings.Split(host, ".")
 			if n > len(labels) {

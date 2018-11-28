@@ -26,9 +26,9 @@ func parsePlaceholders(input string, r *http.Request) (string, error) {
 		case "{fragment}":
 			input = strings.Replace(input, "{fragment}", r.URL.Fragment, -1)
 		case "{host}":
-			input = strings.Replace(input, "{host}", r.URL.Host, -1)
+			input = strings.Replace(input, "{host}", r.Host, -1)
 		case "{hostonly}":
-			input = strings.Replace(input, "{hostonly}", r.URL.Hostname(), -1)
+			input = strings.Replace(input, "{hostonly}", r.Host, -1)
 		case "{method}":
 			input = strings.Replace(input, "{method}", r.Method, -1)
 		case "{path}":
@@ -51,7 +51,7 @@ func parsePlaceholders(input string, r *http.Request) (string, error) {
 			input = strings.Replace(input, "{user}", user, -1)
 		}
 		/* For multi-level tlds such as "example.co.uk", "co" would be used as {label2},
-		 "example" would be {label1} and "uk" would be {label3} */
+		"example" would be {label1} and "uk" would be {label3} */
 		if strings.HasPrefix(placeholder[0], "{label") {
 			nStr := placeholder[0][6 : len(placeholder[0])-1] // get the integer N in "{labelN}"
 			n, err := strconv.Atoi(nStr)
@@ -61,7 +61,7 @@ func parsePlaceholders(input string, r *http.Request) (string, error) {
 			if n < 1 {
 				return "", fmt.Errorf("{label0} is not supported")
 			}
-			labels := strings.Split(r.URL.Hostname(), ".")
+			labels := strings.Split(r.Host, ".")
 			if n > len(labels) {
 				return "", fmt.Errorf("Cannot parse a label greater than %d", len(labels))
 			}

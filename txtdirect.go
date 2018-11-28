@@ -173,13 +173,13 @@ func getRecord(host string, ctx context.Context, c Config, r *http.Request) (rec
 	txts, err := query(host, ctx, c)
 	if err != nil {
 		log.Printf("Initial DNS query failed: %s", err)
-		if err != nil || txts[0] == "" {
-			// if error present or record empty, jump into wildcards
-			hostSlice := strings.Split(host, ".")
-			hostSlice[0] = "_"
-			host = strings.Join(hostSlice, ".")
-			txts, err = query(host, ctx, c)
-		}
+	}
+	// if error present or record empty, jump into wildcards
+	if err != nil || txts[0] == "" {
+		hostSlice := strings.Split(host, ".")
+		hostSlice[0] = "_"
+		host = strings.Join(hostSlice, ".")
+		txts, err = query(host, ctx, c)
 		if err != nil {
 			return record{}, err
 		}

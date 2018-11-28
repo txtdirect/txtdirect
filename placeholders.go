@@ -29,7 +29,7 @@ func parsePlaceholders(input string, r *http.Request) (string, error) {
 			input = strings.Replace(input, "{host}", r.Host, -1)
 		case "{hostonly}":
 			// Removes port from host
-			var host string
+			host := r.Host
 			if strings.Contains(r.Host, ":") {
 				hostSlice := strings.Split(r.Host, ":")
 				host = hostSlice[0]
@@ -68,7 +68,7 @@ func parsePlaceholders(input string, r *http.Request) (string, error) {
 				return "", fmt.Errorf("{label0} is not supported")
 			}
 			// Removes port from host
-			var host string
+			host := r.Host
 			if strings.Contains(r.Host, ":") {
 				hostSlice := strings.Split(r.Host, ":")
 				host = hostSlice[0]

@@ -173,14 +173,24 @@ func contains(array []string, word string) bool {
 	return false
 }
 
-// getRecord uses the given host and path to find a TXT record
+// getRecord uses the given host to find a TXT record
 // and then parses the txt record and returns a TXTDirect record
-// struct instance It returns an error when it can't find any txt
+// struct instance. It returns an error when it can't find any txt
 // records or if the TXT record is not standard.
-func getRecord(host, path string, ctx context.Context, c Config, r *http.Request) (record, error) {
+func getRecord(host string, ctx context.Context, c Config, r *http.Request) (record, error) {
 	txts, err := query(host, ctx, c)
 	if err != nil {
-		return record{}, err
+		log.Printf("Initial DNS query failed: %s", err)
+	}
+	// if error present or record empty, jump into wildcards
+	if err != nil || txts[0] == "" {
+		hostSlice := strings.Split(host, ".")
+		hostSlice[0] = "_"
+		host = strings.Join(hostSlice, ".")
+		txts, err = query(host, ctx, c)
+		if err != nil {
+			return record{}, err
+		}
 	}
 
 	if len(txts) != 1 {
@@ -226,7 +236,7 @@ func customResolver(c Config) net.Resolver {
 	}
 }
 
-// query checkes the given zone using net.LookupTXT to
+// query checks the given zone using net.LookupTXT to
 // find TXT records in that zone
 func query(zone string, ctx context.Context, c Config) ([]string, error) {
 	// Removes port from zone
@@ -276,7 +286,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	rec, err := getRecord(host, path, r.Context(), c, r)
+	rec, err := getRecord(host, r.Context(), c, r)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {

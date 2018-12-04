@@ -30,9 +30,8 @@ func Test_gomods(t *testing.T) {
 		r := httptest.NewRequest("GET", fmt.Sprintf("https://example.com%s", test.path), nil)
 		c := Config{
 			Gomods: Gomods{
-				Enable:   true,
-				GoBinary: "/usr/local/go/bin/go",
-				Workers:  2,
+				Enable:  true,
+				Workers: 2,
 				Cache: struct {
 					Type string
 					Path string

@@ -41,7 +41,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	var enable []string
 	var redirect string
 	var resolver string
-	var modproxy txtdirect.ModProxy
+	var gomods txtdirect.Gomods
 
 	c.Next() // skip directive name
 	for c.NextBlock() {
@@ -101,7 +101,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				})
 			}
 
-		case "modproxy":
+		case "gomods":
 			for c.Next() {
 				if c.Val() == "}" {
 					break
@@ -111,15 +111,22 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				}
 				switch c.Val() {
 				case "enable":
-					args := c.RemainingArgs()
-					value, err := strconv.ParseBool(args[0])
+					args := c.RemainingArgs()[0]
+					value, err := strconv.ParseBool(args)
 					if err != nil {
 						return txtdirect.Config{}, c.ArgErr()
 					}
-					modproxy.Enable = value
-				case "path":
-					args := c.RemainingArgs()
-					modproxy.Path = args[0]
+					gomods.Enable = value
+				case "gobinary":
+					value := c.RemainingArgs()[0]
+					gomods.GoBinary = value
+				case "workers":
+					args := c.RemainingArgs()[0]
+					value, err := strconv.Atoi(args)
+					if err != nil {
+						return txtdirect.Config{}, c.ArgErr()
+					}
+					gomods.Workers = value
 				case "cache":
 					for c.Next() {
 						if c.Val() == "}" {
@@ -129,25 +136,18 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 							continue
 						}
 						switch c.Val() {
-						case "enable":
-							args := c.RemainingArgs()
-							value, err := strconv.ParseBool(args[0])
-							if err != nil {
-								return txtdirect.Config{}, c.ArgErr()
-							}
-							modproxy.Cache.Enable = value
 						case "type":
 							args := c.RemainingArgs()
-							modproxy.Cache.Type = args[0]
+							gomods.Cache.Type = args[0]
 						case "path":
 							args := c.RemainingArgs()
-							modproxy.Cache.Path = args[0]
+							gomods.Cache.Path = args[0]
 						default:
-							return txtdirect.Config{}, c.ArgErr() // unhandled option for prometheus
+							return txtdirect.Config{}, c.ArgErr() // unhandled option for gomods cache
 						}
 					}
 				default:
-					return txtdirect.Config{}, c.ArgErr() // unhandled option for prometheus
+					return txtdirect.Config{}, c.ArgErr() // unhandled option for gomods
 				}
 			}
 
@@ -165,7 +165,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 		Enable:   enable,
 		Redirect: redirect,
 		Resolver: resolver,
-		ModProxy: modproxy,
+		Gomods:   gomods,
 	}
 	return config, nil
 }

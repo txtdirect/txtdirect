@@ -17,10 +17,10 @@ import (
 	"github.com/spf13/afero"
 )
 
-type ModProxy struct {
+type Gomods struct {
 	Enable   bool
-	Path     string
 	GoBinary string
+	Workers  int
 	Cache    struct {
 		Type string
 		Path string
@@ -128,14 +128,14 @@ func (m Module) fetch(r *http.Request, c Config) (download.Protocol, error) {
 	if err != nil {
 		return nil, err
 	}
-	dp := m.dp(fetcher, s, fs)
+	dp := m.dp(fetcher, s, fs, c)
 	return dp, nil
 }
 
 func (m Module) storage(c Config) (storage.Backend, error) {
-	switch c.ModProxy.Cache.Type {
+	switch c.Gomods.Cache.Type {
 	case "local":
-		s, err := fs.NewStorage(c.ModProxy.Cache.Path, afero.NewOsFs())
+		s, err := fs.NewStorage(c.Gomods.Cache.Path, afero.NewOsFs())
 		if err != nil {
 			return nil, fmt.Errorf("could not create new storage from os fs (%s)", err)
 		}
@@ -144,15 +144,15 @@ func (m Module) storage(c Config) (storage.Backend, error) {
 	return nil, fmt.Errorf("Invalid storage config for gomods")
 }
 
-func (m Module) dp(fetcher module.Fetcher, s storage.Backend, fs afero.Fs) download.Protocol {
-	lister := download.NewVCSLister("/usr/local/go/bin/go", fs)
-	st := stash.New(fetcher, s, stash.WithPool(2), stash.WithSingleflight)
+func (m Module) dp(fetcher module.Fetcher, s storage.Backend, fs afero.Fs, c Config) download.Protocol {
+	lister := download.NewVCSLister(c.Gomods.GoBinary, fs)
+	st := stash.New(fetcher, s, stash.WithPool(c.Gomods.Workers), stash.WithSingleflight)
 	dpOpts := &download.Opts{
 		Storage: s,
 		Stasher: st,
 		Lister:  lister,
 	}
-	dp := download.New(dpOpts, addons.WithPool(2))
+	dp := download.New(dpOpts, addons.WithPool(c.Gomods.Workers))
 	return dp
 }
 

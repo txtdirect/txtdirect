@@ -56,7 +56,7 @@ type Config struct {
 	Enable   []string
 	Redirect string
 	Resolver string
-	ModProxy ModProxy
+	Gomods   Gomods
 }
 
 // Parse takes a string containing the DNS TXT record and returns

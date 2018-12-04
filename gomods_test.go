@@ -58,16 +58,14 @@ func Test_gomodsWithLocalCache(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", fmt.Sprintf("https://example.com%s", test.path), nil)
 		c := Config{
-			ModProxy: ModProxy{
+			Gomods: Gomods{
 				Enable: true,
 				Cache: struct {
-					Enable bool
-					Type   string
-					Path   string
+					Type string
+					Path string
 				}{
-					Enable: true,
-					Type:   "local",
-					Path:   "/home/erbesharat/.test",
+					Type: "local",
+					Path: "/home/erbesharat/.test",
 				},
 			},
 		}

@@ -33,7 +33,7 @@ type Module struct {
 }
 
 type ModuleHandler interface {
-	fetch() (*storage.Version, error)
+	fetch(r *http.Request, c Config) (*storage.Version, error)
 	storage(c Config) (storage.Backend, error)
 	dp(fetcher module.Fetcher, s storage.Backend, fs afero.Fs) download.Protocol
 }

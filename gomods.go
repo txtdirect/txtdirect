@@ -39,7 +39,7 @@ type ModuleHandler interface {
 }
 
 var gomodsRegex = regexp.MustCompile("(list|info|mod|zip)")
-var modVersionRegex = regexp.MustCompile("@v\\/(v\\d+\\.\\d+\\.\\d+?|v\\d+\\.\\d+|latest|master)")
+var modVersionRegex = regexp.MustCompile("@v\\/(v\\d+\\.\\d+\\.\\d+\\-\\d+\\-[\\w\\d]+|v\\d+\\.\\d+\\.\\d+|v\\d+\\.\\d+|latest|master)")
 
 func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error {
 	moduleName, version, ext := moduleNameAndVersion(path)
@@ -114,13 +114,11 @@ func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error
 	default:
 		return fmt.Errorf("the requested file's extension is not supported")
 	}
-
-	return nil
 }
 
 func (m Module) fetch(r *http.Request, c Config) (download.Protocol, error) {
 	fs := afero.NewOsFs()
-	fetcher, err := module.NewGoGetFetcher("/usr/local/go/bin/go", fs)
+	fetcher, err := module.NewGoGetFetcher(c.Gomods.GoBinary, fs)
 	if err != nil {
 		return nil, err
 	}

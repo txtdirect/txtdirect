@@ -12,7 +12,8 @@ script:
   - go get -u github.com/mholt/caddy
   - go get -u gopkg.in/natefinch/lumberjack.v2
   - go get -u github.com/miekg/dns
-  - go get -u gopkg.in/src-d/go-git.v4/...
+  - go get -u github.com/gomods/athens/...
+  - go get -u github.com/spf13/afero
   - go test -v -race ./...
   - make travis-build
 

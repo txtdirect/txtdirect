@@ -120,7 +120,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				case "gobinary":
 					value := c.RemainingArgs()[0]
 					if value == "" {
-						value = os.Getenv("GOROOT") + "/go"
+						value = os.Getenv("GOROOT") + "/bin/go"
 					}
 					gomods.GoBinary = value
 				case "workers":

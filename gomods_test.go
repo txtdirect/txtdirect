@@ -3,6 +3,7 @@ package txtdirect
 import (
 	"fmt"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -26,18 +27,22 @@ func Test_gomods(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
+		if err := os.MkdirAll("/tmp/gomods", os.ModePerm); err != nil {
+			t.Fatal("Couldn't create storage directory (/tmp/gomods)")
+		}
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", fmt.Sprintf("https://example.com%s", test.path), nil)
 		c := Config{
 			Gomods: Gomods{
-				Enable:  true,
-				Workers: 2,
+				Enable:   true,
+				Workers:  2,
+				GoBinary: os.Getenv("GOROOT") + "/bin/go",
 				Cache: struct {
 					Type string
 					Path string
 				}{
 					Type: "local",
-					Path: "/home/erbesharat/.test/cache",
+					Path: "/tmp/gomods",
 				},
 			},
 		}

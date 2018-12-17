@@ -33,6 +33,7 @@ const (
 	defaultSub      = "www"
 	defaultProtocol = "https"
 	proxyKeepalive  = 30
+	fallbackDelay   = 300 * time.Millisecond
 	logFormat       = "02/Jan/2006:15:04:05 -0700"
 	proxyTimeout    = 30 * time.Second
 )
@@ -45,6 +46,7 @@ type record struct {
 	Code    int
 	Type    string
 	Vcs     string
+	Website string
 	From    string
 	Root    string
 	Re      string
@@ -58,7 +60,11 @@ type Config struct {
 	Prometheus Prometheus
 }
 
-func (r *record) Parse(str string, req *http.Request) error {
+// Parse takes a string containing the DNS TXT record and returns
+// a TXTDirect record struct instance.
+// It will return an error if the DNS TXT record is not standard or
+// if the record type is not enabled in the TXTDirect's config.
+func (r *record) Parse(str string, req *http.Request, c Config) error {
 	s := strings.Split(str, ";")
 	for _, l := range s {
 		switch {
@@ -110,6 +116,10 @@ func (r *record) Parse(str string, req *http.Request) error {
 			l = strings.TrimPrefix(l, "vcs=")
 			r.Vcs = l
 
+		case strings.HasPrefix(l, "website="):
+			l = strings.TrimPrefix(l, "website=")
+			r.Website = l
+
 		default:
 			tuple := strings.Split(l, "=")
 			if len(tuple) != 2 {
@@ -120,23 +130,28 @@ func (r *record) Parse(str string, req *http.Request) error {
 		if len(l) > 255 {
 			return fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
 		}
+		if r.Type == "dockerv2" && r.To == "" {
+			return fmt.Errorf("<%s> [txtdirect]: to= field is required in dockerv2 type", time.Now().Format(logFormat))
+		}
 	}
 
 	if r.Code == 0 {
 		r.Code = http.StatusMovedPermanently
 	}
 
-	if r.Vcs == "" && r.Type == "gometa" {
-		r.Vcs = "git"
-	}
-
 	if r.Type == "" {
 		r.Type = "host"
+	}
+
+	if !contains(c.Enable, r.Type) {
+		return fmt.Errorf("%s type is not enabled in configuration", r.Type)
 	}
 
 	return nil
 }
 
+// getBaseTarget parses the placeholder in the given record's To= field
+// and returns the final address and http status code
 func getBaseTarget(rec record, r *http.Request) (string, int, error) {
 	if strings.ContainsAny(rec.To, "{}") {
 		to, err := parsePlaceholders(rec.To, r)
@@ -148,6 +163,8 @@ func getBaseTarget(rec record, r *http.Request) (string, int, error) {
 	return rec.To, rec.Code, nil
 }
 
+// contains checks the given slice to see if an item exists
+// in that slice or not
 func contains(array []string, word string) bool {
 	for _, w := range array {
 		if w == word {
@@ -157,10 +174,24 @@ func contains(array []string, word string) bool {
 	return false
 }
 
-func getRecord(host, path string, ctx context.Context, c Config, r *http.Request) (record, error) {
+// getRecord uses the given host to find a TXT record
+// and then parses the txt record and returns a TXTDirect record
+// struct instance. It returns an error when it can't find any txt
+// records or if the TXT record is not standard.
+func getRecord(host string, ctx context.Context, c Config, r *http.Request) (record, error) {
 	txts, err := query(host, ctx, c)
 	if err != nil {
-		return record{}, err
+		log.Printf("Initial DNS query failed: %s", err)
+	}
+	// if error present or record empty, jump into wildcards
+	if err != nil || txts[0] == "" {
+		hostSlice := strings.Split(host, ".")
+		hostSlice[0] = "_"
+		host = strings.Join(hostSlice, ".")
+		txts, err = query(host, ctx, c)
+		if err != nil {
+			return record{}, err
+		}
 	}
 
 	if len(txts) != 1 {
@@ -168,13 +199,16 @@ func getRecord(host, path string, ctx context.Context, c Config, r *http.Request
 	}
 
 	rec := record{}
-	if err = rec.Parse(txts[0], r); err != nil {
+	if err = rec.Parse(txts[0], r, c); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
 	return rec, nil
 }
 
+// fallback redirects the request to the given fallback address
+// and if it's not provided it will check txtdirect config for
+// default fallback address
 func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int, c Config) {
 	if fallback != "" {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), fallback)
@@ -197,6 +231,8 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 	}
 }
 
+// customResolver returns a net.Resolver instance based
+// on the given txtdirect config to use a custom DNS resolver.
 func customResolver(c Config) net.Resolver {
 	return net.Resolver{
 		PreferGo: true,
@@ -207,6 +243,8 @@ func customResolver(c Config) net.Resolver {
 	}
 }
 
+// query checks the given zone using net.LookupTXT to
+// find TXT records in that zone
 func query(zone string, ctx context.Context, c Config) ([]string, error) {
 	// Removes port from zone
 	if strings.Contains(zone, ":") {
@@ -264,7 +302,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	rec, err := getRecord(host, path, r.Context(), c, r)
+	rec, err := getRecord(host, r.Context(), c, r)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {
@@ -307,7 +345,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	if rec.Type == "path" && contains(c.Enable, rec.Type) {
+	if rec.Type == "path" {
 		if path == "/" {
 			if rec.Root == "" {
 				fallback(w, r, fallbackURL, code, c)
@@ -332,7 +370,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 	}
 
-	if rec.Type == "proxy" && contains(c.Enable, rec.Type) {
+	if rec.Type == "proxy" {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), rec.From, rec.To)
 		to, _, err := getBaseTarget(rec, r)
 		if err != nil {
@@ -344,12 +382,21 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if err != nil {
 			return err
 		}
-		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout)
+		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout, fallbackDelay)
 		reverseProxy.ServeHTTP(w, r, nil)
 		return nil
 	}
 
-	if rec.Type == "host" && contains(c.Enable, rec.Type) {
+	if rec.Type == "dockerv2" {
+		err := redirectDockerv2(w, r, rec)
+		if err != nil {
+			log.Printf("<%s> [txtdirect]: couldn't redirect to the requested container: %s", time.Now().Format(logFormat), err.Error())
+			fallback(w, r, fallbackURL, code, c)
+		}
+		return nil
+	}
+
+	if rec.Type == "host" {
 		to, code, err := getBaseTarget(rec, r)
 		if err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
@@ -364,7 +411,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	if rec.Type == "gometa" && contains(c.Enable, rec.Type) {
+	if rec.Type == "gometa" {
 		return gometa(w, rec, host, path)
 	}
 

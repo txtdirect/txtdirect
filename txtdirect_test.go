@@ -177,8 +177,11 @@ func TestParse(t *testing.T) {
 
 	for i, test := range tests {
 		r := record{}
+		c := Config{
+			Enable: []string{test.expected.Type},
+		}
 		req, _ := http.NewRequest("GET", "http://example.com?url=https://example.com/testing", nil)
-		err := r.Parse(test.txtRecord, req)
+		err := r.Parse(test.txtRecord, req, c)
 
 		if err != nil {
 			if test.err == nil || !strings.HasPrefix(err.Error(), test.err.Error()) {
@@ -314,47 +317,6 @@ func TestRedirectBlacklist(t *testing.T) {
 	err := Redirect(w, req, config)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
-	}
-}
-
-func TestParsePlaceholders(t *testing.T) {
-	tests := []struct {
-		url         string
-		placeholder string
-		expected    string
-	}{
-		{
-			"example.com{uri}",
-			"/?test=test",
-			"example.com/?test=test",
-		},
-		{
-			"example.com{uri}/{~test}",
-			"/?test=test",
-			"example.com/?test=test/test",
-		},
-		{
-			"example.com{uri}/{>Test}",
-			"/?test=test",
-			"example.com/?test=test/test-header",
-		},
-		{
-			"example.com{uri}/{?test}",
-			"/?test=test",
-			"example.com/?test=test/test",
-		},
-	}
-	for _, test := range tests {
-		req := httptest.NewRequest("GET", "https://example.com"+test.placeholder, nil)
-		req.AddCookie(&http.Cookie{Name: "test", Value: "test"})
-		req.Header.Add("Test", "test-header")
-		result, err := parsePlaceholders(test.url, req)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if result != test.expected {
-			t.Errorf("Expected %s, got %s", test.expected, result)
-		}
 	}
 }
 

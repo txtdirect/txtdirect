@@ -45,6 +45,8 @@ External Links:
     https://en.wikipedia.org/wiki/Percent-encoding  
     https://tools.ietf.org/html/rfc3986#page-11
 
+For multi-level tlds such as `example.co.uk`, `co` would be used as `{label2}`, `example` would be `{label1}` and `uk` would be `{label3}`
+
 ### type=host
 *v*
 * Mandatory

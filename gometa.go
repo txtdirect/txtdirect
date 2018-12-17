@@ -27,7 +27,12 @@ var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 </head>
 </html>`))
 
+// gometa executes a template on the given ResponseWriter
+// that contains go-import meta tag
 func gometa(w http.ResponseWriter, r record, host, path string) error {
+	if r.Vcs == "" {
+		r.Vcs = "git"
+	}
 	if path == "/" {
 		path = ""
 	}

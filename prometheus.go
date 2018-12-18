@@ -20,6 +20,7 @@ var (
 		Name:      "total_requests_per_host",
 		Help:      "Total requests per host",
 	}, []string{"host"})
+
 	RequestsByStatus = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
 		Name:      "total_returned_statuses_per_host",
@@ -37,8 +38,10 @@ const (
 )
 
 func NewPrometheus(addr, path string) *Prometheus {
-	if addr == "" || path == "" {
+	if addr == "" {
 		addr = prometheusAddr
+	}
+	if path == "" {
 		path = prometheusPath
 	}
 	p := &Prometheus{
@@ -49,6 +52,8 @@ func NewPrometheus(addr, path string) *Prometheus {
 }
 
 func (p *Prometheus) Start() {
-	prometheus.Register(RequestsCount)
-	prometheus.Register(RequestsByStatus)
+	once.Do(func() {
+		prometheus.MustRegister(RequestsCount)
+		prometheus.MustRegister(RequestsByStatus)
+	})
 }

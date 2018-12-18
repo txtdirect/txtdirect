@@ -1,27 +1,17 @@
 package txtdirect
 
 import (
-	"log"
-	"net/http"
-	"os"
 	"sync"
 	"time"
 
-	"github.com/mholt/caddy"
-	"github.com/mholt/caddy/caddyhttp/httpserver"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Prometheus contains Prometheus's configuration
 type Prometheus struct {
-	Enable   bool
-	Address  string
-	Path     string
-	Hostname string
-	once     sync.Once
-	next     httpserver.Handler
-	handler  http.Handler
+	Enable  bool
+	Address string
+	Path    string
 }
 
 var (
@@ -52,51 +42,13 @@ func NewPrometheus(addr, path string) *Prometheus {
 		path = prometheusPath
 	}
 	p := &Prometheus{
-		Address: addr,
 		Path:    path,
+		Address: addr,
 	}
 	return p
 }
 
-func (p *Prometheus) start() error {
-	p.once.Do(func() {
-
-		prometheus.MustRegister(RequestsCount)
-		prometheus.MustRegister(RequestsByStatus)
-
-		if p.Address != "" {
-			http.Handle(p.Path, p.handler)
-			go func() {
-				err := http.ListenAndServe(p.Address, nil)
-				if err != nil {
-					log.Printf("[ERROR] Starting handler: %v", err)
-				}
-			}()
-		}
-	})
-	return nil
-}
-
-func (p *Prometheus) Setup(c *caddy.Controller) {
-	p.handler = promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{
-		ErrorHandling: promhttp.HTTPErrorOnError,
-		ErrorLog:      log.New(os.Stderr, "", log.LstdFlags),
-	})
-	once.Do(func() {
-		c.OnStartup(p.start)
-	})
-	cfg := httpserver.GetConfig(c)
-	cfg.AddMiddleware(func(next httpserver.Handler) httpserver.Handler {
-		return httpserver.HandlerFunc(func(w http.ResponseWriter, r *http.Request) (int, error) {
-			if r.URL.Path == p.Path {
-				p.handler.ServeHTTP(w, r)
-				return 0, nil
-			}
-			return next.ServeHTTP(w, r)
-		})
-	})
-	cfg.AddMiddleware(func(next httpserver.Handler) httpserver.Handler {
-		p.next = next
-		return p.next
-	})
+func (p *Prometheus) Start() {
+	prometheus.Register(RequestsCount)
+	prometheus.Register(RequestsByStatus)
 }

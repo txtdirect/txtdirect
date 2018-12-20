@@ -19,13 +19,11 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/txtdirect/txtdirect"
 )
 
@@ -166,7 +164,7 @@ func setup(c *caddy.Controller) error {
 	cfg.AddMiddleware(mid)
 	if config.Prometheus.Enable {
 		p := txtdirect.NewPrometheus(config.Prometheus.Address, config.Prometheus.Path)
-		p.Start()
+		p.Setup(c)
 	}
 
 	return nil
@@ -194,10 +192,6 @@ type Redirect struct {
 }
 
 func (rd Redirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	if r.Host == rd.Config.Prometheus.Address && strings.Contains(r.URL.Path, rd.Config.Prometheus.Path) {
-		promhttp.Handler().ServeHTTP(w, r)
-		return 0, nil
-	}
 	if err := txtdirect.Redirect(w, r, rd.Config); err != nil {
 		if err.Error() == "option disabled" {
 			return rd.Next.ServeHTTP(w, r)

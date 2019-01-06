@@ -17,7 +17,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -209,101 +208,6 @@ func TestParse(t *testing.T) {
 		if got, want := r.Vcs, test.expected.Vcs; got != want {
 			t.Errorf("Test %d: Expected Vcs to be '%s', got '%s'", i, want, got)
 		}
-	}
-}
-
-/*
-DNS TXT records currently registered at _td.test.txtdirect.org available in:
-https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
-*/
-func TestRedirectDefault(t *testing.T) {
-	testURL := "https://%d._td.test.txtdirect.org"
-	dnsURL := "_redirect.%d._td.test.txtdirect.org"
-
-	config := Config{
-		Enable: []string{"host"},
-	}
-
-	for i := 0; ; i++ {
-		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
-		if err != nil {
-			break
-		}
-		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
-		rec := httptest.NewRecorder()
-		err = Redirect(rec, req, config)
-		if err != nil {
-			t.Errorf("test %d: Unexpected error: %s", i, err)
-		}
-	}
-}
-
-/*
-DNS TXT records currently registered at _ths.test.txtdirect.org available in:
-https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
-*/
-func TestRedirectSuccess(t *testing.T) {
-	testURL := "https://%d._ths.test.txtdirect.org"
-	dnsURL := "_redirect.%d._ths.test.txtdirect.org"
-
-	config := Config{
-		Enable: []string{"host", "gometa"},
-	}
-
-	for i := 0; ; i++ {
-		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
-		if err != nil {
-			break
-		}
-		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
-		rec := httptest.NewRecorder()
-		err = Redirect(rec, req, config)
-		if err != nil {
-			t.Errorf("test %d: Unexpected error: %s", i, err)
-		}
-	}
-}
-
-/*
-DNS TXT records currently registered at _thf.test.txtdirect.org available in:
-https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
-*/
-func TestRedirectFailure(t *testing.T) {
-	testURL := "https://%d._thf.test.txtdirect.org"
-	dnsURL := "_redirect.%d._thf.test.txtdirect.org"
-
-	config := Config{
-		Enable: []string{"host"},
-	}
-
-	for i := 0; ; i++ {
-		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
-		if err != nil {
-			break
-		}
-		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
-		rec := httptest.NewRecorder()
-		err = Redirect(rec, req, config)
-		if err == nil {
-			t.Errorf("test %d: Expected error, got nil", i)
-		}
-	}
-}
-
-/*
-DNS TXT records currently registered at _ths.test.txtdirect.org available in:
-https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
-*/
-func TestPathBasedRoutingRedirect(t *testing.T) {
-	config := Config{
-		Enable: []string{"path"},
-	}
-	req := httptest.NewRequest("GET", "https://pkg.txtdirect.com/caddy/v1/", nil)
-	w := httptest.NewRecorder()
-
-	err := Redirect(w, req, config)
-	if err != nil {
-		t.Errorf("Unexpected error: %s", err)
 	}
 }
 

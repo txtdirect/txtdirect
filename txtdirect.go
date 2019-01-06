@@ -190,6 +190,7 @@ func getRecord(host string, ctx context.Context, c Config, r *http.Request) (rec
 		host = strings.Join(hostSlice, ".")
 		txts, err = query(host, ctx, c)
 		if err != nil {
+			log.Printf("Wildcard DNS query failed: %s", err.Error())
 			return record{}, err
 		}
 	}

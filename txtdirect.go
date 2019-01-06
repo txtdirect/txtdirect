@@ -20,7 +20,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -37,8 +36,6 @@ const (
 	logFormat       = "02/Jan/2006:15:04:05 -0700"
 	proxyTimeout    = 30 * time.Second
 )
-
-var PlaceholderRegex = regexp.MustCompile("{[~>?]?\\w+}")
 
 type record struct {
 	Version string
@@ -78,7 +75,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 
 		case strings.HasPrefix(l, "from="):
 			l = strings.TrimPrefix(l, "from=")
-			l, err := parsePlaceholders(l, req)
+			l, err := parsePlaceholders(l, req, []string{})
 			if err != nil {
 				return err
 			}
@@ -94,7 +91,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 
 		case strings.HasPrefix(l, "to="):
 			l = strings.TrimPrefix(l, "to=")
-			l, err := parsePlaceholders(l, req)
+			l, err := parsePlaceholders(l, req, []string{})
 			if err != nil {
 				return err
 			}
@@ -154,7 +151,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 // and returns the final address and http status code
 func getBaseTarget(rec record, r *http.Request) (string, int, error) {
 	if strings.ContainsAny(rec.To, "{}") {
-		to, err := parsePlaceholders(rec.To, r)
+		to, err := parsePlaceholders(rec.To, r, []string{})
 		if err != nil {
 			return "", 0, err
 		}
@@ -357,8 +354,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 
 		if path != "" {
-			zone, from, err := zoneFromPath(host, path, rec)
-			rec, err = getFinalRecord(zone, from, r.Context(), c, r)
+			zone, from, pathSlice, err := zoneFromPath(host, path, rec)
+			rec, err = getFinalRecord(zone, from, r.Context(), c, r, pathSlice)
 			if err != nil {
 				log.Print("Fallback is triggered because an error has occurred: ", err)
 				fallback(w, r, fallbackURL, code, c)

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gomods/athens/pkg/download"
@@ -14,6 +16,7 @@ import (
 	"github.com/gomods/athens/pkg/stash"
 	"github.com/gomods/athens/pkg/storage"
 	"github.com/gomods/athens/pkg/storage/fs"
+	"github.com/mholt/caddy"
 	"github.com/spf13/afero"
 )
 
@@ -21,10 +24,11 @@ type Gomods struct {
 	Enable   bool
 	GoBinary string
 	Workers  int
-	Cache    struct {
-		Type string
-		Path string
-	}
+	Cache    Cache
+}
+type Cache struct {
+	Type string
+	Path string
 }
 
 type Module struct {
@@ -171,4 +175,53 @@ func moduleNameAndVersion(path string) (string, string, string) {
 		version = modVersionRegex.FindAllStringSubmatch(path, -1)[0][1]
 	}
 	return moduleName, version, ext
+}
+
+// ParseGomods parses the txtdirect config for gomods
+func (gomods Gomods) ParseGomods(c *caddy.Controller, key, value string) error {
+	switch value {
+	case "enable":
+		value, err := strconv.ParseBool(value)
+		if err != nil {
+			return c.ArgErr()
+		}
+		gomods.Enable = value
+	case "gobinary":
+		if value == "" {
+			value = os.Getenv("GOROOT") + "/bin/go"
+		}
+		gomods.GoBinary = value
+	case "workers":
+		value, err := strconv.Atoi(value)
+		if err != nil {
+			return c.ArgErr()
+		}
+		gomods.Workers = value
+	case "cache":
+		for c.Next() {
+			if c.Val() == "}" {
+				break
+			}
+			if c.Val() == "{" {
+				continue
+			}
+			gomods.Cache.ParseCache(c, c.Val(), c.RemainingArgs()[0])
+		}
+	default:
+		return c.ArgErr() // unhandled option for gomods
+	}
+	return nil
+}
+
+// ParseCache parses the txtdirect config for gomods cache
+func (cache Cache) ParseCache(c *caddy.Controller, key, value string) error {
+	switch key {
+	case "type":
+		cache.Type = value
+	case "path":
+		cache.Path = value
+	default:
+		return c.ArgErr() // unhandled option for gomods cache
+	}
+	return nil
 }

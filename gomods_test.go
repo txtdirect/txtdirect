@@ -37,10 +37,7 @@ func Test_gomods(t *testing.T) {
 				Enable:   true,
 				Workers:  2,
 				GoBinary: os.Getenv("GOROOT") + "/bin/go",
-				Cache: struct {
-					Type string
-					Path string
-				}{
+				Cache: Cache{
 					Type: "local",
 					Path: "/tmp/gomods",
 				},

@@ -18,7 +18,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
@@ -85,22 +84,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 			if len(logfile) != 1 {
 
 			}
-			switch logfile[0] {
-			case "stdout":
-				log.SetOutput(os.Stdout)
-			case "stderr":
-				log.SetOutput(os.Stderr)
-			case "":
-				log.SetOutput(ioutil.Discard)
-			default:
-				log.SetOutput(&lumberjack.Logger{
-					Filename:   logfile[0],
-					MaxSize:    100,
-					MaxAge:     14,
-					MaxBackups: 10,
-				})
-			}
-
+			parseLogfile(logfile[0])
 		case "gomods":
 			for c.Next() {
 				if c.Val() == "}" {
@@ -109,48 +93,9 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				if c.Val() == "{" {
 					continue
 				}
-				switch c.Val() {
-				case "enable":
-					args := c.RemainingArgs()[0]
-					value, err := strconv.ParseBool(args)
-					if err != nil {
-						return txtdirect.Config{}, c.ArgErr()
-					}
-					gomods.Enable = value
-				case "gobinary":
-					value := c.RemainingArgs()[0]
-					if value == "" {
-						value = os.Getenv("GOROOT") + "/bin/go"
-					}
-					gomods.GoBinary = value
-				case "workers":
-					args := c.RemainingArgs()[0]
-					value, err := strconv.Atoi(args)
-					if err != nil {
-						return txtdirect.Config{}, c.ArgErr()
-					}
-					gomods.Workers = value
-				case "cache":
-					for c.Next() {
-						if c.Val() == "}" {
-							break
-						}
-						if c.Val() == "{" {
-							continue
-						}
-						switch c.Val() {
-						case "type":
-							args := c.RemainingArgs()
-							gomods.Cache.Type = args[0]
-						case "path":
-							args := c.RemainingArgs()
-							gomods.Cache.Path = args[0]
-						default:
-							return txtdirect.Config{}, c.ArgErr() // unhandled option for gomods cache
-						}
-					}
-				default:
-					return txtdirect.Config{}, c.ArgErr() // unhandled option for gomods
+				err := gomods.ParseGomods(c, c.Val(), c.RemainingArgs()[0])
+				if err != nil {
+					return txtdirect.Config{}, err
 				}
 			}
 
@@ -162,23 +107,9 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				if c.Val() == "{" {
 					continue
 				}
-				switch c.Val() {
-				case "enable":
-					args := c.RemainingArgs()
-					value, err := strconv.ParseBool(args[0])
-					if err != nil {
-						return txtdirect.Config{}, c.ArgErr()
-					}
-					prometheus.Enable = value
-				case "address":
-					// TODO: validate the given address
-					args := c.RemainingArgs()
-					prometheus.Address = args[0]
-				case "path":
-					args := c.RemainingArgs()
-					prometheus.Path = args[0]
-				default:
-					return txtdirect.Config{}, c.ArgErr() // unhandled option for prometheus
+				err := prometheus.ParsePrometheus(c, c.Val(), c.RemainingArgs()[0])
+				if err != nil {
+					return txtdirect.Config{}, err
 				}
 			}
 
@@ -254,4 +185,22 @@ func (rd Redirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error
 		return http.StatusInternalServerError, err
 	}
 	return 0, nil
+}
+
+func parseLogfile(logfile string) {
+	switch logfile {
+	case "stdout":
+		log.SetOutput(os.Stdout)
+	case "stderr":
+		log.SetOutput(os.Stderr)
+	case "":
+		log.SetOutput(ioutil.Discard)
+	default:
+		log.SetOutput(&lumberjack.Logger{
+			Filename:   logfile,
+			MaxSize:    100,
+			MaxAge:     14,
+			MaxBackups: 10,
+		})
+	}
 }

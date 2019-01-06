@@ -33,6 +33,7 @@ fetch-dependencies:
 	go get github.com/captncraig/caddy-realip
 	go get gopkg.in/natefinch/lumberjack.v2
 	go get github.com/miekg/dns
+	go get github.com/prometheus/client_golang/...
 	go get -d -u
 
 docker:

@@ -152,6 +152,27 @@ func TestParse(t *testing.T) {
 				Enable:   []string{"path"},
 			},
 		},
+		{
+			`
+			txtdirect {
+				enable host
+				redirect https://example.com
+				prometheus {
+					enable true
+					address localhost:6666
+				}
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host"},
+				Prometheus: txtdirect.Prometheus{
+					Enable:  true,
+					Address: "localhost:6666",
+				},
+			},
+		},
 	}
 
 	for i, test := range tests {

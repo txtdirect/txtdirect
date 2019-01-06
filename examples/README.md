@@ -70,7 +70,6 @@ txtdirect {
 # Placeholders
 {dir} 	        The directory of the requested file (from request URI)  
 {file} 	        The name of the requested file (from request URI)  
-{fragment} 	    The last part of the URL starting with "#"  
 {>Header} 	    Any request header, where "Header" is the header field name  
 {host} 	        The host value on the request  
 {hostname} 	    The name of the host machine that is processing the request  
@@ -84,7 +83,7 @@ txtdirect {
 {?key} 	        The value of the "key" argument from the query string  
 {remote} 	      The client's IP address  
 {scheme} 	      The protocol/scheme used (usually http or https)  
-{uri} 	        The request URI (includes path, query string, and fragment)  
+{uri} 	        The request URI (includes path and query string)  
 {uri_escaped} 	The query-escaped variant of {uri}  
 -->
 

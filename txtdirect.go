@@ -20,7 +20,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -38,14 +37,13 @@ const (
 	proxyTimeout    = 30 * time.Second
 )
 
-var PlaceholderRegex = regexp.MustCompile("{[~>?]?\\w+}")
-
 type record struct {
 	Version string
 	To      string
 	Code    int
 	Type    string
 	Vcs     string
+	Website string
 	From    string
 	Root    string
 	Re      string
@@ -53,10 +51,11 @@ type record struct {
 
 // Config contains the middleware's configuration
 type Config struct {
-	Enable   []string
-	Redirect string
-	Resolver string
-	Gomods   Gomods
+	Enable     []string
+	Redirect   string
+	Resolver   string
+	Gomods     Gomods
+	Prometheus Prometheus
 }
 
 // Parse takes a string containing the DNS TXT record and returns
@@ -77,7 +76,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 
 		case strings.HasPrefix(l, "from="):
 			l = strings.TrimPrefix(l, "from=")
-			l, err := parsePlaceholders(l, req)
+			l, err := parsePlaceholders(l, req, []string{})
 			if err != nil {
 				return err
 			}
@@ -93,7 +92,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 
 		case strings.HasPrefix(l, "to="):
 			l = strings.TrimPrefix(l, "to=")
-			l, err := parsePlaceholders(l, req)
+			l, err := parsePlaceholders(l, req, []string{})
 			if err != nil {
 				return err
 			}
@@ -115,6 +114,10 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 			l = strings.TrimPrefix(l, "vcs=")
 			r.Vcs = l
 
+		case strings.HasPrefix(l, "website="):
+			l = strings.TrimPrefix(l, "website=")
+			r.Website = l
+
 		default:
 			tuple := strings.Split(l, "=")
 			if len(tuple) != 2 {
@@ -125,10 +128,13 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 		if len(l) > 255 {
 			return fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
 		}
+		if r.Type == "dockerv2" && r.To == "" {
+			return fmt.Errorf("<%s> [txtdirect]: to= field is required in dockerv2 type", time.Now().Format(logFormat))
+		}
 	}
 
 	if r.Code == 0 {
-		r.Code = 301
+		r.Code = http.StatusMovedPermanently
 	}
 
 	if r.Type == "" {
@@ -146,7 +152,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 // and returns the final address and http status code
 func getBaseTarget(rec record, r *http.Request) (string, int, error) {
 	if strings.ContainsAny(rec.To, "{}") {
-		to, err := parsePlaceholders(rec.To, r)
+		to, err := parsePlaceholders(rec.To, r, []string{})
 		if err != nil {
 			return "", 0, err
 		}
@@ -166,14 +172,25 @@ func contains(array []string, word string) bool {
 	return false
 }
 
-// getRecord uses the given host and path to find a TXT record
+// getRecord uses the given host to find a TXT record
 // and then parses the txt record and returns a TXTDirect record
-// struct instance It returns an error when it can't find any txt
+// struct instance. It returns an error when it can't find any txt
 // records or if the TXT record is not standard.
-func getRecord(host, path string, ctx context.Context, c Config, r *http.Request) (record, error) {
+func getRecord(host string, ctx context.Context, c Config, r *http.Request) (record, error) {
 	txts, err := query(host, ctx, c)
 	if err != nil {
-		return record{}, err
+		log.Printf("Initial DNS query failed: %s", err)
+	}
+	// if error present or record empty, jump into wildcards
+	if err != nil || txts[0] == "" {
+		hostSlice := strings.Split(host, ".")
+		hostSlice[0] = "_"
+		host = strings.Join(hostSlice, ".")
+		txts, err = query(host, ctx, c)
+		if err != nil {
+			log.Printf("Wildcard DNS query failed: %s", err.Error())
+			return record{}, err
+		}
 	}
 
 	if len(txts) != 1 {
@@ -195,11 +212,17 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 	if fallback != "" {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), fallback)
 		http.Redirect(w, r, fallback, code)
+		if c.Prometheus.Enable {
+			RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
+		}
 	} else if c.Redirect != "" {
 		for _, enable := range c.Enable {
 			if enable == "www" {
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), c.Redirect)
-				http.Redirect(w, r, c.Redirect, 403)
+				http.Redirect(w, r, c.Redirect, http.StatusForbidden)
+				if c.Prometheus.Enable {
+					RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
+				}
 			}
 		}
 	} else {
@@ -219,7 +242,7 @@ func customResolver(c Config) net.Resolver {
 	}
 }
 
-// query checkes the given zone using net.LookupTXT to
+// query checks the given zone using net.LookupTXT to
 // find TXT records in that zone
 func query(zone string, ctx context.Context, c Config) ([]string, error) {
 	// Removes port from zone
@@ -258,32 +281,46 @@ func query(zone string, ctx context.Context, c Config) ([]string, error) {
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
 	path := r.URL.Path
-
+	if c.Prometheus.Enable {
+		RequestsCount.WithLabelValues(host).Add(1)
+	}
 	bl := make(map[string]bool)
 	bl["/favicon.ico"] = true
 
 	if bl[path] {
 		redirect := strings.Join([]string{host, path}, "")
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), redirect)
-		http.Redirect(w, r, redirect, 200)
+		http.Redirect(w, r, redirect, http.StatusOK)
+		if c.Prometheus.Enable {
+			RequestsByStatus.WithLabelValues(host, string(http.StatusOK)).Add(1)
+		}
 		return nil
 	}
 
-	rec, err := getRecord(host, path, r.Context(), c, r)
+	rec, err := getRecord(host, r.Context(), c, r)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
+				if c.Prometheus.Enable {
+					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
+				}
 				return nil
 			}
 			if contains(c.Enable, "www") {
 				s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", host}, "")
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), s)
-				http.Redirect(w, r, s, 301)
+				http.Redirect(w, r, s, http.StatusMovedPermanently)
+				if c.Prometheus.Enable {
+					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
+				}
 				return nil
 			}
 			http.NotFound(w, r)
+			if c.Prometheus.Enable {
+				RequestsByStatus.WithLabelValues(host, string(http.StatusNotFound)).Add(1)
+			}
 			return nil
 		}
 		return err
@@ -311,12 +348,15 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			}
 			log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), rec.Root)
 			http.Redirect(w, r, rec.Root, rec.Code)
+			if c.Prometheus.Enable {
+				RequestsByStatus.WithLabelValues(host, string(rec.Code)).Add(1)
+			}
 			return nil
 		}
 
 		if path != "" {
-			zone, from, err := zoneFromPath(host, path, rec)
-			rec, err = getFinalRecord(zone, from, r.Context(), c, r)
+			zone, from, pathSlice, err := zoneFromPath(host, path, rec)
+			rec, err = getFinalRecord(zone, from, r.Context(), c, r, pathSlice)
 			if err != nil {
 				log.Print("Fallback is triggered because an error has occurred: ", err)
 				fallback(w, r, fallbackURL, code, c)
@@ -342,6 +382,15 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
+	if rec.Type == "dockerv2" {
+		err := redirectDockerv2(w, r, rec)
+		if err != nil {
+			log.Printf("<%s> [txtdirect]: couldn't redirect to the requested container: %s", time.Now().Format(logFormat), err.Error())
+			fallback(w, r, fallbackURL, code, c)
+		}
+		return nil
+	}
+
 	if rec.Type == "host" {
 		to, code, err := getBaseTarget(rec, r)
 		if err != nil {
@@ -351,6 +400,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), to)
 		http.Redirect(w, r, to, code)
+		if c.Prometheus.Enable {
+			RequestsByStatus.WithLabelValues(host, string(code)).Add(1)
+		}
 		return nil
 	}
 

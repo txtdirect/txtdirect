@@ -17,7 +17,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -41,8 +40,11 @@ var txts = map[string]string{
 	"_redirect.noversion.path.e2e.test.": "to=https://noversion.fallback.path.test;type=path",
 	"_redirect.noto.path.e2e.test.":      "v=txtv0;type=path",
 	"_redirect.noroot.path.e2e.test.":    "v=txtv0;to=https://noroot.fallback.path.test;type=path;code=302",
+	"_redirect.metapath.e2e.test.":       "v=txtv0;type=path",
 	// type=gometa
-	"_redirect.pkg.txtdirect.test.": "v=txtv0;to=https://github.com/txtdirect/txtdirect;type=gometa;vcs=git",
+	"_redirect.pkg.txtdirect.test.":           "v=txtv0;to=https://github.com/txtdirect/txtdirect;type=gometa;vcs=git",
+	"_redirect.pkg.metapath.e2e.test.":        "v=txtv0;to=https://github.com/okkur/reposeed-server;type=gometa",
+	"_redirect.second.pkg.metapath.e2e.test.": "v=txtv0;to=https://github.com/okkur/reposeed;type=gometa",
 	// type=""
 	"_redirect.about.test.": "v=txtv0;to=https://about.txtdirect.org",
 	"_redirect.pkg.test.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
@@ -212,101 +214,6 @@ func TestParse(t *testing.T) {
 	}
 }
 
-/*
-DNS TXT records currently registered at _td.test.txtdirect.org available in:
-https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
-*/
-func TestRedirectDefault(t *testing.T) {
-	testURL := "https://%d._td.test.txtdirect.org"
-	dnsURL := "_redirect.%d._td.test.txtdirect.org"
-
-	config := Config{
-		Enable: []string{"host"},
-	}
-
-	for i := 0; ; i++ {
-		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
-		if err != nil {
-			break
-		}
-		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
-		rec := httptest.NewRecorder()
-		err = Redirect(rec, req, config)
-		if err != nil {
-			t.Errorf("test %d: Unexpected error: %s", i, err)
-		}
-	}
-}
-
-/*
-DNS TXT records currently registered at _ths.test.txtdirect.org available in:
-https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
-*/
-func TestRedirectSuccess(t *testing.T) {
-	testURL := "https://%d._ths.test.txtdirect.org"
-	dnsURL := "_redirect.%d._ths.test.txtdirect.org"
-
-	config := Config{
-		Enable: []string{"host", "gometa"},
-	}
-
-	for i := 0; ; i++ {
-		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
-		if err != nil {
-			break
-		}
-		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
-		rec := httptest.NewRecorder()
-		err = Redirect(rec, req, config)
-		if err != nil {
-			t.Errorf("test %d: Unexpected error: %s", i, err)
-		}
-	}
-}
-
-/*
-DNS TXT records currently registered at _thf.test.txtdirect.org available in:
-https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
-*/
-func TestRedirectFailure(t *testing.T) {
-	testURL := "https://%d._thf.test.txtdirect.org"
-	dnsURL := "_redirect.%d._thf.test.txtdirect.org"
-
-	config := Config{
-		Enable: []string{"host"},
-	}
-
-	for i := 0; ; i++ {
-		_, err := net.LookupTXT(fmt.Sprintf(dnsURL, i))
-		if err != nil {
-			break
-		}
-		req, _ := http.NewRequest("GET", fmt.Sprintf(testURL, i), nil)
-		rec := httptest.NewRecorder()
-		err = Redirect(rec, req, config)
-		if err == nil {
-			t.Errorf("test %d: Expected error, got nil", i)
-		}
-	}
-}
-
-/*
-DNS TXT records currently registered at _ths.test.txtdirect.org available in:
-https://raw.githubusercontent.com/txtdirect/_test-records/master/test.txtdirect.org
-*/
-func TestPathBasedRoutingRedirect(t *testing.T) {
-	config := Config{
-		Enable: []string{"path"},
-	}
-	req := httptest.NewRequest("GET", "https://pkg.txtdirect.com/caddy/v1/", nil)
-	w := httptest.NewRecorder()
-
-	err := Redirect(w, req, config)
-	if err != nil {
-		t.Errorf("Unexpected error: %s", err)
-	}
-}
-
 func TestRedirectBlacklist(t *testing.T) {
 	config := Config{
 		Enable: []string{"path"},
@@ -450,6 +357,18 @@ func TestRedirectE2e(t *testing.T) {
 			txts["_redirect.pkg.txtdirect.test."],
 			"https://github.com/txtdirect/txtdirect",
 			[]string{"gometa"},
+		},
+		{
+			"https://metapath.e2e.test/pkg",
+			txts["_redirect.metapath.e2e.test."],
+			"https://github.com/okkur/reposeed-server",
+			[]string{"gometa", "path"},
+		},
+		{
+			"https://metapath.e2e.test/pkg/second",
+			txts["_redirect.metapath.e2e.test."],
+			"https://github.com/okkur/reposeed",
+			[]string{"gometa", "path"},
 		},
 	}
 	for _, test := range tests {

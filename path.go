@@ -20,7 +20,7 @@ var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+[a-zA-Z0-9]*)>")
 // zoneFromPath generates a DNS zone with the given host and path
 // It will use custom regex to parse the path if it's provided in
 // the given record.
-func zoneFromPath(host string, path string, rec record, ps *[]string) (string, int, error) {
+func zoneFromPath(host string, path string, rec record) (string, int, []string, error) {
 	if strings.ContainsAny(path, ".") {
 		path = strings.Replace(path, ".", "-", -1)
 	}
@@ -43,11 +43,10 @@ func zoneFromPath(host string, path string, rec record, ps *[]string) (string, i
 			}
 			url := sortMap(unordered)
 			reverse(url)
-			*ps = pathSlice
 			from := len(pathSlice)
 			url = append(url, host)
 			url = append([]string{basezone}, url...)
-			return strings.Join(url, "."), from, nil
+			return strings.Join(url, "."), from, pathSlice, nil
 		}
 	}
 	pathSlice := []string{}
@@ -71,7 +70,7 @@ func zoneFromPath(host string, path string, rec record, ps *[]string) (string, i
 			keys = append(keys, k)
 		}
 		if len(keys) != len(pathSlice) {
-			return "", 0, fmt.Errorf("length of path doesn't match with length of from= in record")
+			return "", 0, []string{}, fmt.Errorf("length of path doesn't match with length of from= in record")
 		}
 		generatedPath := []string{}
 
@@ -83,13 +82,13 @@ func zoneFromPath(host string, path string, rec record, ps *[]string) (string, i
 
 		url := append(generatedPath, host)
 		url = append([]string{basezone}, url...)
-		return strings.Join(url, "."), from, nil
+		return strings.Join(url, "."), from, pathSlice, nil
 	}
-	*ps = pathSlice
+	ps := pathSlice
 	reverse(pathSlice)
 	url := append(pathSlice, host)
 	url = append([]string{basezone}, url...)
-	return strings.Join(url, "."), from, nil
+	return strings.Join(url, "."), from, ps, nil
 }
 
 // getFinalRecord finds the final TXT record for the given zone.

@@ -24,7 +24,7 @@ var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 <html>
 <head>
 <meta name="go-import" content="{{.Host}}{{.Path}} {{.Vcs}} {{.NewURL}}">
-<meta name="go-source" content="{{.Host}}{{.Path}} _ {{.NewURL}}/tree/v2{/dir} {{.NewURL}}/blob/v2{/dir}/{file}#L{line}">
+{{if .HasGoSource}}<meta name="go-source" content="{{.Host}}{{.Path}} _ {{.NewURL}}/tree/v2{/dir} {{.NewURL}}/blob/v2{/dir}/{file}#L{line}">{{end}}
 </head>
 </html>`))
 
@@ -41,16 +41,21 @@ func gometa(w http.ResponseWriter, r record, host, path string) error {
 	if strings.Contains(path, bl) {
 		return fmt.Errorf("path containing 'internal' is disallowed")
 	}
+
+	gosource := strings.Contains(r.To, "github.com")
+
 	RequestsByStatus.WithLabelValues(host, string(http.StatusFound)).Add(1)
 	return tmpl.Execute(w, struct {
-		Host   string
-		Path   string
-		Vcs    string
-		NewURL string
+		Host        string
+		Path        string
+		Vcs         string
+		NewURL      string
+		HasGoSource bool
 	}{
 		host,
 		path,
 		r.Vcs,
 		r.To,
+		gosource,
 	})
 }

@@ -20,7 +20,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -38,8 +37,6 @@ const (
 	proxyTimeout    = 30 * time.Second
 )
 
-var PlaceholderRegex = regexp.MustCompile("{[~>?]?\\w+}")
-
 type record struct {
 	Version string
 	To      string
@@ -54,9 +51,10 @@ type record struct {
 
 // Config contains the middleware's configuration
 type Config struct {
-	Enable   []string
-	Redirect string
-	Resolver string
+	Enable     []string
+	Redirect   string
+	Resolver   string
+	Prometheus Prometheus
 }
 
 // Parse takes a string containing the DNS TXT record and returns
@@ -77,7 +75,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 
 		case strings.HasPrefix(l, "from="):
 			l = strings.TrimPrefix(l, "from=")
-			l, err := parsePlaceholders(l, req)
+			l, err := parsePlaceholders(l, req, []string{})
 			if err != nil {
 				return err
 			}
@@ -93,7 +91,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 
 		case strings.HasPrefix(l, "to="):
 			l = strings.TrimPrefix(l, "to=")
-			l, err := parsePlaceholders(l, req)
+			l, err := parsePlaceholders(l, req, []string{})
 			if err != nil {
 				return err
 			}
@@ -135,7 +133,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 	}
 
 	if r.Code == 0 {
-		r.Code = 301
+		r.Code = http.StatusMovedPermanently
 	}
 
 	if r.Type == "" {
@@ -153,7 +151,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 // and returns the final address and http status code
 func getBaseTarget(rec record, r *http.Request) (string, int, error) {
 	if strings.ContainsAny(rec.To, "{}") {
-		to, err := parsePlaceholders(rec.To, r)
+		to, err := parsePlaceholders(rec.To, r, []string{})
 		if err != nil {
 			return "", 0, err
 		}
@@ -189,6 +187,7 @@ func getRecord(host string, ctx context.Context, c Config, r *http.Request) (rec
 		host = strings.Join(hostSlice, ".")
 		txts, err = query(host, ctx, c)
 		if err != nil {
+			log.Printf("Wildcard DNS query failed: %s", err.Error())
 			return record{}, err
 		}
 	}
@@ -212,11 +211,17 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 	if fallback != "" {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), fallback)
 		http.Redirect(w, r, fallback, code)
+		if c.Prometheus.Enable {
+			RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
+		}
 	} else if c.Redirect != "" {
 		for _, enable := range c.Enable {
 			if enable == "www" {
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), c.Redirect)
-				http.Redirect(w, r, c.Redirect, 403)
+				http.Redirect(w, r, c.Redirect, http.StatusForbidden)
+				if c.Prometheus.Enable {
+					RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
+				}
 			}
 		}
 	} else {
@@ -275,14 +280,19 @@ func query(zone string, ctx context.Context, c Config) ([]string, error) {
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
 	path := r.URL.Path
-
+	if c.Prometheus.Enable {
+		RequestsCount.WithLabelValues(host).Add(1)
+	}
 	bl := make(map[string]bool)
 	bl["/favicon.ico"] = true
 
 	if bl[path] {
 		redirect := strings.Join([]string{host, path}, "")
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), redirect)
-		http.Redirect(w, r, redirect, 200)
+		http.Redirect(w, r, redirect, http.StatusOK)
+		if c.Prometheus.Enable {
+			RequestsByStatus.WithLabelValues(host, string(http.StatusOK)).Add(1)
+		}
 		return nil
 	}
 
@@ -292,15 +302,24 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			if c.Redirect != "" {
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
+				if c.Prometheus.Enable {
+					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
+				}
 				return nil
 			}
 			if contains(c.Enable, "www") {
 				s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", host}, "")
 				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), s)
-				http.Redirect(w, r, s, 301)
+				http.Redirect(w, r, s, http.StatusMovedPermanently)
+				if c.Prometheus.Enable {
+					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
+				}
 				return nil
 			}
 			http.NotFound(w, r)
+			if c.Prometheus.Enable {
+				RequestsByStatus.WithLabelValues(host, string(http.StatusNotFound)).Add(1)
+			}
 			return nil
 		}
 		return err
@@ -328,12 +347,15 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			}
 			log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), rec.Root)
 			http.Redirect(w, r, rec.Root, rec.Code)
+			if c.Prometheus.Enable {
+				RequestsByStatus.WithLabelValues(host, string(rec.Code)).Add(1)
+			}
 			return nil
 		}
 
 		if path != "" {
-			zone, from, err := zoneFromPath(host, path, rec)
-			rec, err = getFinalRecord(zone, from, r.Context(), c, r)
+			zone, from, pathSlice, err := zoneFromPath(host, path, rec)
+			rec, err = getFinalRecord(zone, from, r.Context(), c, r, pathSlice)
 			if err != nil {
 				log.Print("Fallback is triggered because an error has occurred: ", err)
 				fallback(w, r, fallbackURL, code, c)
@@ -377,6 +399,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), to)
 		http.Redirect(w, r, to, code)
+		if c.Prometheus.Enable {
+			RequestsByStatus.WithLabelValues(host, string(code)).Add(1)
+		}
 		return nil
 	}
 

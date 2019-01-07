@@ -154,7 +154,7 @@ func Test_zoneFromPath(t *testing.T) {
 		rec := record{}
 		rec.Re = test.regex
 		rec.From = test.from
-		zone, _, err := zoneFromPath(test.host, test.path, rec)
+		zone, _, _, err := zoneFromPath(test.host, test.path, rec)
 		if err != nil {
 			t.Errorf("Got error: %s", err.Error())
 		}

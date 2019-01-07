@@ -20,7 +20,7 @@ var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+[a-zA-Z0-9]*)>")
 // zoneFromPath generates a DNS zone with the given host and path
 // It will use custom regex to parse the path if it's provided in
 // the given record.
-func zoneFromPath(host string, path string, rec record) (string, int, error) {
+func zoneFromPath(host string, path string, rec record) (string, int, []string, error) {
 	if strings.ContainsAny(path, ".") {
 		path = strings.Replace(path, ".", "-", -1)
 	}
@@ -46,7 +46,7 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 			from := len(pathSlice)
 			url = append(url, host)
 			url = append([]string{basezone}, url...)
-			return strings.Join(url, "."), from, nil
+			return strings.Join(url, "."), from, pathSlice, nil
 		}
 	}
 	pathSlice := []string{}
@@ -70,7 +70,7 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 			keys = append(keys, k)
 		}
 		if len(keys) != len(pathSlice) {
-			return "", 0, fmt.Errorf("length of path doesn't match with length of from= in record")
+			return "", 0, []string{}, fmt.Errorf("length of path doesn't match with length of from= in record")
 		}
 		generatedPath := []string{}
 
@@ -82,17 +82,18 @@ func zoneFromPath(host string, path string, rec record) (string, int, error) {
 
 		url := append(generatedPath, host)
 		url = append([]string{basezone}, url...)
-		return strings.Join(url, "."), from, nil
+		return strings.Join(url, "."), from, pathSlice, nil
 	}
+	ps := pathSlice
 	reverse(pathSlice)
 	url := append(pathSlice, host)
 	url = append([]string{basezone}, url...)
-	return strings.Join(url, "."), from, nil
+	return strings.Join(url, "."), from, ps, nil
 }
 
 // getFinalRecord finds the final TXT record for the given zone.
 // It will try wildcards if the first zone return error
-func getFinalRecord(zone string, from int, ctx context.Context, c Config, r *http.Request) (record, error) {
+func getFinalRecord(zone string, from int, ctx context.Context, c Config, r *http.Request, pathSlice []string) (record, error) {
 	txts, err := query(zone, ctx, c)
 	if err != nil {
 		// if nothing found, jump into wildcards
@@ -107,6 +108,7 @@ func getFinalRecord(zone string, from int, ctx context.Context, c Config, r *htt
 		return record{}, fmt.Errorf("could not get TXT record: %s", err)
 	}
 
+	txts[0], err = parsePlaceholders(txts[0], r, pathSlice)
 	rec := record{}
 	if err = rec.Parse(txts[0], r, c); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)

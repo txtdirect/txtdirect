@@ -41,7 +41,7 @@ func gometa(w http.ResponseWriter, r record, host, path string) error {
 	if strings.Contains(path, bl) {
 		return fmt.Errorf("path containing 'internal' is disallowed")
 	}
-
+	RequestsByStatus.WithLabelValues(host, string(http.StatusFound)).Add(1)
 	return tmpl.Execute(w, struct {
 		Host   string
 		Path   string

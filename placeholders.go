@@ -5,13 +5,16 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
+var PlaceholderRegex = regexp.MustCompile("{[~>?]?\\w+}")
+
 // parsePlaceholders gets a string input and looks for placeholders inside
 // the string. it will then replace them with the actual data from the request
-func parsePlaceholders(input string, r *http.Request) (string, error) {
+func parsePlaceholders(input string, r *http.Request, pathSlice []string) (string, error) {
 	placeholders := PlaceholderRegex.FindAllStringSubmatch(input, -1)
 	for _, placeholder := range placeholders {
 		switch placeholder[0] {
@@ -98,5 +101,10 @@ func parsePlaceholders(input string, r *http.Request) (string, error) {
 			input = strings.Replace(input, placeholder[0], query.Get(name), -1)
 		}
 	}
+
+	for k, v := range pathSlice {
+		input = strings.Replace(input, fmt.Sprintf("{$%d}", k+1), v, -1)
+	}
+
 	return input, nil
 }

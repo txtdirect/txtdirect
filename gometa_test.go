@@ -37,6 +37,7 @@ func TestGometa(t *testing.T) {
 <html>
 <head>
 <meta name="go-import" content="example.com/test git redirect.com/my-go-pkg">
+
 </head>
 </html>`,
 		},
@@ -48,6 +49,7 @@ func TestGometa(t *testing.T) {
 <html>
 <head>
 <meta name="go-import" content="empty.com/test git ">
+
 </head>
 </html>`,
 		},
@@ -62,6 +64,22 @@ func TestGometa(t *testing.T) {
 <html>
 <head>
 <meta name="go-import" content="root.com git redirect.com/my-root-package">
+
+</head>
+</html>`,
+		},
+		{
+			host: "root.com",
+			path: "/",
+			record: record{
+				Vcs: "git",
+				To:  "github.com/txtdirect/txtdirect",
+			},
+			expected: `<!DOCTYPE html>
+<html>
+<head>
+<meta name="go-import" content="root.com git github.com/txtdirect/txtdirect">
+<meta name="go-source" content="root.com _ github.com/txtdirect/txtdirect/tree/v2{/dir} github.com/txtdirect/txtdirect/blob/v2{/dir}/{file}#L{line}">
 </head>
 </html>`,
 		},

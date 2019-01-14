@@ -19,10 +19,10 @@ func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error 
 	if !strings.HasPrefix(path, "/v2") {
 		log.Printf("<%s> [txtdirect]: unrecognized path for dockerv2: %s", time.Now().Format(logFormat), path)
 		if path == "" || path == "/" {
-			fallback(w, r, rec.Root, http.StatusPermanentRedirect, Config{})
+			fallback(w, r, rec.Root, rec.Type, http.StatusPermanentRedirect, Config{})
 			return nil
 		}
-		fallback(w, r, rec.Website, http.StatusPermanentRedirect, Config{})
+		fallback(w, r, rec.Website, rec.Type, http.StatusPermanentRedirect, Config{})
 		return nil
 	}
 	if dockerRegexes["v2"].MatchString(path) {

@@ -207,7 +207,8 @@ func getRecord(host string, ctx context.Context, c Config, r *http.Request) (rec
 // fallback redirects the request to the given fallback address
 // and if it's not provided it will check txtdirect config for
 // default fallback address
-func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int, c Config) {
+func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType string, code int, c Config) {
+	FallbacksCount.WithLabelValues(r.Host, recordType).Add(1)
 	if fallback != "" {
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), fallback)
 		http.Redirect(w, r, fallback, code)
@@ -335,7 +336,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Re != "" && rec.From != "" {
-		fallback(w, r, fallbackURL, code, c)
+		fallback(w, r, fallbackURL, rec.Type, code, c)
 		return nil
 	}
 
@@ -343,7 +344,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		RequestsCountBasedOnType.WithLabelValues(host, "path").Add(1)
 		if path == "/" {
 			if rec.Root == "" {
-				fallback(w, r, fallbackURL, code, c)
+				fallback(w, r, fallbackURL, rec.Type, code, c)
 				return nil
 			}
 			log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), rec.Root)
@@ -359,7 +360,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			rec, err = getFinalRecord(zone, from, r.Context(), c, r, pathSlice)
 			if err != nil {
 				log.Print("Fallback is triggered because an error has occurred: ", err)
-				fallback(w, r, fallbackURL, code, c)
+				fallback(w, r, fallbackURL, rec.Type, code, c)
 				return nil
 			}
 		}
@@ -371,7 +372,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		to, _, err := getBaseTarget(rec, r)
 		if err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
-			fallback(w, r, fallbackURL, code, c)
+			fallback(w, r, fallbackURL, rec.Type, code, c)
 			return err
 		}
 		u, err := url.Parse(to)
@@ -388,7 +389,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		err := redirectDockerv2(w, r, rec)
 		if err != nil {
 			log.Printf("<%s> [txtdirect]: couldn't redirect to the requested container: %s", time.Now().Format(logFormat), err.Error())
-			fallback(w, r, fallbackURL, code, c)
+			fallback(w, r, fallbackURL, rec.Type, code, c)
 		}
 		return nil
 	}
@@ -398,7 +399,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		to, code, err := getBaseTarget(rec, r)
 		if err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
-			fallback(w, r, fallbackURL, code, c)
+			fallback(w, r, fallbackURL, rec.Type, code, c)
 			return err
 		}
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), to)

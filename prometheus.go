@@ -39,8 +39,14 @@ var (
 
 	RequestsCountBasedOnType = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
-		Name:      "txtdirect_redirect_type_count_total",
+		Name:      "redirect_type_count_total",
 		Help:      "Total requests for each host based on type",
+	}, []string{"host", "type"})
+
+	FallbacksCount = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "txtdirect",
+		Name:      "fallback_type_count_total",
+		Help:      "Total fallbacks triggered for each type",
 	}, []string{"host", "type"})
 
 	once sync.Once

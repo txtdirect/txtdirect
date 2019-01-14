@@ -208,7 +208,7 @@ func getRecord(host string, ctx context.Context, c Config, r *http.Request) (rec
 // default fallback address
 func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int, c Config) {
 	if fallback != "" {
-		log.Printf("[txtdirect]: %s > %s", r.URL.String(), fallback)
+		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, fallback)
 		http.Redirect(w, r, fallback, code)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
@@ -216,7 +216,7 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 	} else if c.Redirect != "" {
 		for _, enable := range c.Enable {
 			if enable == "www" {
-				log.Printf("[txtdirect]: %s > %s", r.URL.String(), c.Redirect)
+				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusForbidden)
 				if c.Prometheus.Enable {
 					RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
@@ -287,7 +287,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if bl[path] {
 		redirect := strings.Join([]string{host, path}, "")
-		log.Printf("[txtdirect]: %s > %s", r.URL.String(), redirect)
+		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, redirect)
 		http.Redirect(w, r, redirect, http.StatusOK)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(host, string(http.StatusOK)).Add(1)
@@ -299,7 +299,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {
-				log.Printf("[txtdirect]: %s > %s", r.URL.String(), c.Redirect)
+				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
 				if c.Prometheus.Enable {
 					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
@@ -308,7 +308,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			}
 			if contains(c.Enable, "www") {
 				s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", host}, "")
-				log.Printf("[txtdirect]: %s > %s", r.URL.String(), s)
+				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, s)
 				http.Redirect(w, r, s, http.StatusMovedPermanently)
 				if c.Prometheus.Enable {
 					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
@@ -344,7 +344,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 				fallback(w, r, fallbackURL, code, c)
 				return nil
 			}
-			log.Printf("[txtdirect]: %s > %s", r.URL.String(), rec.Root)
+			log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, rec.Root)
 			http.Redirect(w, r, rec.Root, rec.Code)
 			if c.Prometheus.Enable {
 				RequestsByStatus.WithLabelValues(host, string(rec.Code)).Add(1)
@@ -396,7 +396,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			fallback(w, r, fallbackURL, code, c)
 			return err
 		}
-		log.Printf("[txtdirect]: %s > %s", r.URL.String(), to)
+		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, to)
 		http.Redirect(w, r, to, code)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(host, string(code)).Add(1)

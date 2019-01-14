@@ -27,13 +27,13 @@ type Prometheus struct {
 var (
 	RequestsCount = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
-		Name:      "total_requests_per_host",
+		Name:      "redirect_count_total",
 		Help:      "Total requests per host",
 	}, []string{"host"})
 
 	RequestsByStatus = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
-		Name:      "total_returned_statuses_per_host",
+		Name:      "redirect_status_count_total",
 		Help:      "Total returned statuses per host",
 	}, []string{"host", "status"})
 

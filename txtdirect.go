@@ -212,7 +212,7 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType strin
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, fallback)
 		http.Redirect(w, r, fallback, code)
 		if c.Prometheus.Enable {
-			RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
+			RequestsByStatus.WithLabelValues(r.URL.Host, strconv.Itoa(code)).Add(1)
 		}
 	} else if c.Redirect != "" {
 		for _, enable := range c.Enable {
@@ -220,7 +220,7 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType strin
 				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusForbidden)
 				if c.Prometheus.Enable {
-					RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
+					RequestsByStatus.WithLabelValues(r.URL.Host, strconv.Itoa(http.StatusForbidden)).Add(1)
 				}
 			}
 		}
@@ -291,7 +291,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, redirect)
 		http.Redirect(w, r, redirect, http.StatusOK)
 		if c.Prometheus.Enable {
-			RequestsByStatus.WithLabelValues(host, string(http.StatusOK)).Add(1)
+			RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusOK)).Add(1)
 		}
 		return nil
 	}
@@ -303,7 +303,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
 				if c.Prometheus.Enable {
-					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
+					RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusMovedPermanently)).Add(1)
 				}
 				return nil
 			}
@@ -312,13 +312,13 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, s)
 				http.Redirect(w, r, s, http.StatusMovedPermanently)
 				if c.Prometheus.Enable {
-					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
+					RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusMovedPermanently)).Add(1)
 				}
 				return nil
 			}
 			http.NotFound(w, r)
 			if c.Prometheus.Enable {
-				RequestsByStatus.WithLabelValues(host, string(http.StatusNotFound)).Add(1)
+				RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusNotFound)).Add(1)
 			}
 			return nil
 		}
@@ -349,7 +349,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, rec.Root)
 			http.Redirect(w, r, rec.Root, rec.Code)
 			if c.Prometheus.Enable {
-				RequestsByStatus.WithLabelValues(host, string(rec.Code)).Add(1)
+				RequestsByStatus.WithLabelValues(host, strconv.Itoa(rec.Code)).Add(1)
 			}
 			return nil
 		}
@@ -405,7 +405,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, to)
 		http.Redirect(w, r, to, code)
 		if c.Prometheus.Enable {
-			RequestsByStatus.WithLabelValues(host, string(code)).Add(1)
+			RequestsByStatus.WithLabelValues(host, strconv.Itoa(code)).Add(1)
 		}
 		return nil
 	}

@@ -33,7 +33,6 @@ const (
 	defaultProtocol = "https"
 	proxyKeepalive  = 30
 	fallbackDelay   = 300 * time.Millisecond
-	logFormat       = "02/Jan/2006:15:04:05 -0700"
 	proxyTimeout    = 30 * time.Second
 )
 
@@ -128,7 +127,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 			return fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
 		}
 		if r.Type == "dockerv2" && r.To == "" {
-			return fmt.Errorf("<%s> [txtdirect]: to= field is required in dockerv2 type", time.Now().Format(logFormat))
+			return fmt.Errorf("[txtdirect]: to= field is required in dockerv2 type")
 		}
 	}
 
@@ -210,7 +209,7 @@ func getRecord(host string, ctx context.Context, c Config, r *http.Request) (rec
 func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType string, code int, c Config) {
 	FallbacksCount.WithLabelValues(r.Host, recordType).Add(1)
 	if fallback != "" {
-		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), fallback)
+		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, fallback)
 		http.Redirect(w, r, fallback, code)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
@@ -218,7 +217,7 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType strin
 	} else if c.Redirect != "" {
 		for _, enable := range c.Enable {
 			if enable == "www" {
-				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), c.Redirect)
+				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusForbidden)
 				if c.Prometheus.Enable {
 					RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
@@ -289,7 +288,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if bl[path] {
 		redirect := strings.Join([]string{host, path}, "")
-		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), redirect)
+		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, redirect)
 		http.Redirect(w, r, redirect, http.StatusOK)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(host, string(http.StatusOK)).Add(1)
@@ -301,7 +300,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {
-				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), c.Redirect)
+				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
 				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
 				if c.Prometheus.Enable {
 					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
@@ -310,7 +309,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			}
 			if contains(c.Enable, "www") {
 				s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", host}, "")
-				log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), s)
+				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, s)
 				http.Redirect(w, r, s, http.StatusMovedPermanently)
 				if c.Prometheus.Enable {
 					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
@@ -347,7 +346,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 				fallback(w, r, fallbackURL, rec.Type, code, c)
 				return nil
 			}
-			log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), rec.Root)
+			log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, rec.Root)
 			http.Redirect(w, r, rec.Root, rec.Code)
 			if c.Prometheus.Enable {
 				RequestsByStatus.WithLabelValues(host, string(rec.Code)).Add(1)
@@ -368,7 +367,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "proxy" {
 		RequestsCountBasedOnType.WithLabelValues(host, "proxy").Add(1)
-		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), rec.From, rec.To)
+		log.Printf("[txtdirect]: %s > %s", rec.From, rec.To)
+
 		to, _, err := getBaseTarget(rec, r)
 		if err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
@@ -388,8 +388,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		RequestsCountBasedOnType.WithLabelValues(host, "dockerv2").Add(1)
 		err := redirectDockerv2(w, r, rec)
 		if err != nil {
-			log.Printf("<%s> [txtdirect]: couldn't redirect to the requested container: %s", time.Now().Format(logFormat), err.Error())
-			fallback(w, r, fallbackURL, rec.Type, code, c)
+			log.Printf("[txtdirect]: couldn't redirect to the requested container: %s", err.Error())
+      fallback(w, r, fallbackURL, rec.Type, code, c)
 		}
 		return nil
 	}
@@ -402,7 +402,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			fallback(w, r, fallbackURL, rec.Type, code, c)
 			return err
 		}
-		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), r.URL.String(), to)
+		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, to)
 		http.Redirect(w, r, to, code)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(host, string(code)).Add(1)

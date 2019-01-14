@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"time"
 )
 
 var dockerRegexes = map[string]*regexp.Regexp{
@@ -17,7 +16,7 @@ var dockerRegexes = map[string]*regexp.Regexp{
 func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error {
 	path := r.URL.Path
 	if !strings.HasPrefix(path, "/v2") {
-		log.Printf("<%s> [txtdirect]: unrecognized path for dockerv2: %s", time.Now().Format(logFormat), path)
+		log.Printf("[txtdirect]: unrecognized path for dockerv2: %s", path)
 		if path == "" || path == "/" {
 			fallback(w, r, rec.Root, rec.Type, http.StatusPermanentRedirect, Config{})
 			return nil

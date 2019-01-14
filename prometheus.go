@@ -77,6 +77,8 @@ func (p *Prometheus) start() error {
 	p.once.Do(func() {
 		prometheus.MustRegister(RequestsCount)
 		prometheus.MustRegister(RequestsByStatus)
+		prometheus.MustRegister(RequestsCountBasedOnType)
+		prometheus.MustRegister(FallbacksCount)
 		http.Handle(p.Path, p.handler)
 		go func() {
 			err := http.ListenAndServe(p.Address, nil)

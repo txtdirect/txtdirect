@@ -69,7 +69,7 @@ func (p *Prometheus) start() error {
 		go func() {
 			err := http.ListenAndServe(p.Address, nil)
 			if err != nil {
-				log.Printf("<%s> [txtdirect]: Couldn't start http handler for prometheus metrics. %s", time.Now().Format(logFormat), err.Error())
+				log.Printf("[txtdirect]: Couldn't start http handler for prometheus metrics. %s", err.Error())
 			}
 		}()
 	})

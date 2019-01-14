@@ -340,6 +340,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "path" {
+		RequestsCountBasedOnType.WithLabelValues(host, "path").Add(1)
 		if path == "/" {
 			if rec.Root == "" {
 				fallback(w, r, fallbackURL, code, c)
@@ -365,6 +366,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "proxy" {
+		RequestsCountBasedOnType.WithLabelValues(host, "proxy").Add(1)
 		log.Printf("<%s> [txtdirect]: %s > %s", time.Now().Format(logFormat), rec.From, rec.To)
 		to, _, err := getBaseTarget(rec, r)
 		if err != nil {
@@ -382,6 +384,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "dockerv2" {
+		RequestsCountBasedOnType.WithLabelValues(host, "dockerv2").Add(1)
 		err := redirectDockerv2(w, r, rec)
 		if err != nil {
 			log.Printf("<%s> [txtdirect]: couldn't redirect to the requested container: %s", time.Now().Format(logFormat), err.Error())
@@ -391,6 +394,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "host" {
+		RequestsCountBasedOnType.WithLabelValues(host, "host").Add(1)
 		to, code, err := getBaseTarget(rec, r)
 		if err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
@@ -406,6 +410,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "gometa" {
+		RequestsCountBasedOnType.WithLabelValues(host, "gometa").Add(1)
 		return gometa(w, rec, host, path)
 	}
 

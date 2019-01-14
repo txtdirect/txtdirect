@@ -37,6 +37,12 @@ var (
 		Help:      "Total returned statuses per host",
 	}, []string{"host", "status"})
 
+	RequestsCountBasedOnType = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "txtdirect",
+		Name:      "txtdirect_redirect_type_count_total",
+		Help:      "Total requests for each host based on type",
+	}, []string{"host", "type"})
+
 	once sync.Once
 )
 

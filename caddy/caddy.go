@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"os"
 
-	"gopkg.in/natefinch/lumberjack.v2"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
@@ -87,6 +87,10 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 			parseLogfile(logfile[0])
 		case "gomods":
 			for c.Next() {
+				if c.Val() != "{" {
+					gomods.Enable = true
+					break
+				}
 				if c.Val() == "}" {
 					break
 				}
@@ -130,6 +134,8 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 		Gomods:     gomods,
 		Prometheus: prometheus,
 	}
+	setDefaultConfigs(&config)
+
 	return config, nil
 }
 
@@ -202,5 +208,18 @@ func parseLogfile(logfile string) {
 			MaxAge:     14,
 			MaxBackups: 10,
 		})
+	}
+}
+
+func setDefaultConfigs(c *txtdirect.Config) {
+	// Gomods config defaults
+	if c.Gomods.GoBinary == "" {
+		c.Gomods.GoBinary = os.Getenv("GOROOT") + "/bin/go"
+	}
+	if c.Gomods.Cache.Type == "" {
+		c.Gomods.Cache.Type = "local"
+	}
+	if c.Gomods.Cache.Path == "" {
+		c.Gomods.Cache.Path = "/tmp/txtdirect/gomods"
 	}
 }

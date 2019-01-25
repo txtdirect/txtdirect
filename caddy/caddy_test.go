@@ -15,6 +15,7 @@ package caddy
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -173,6 +174,28 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			`
+			txtdirect {
+				enable host gomods
+				redirect https://example.com
+				gomods
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
+				Gomods: txtdirect.Gomods{
+					Enable:   true,
+					GoBinary: os.Getenv("GOROOT") + "/bin/go",
+					Cache: txtdirect.Cache{
+						Type: "local",
+						Path: "/tmp/txtdirect/gomods",
+					},
+				},
+			},
+		},
 	}
 
 	for i, test := range tests {
@@ -187,6 +210,16 @@ func TestParse(t *testing.T) {
 				t.Errorf("Test %d: Expected error", i)
 			}
 			continue
+		}
+
+		// Check configs for each enabled type
+		for _, e := range conf.Enable {
+			switch e {
+			case "gomods":
+				if conf.Gomods != test.expected.Gomods {
+					t.Errorf("Expected %+v for gomods config got %+v", test.expected.Gomods, conf.Gomods)
+				}
+			}
 		}
 
 		if !identical(conf.Enable, test.expected.Enable) {

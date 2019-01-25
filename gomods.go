@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -180,16 +179,7 @@ func moduleNameAndVersion(path string) (string, string, string) {
 // ParseGomods parses the txtdirect config for gomods
 func (gomods Gomods) ParseGomods(c *caddy.Controller, key, value string) error {
 	switch value {
-	case "enable":
-		value, err := strconv.ParseBool(value)
-		if err != nil {
-			return c.ArgErr()
-		}
-		gomods.Enable = value
 	case "gobinary":
-		if value == "" {
-			value = os.Getenv("GOROOT") + "/bin/go"
-		}
 		gomods.GoBinary = value
 	case "workers":
 		value, err := strconv.Atoi(value)

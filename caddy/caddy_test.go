@@ -190,6 +190,7 @@ func TestParse(t *testing.T) {
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: os.Getenv("GOROOT") + "/bin/go",
+					Workers:  1,
 				},
 				Resolver: "127.0.0.1",
 			},
@@ -214,6 +215,7 @@ func TestParse(t *testing.T) {
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: "/my/go/binary",
+					Workers:  1,
 					Cache: txtdirect.Cache{
 						Enable: true,
 						Type:   "tmp",
@@ -245,6 +247,7 @@ func TestParse(t *testing.T) {
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: "/my/go/binary",
+					Workers:  1,
 					Cache: txtdirect.Cache{
 						Enable: true,
 						Type:   "local",

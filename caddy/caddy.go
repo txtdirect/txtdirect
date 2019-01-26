@@ -226,4 +226,7 @@ func setDefaultConfigs(c *txtdirect.Config) {
 			c.Gomods.Cache.Path = "/tmp/txtdirect/gomods"
 		}
 	}
+	if c.Gomods.Workers == 0 {
+		c.Gomods.Workers = 1
+	}
 }

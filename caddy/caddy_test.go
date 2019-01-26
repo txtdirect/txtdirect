@@ -253,37 +253,39 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
-		// {
-		// 	`
-		// 	txtdirect {
-		// 		enable host gomods
-		// 		redirect https://example.com
-		// 		gomods {
-		// 			gobinary /my/go/binary
-		// 			cache {
-		// 				type local
-		// 				path /my/cache/path
-		// 			}
-		// 		}
-		// 		resolver 127.0.0.1
-		// 	}
-		// 	`,
-		// 	false,
-		// 	txtdirect.Config{
-		// 		Redirect: "https://example.com",
-		// 		Enable:   []string{"host", "gomods"},
-		// 		Resolver: "127.0.0.1",
-		// 		Gomods: txtdirect.Gomods{
-		// 			Enable:   true,
-		// 			GoBinary: "/my/go/binary",
-		// 			Cache: txtdirect.Cache{
-		// 				Enable: true,
-		// 				Type:   "local",
-		// 				Path:   "/my/cache/path",
-		// 			},
-		// 		},
-		// 	},
-		// },
+		{
+			`
+			txtdirect {
+				enable host gomods
+				redirect https://example.com
+				gomods {
+					gobinary /my/go/binary
+					cache {
+						type local
+						path /my/cache/path
+					}
+					workers 5
+				}
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
+				Resolver: "127.0.0.1",
+				Gomods: txtdirect.Gomods{
+					Enable:   true,
+					GoBinary: "/my/go/binary",
+					Cache: txtdirect.Cache{
+						Enable: true,
+						Type:   "local",
+						Path:   "/my/cache/path",
+					},
+					Workers: 5,
+				},
+			},
+		},
 	}
 
 	for i, test := range tests {
@@ -308,6 +310,10 @@ func TestParse(t *testing.T) {
 					t.Errorf("Expected %+v for gomods config got %+v", test.expected.Gomods, conf.Gomods)
 				}
 			}
+		}
+
+		if test.expected.Resolver != conf.Resolver {
+			t.Errorf("Expected resolver to be %s, but got %s", test.expected.Resolver, conf.Resolver)
 		}
 
 		if !identical(conf.Enable, test.expected.Enable) {

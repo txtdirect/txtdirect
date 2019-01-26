@@ -14,6 +14,7 @@ limitations under the License.
 package caddy
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -86,21 +87,23 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 			}
 			parseLogfile(logfile[0])
 		case "gomods":
+			gomods.Enable = true
 			c.NextArg()
 			if c.Val() != "{" {
-				gomods.Enable = true
 				continue
 			}
 			for c.Next() {
-				err := gomods.ParseGomods(c, c.Val(), c.RemainingArgs())
-				if err != nil {
-					return txtdirect.Config{}, err
-				}
 				if c.Val() == "}" {
 					break
 				}
+				fmt.Println("Before gomods: ", c.Val())
+				err := gomods.ParseGomods(c)
+				fmt.Println("After gomods: ", c.Val())
+				if err != nil {
+					return txtdirect.Config{}, err
+				}
+
 			}
-			gomods.Enable = true
 
 		case "prometheus":
 			for c.Next() {

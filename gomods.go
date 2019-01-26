@@ -178,35 +178,32 @@ func moduleNameAndVersion(path string) (string, string, string) {
 }
 
 // ParseGomods parses the txtdirect config for gomods
-func (gomods *Gomods) ParseGomods(c *caddy.Controller, key string, value []string) error {
-	switch key {
+func (gomods *Gomods) ParseGomods(c *caddy.Controller) error {
+	switch c.Val() {
 	case "gobinary":
-		gomods.GoBinary = value[0]
+		gomods.GoBinary = c.RemainingArgs()[0]
 
 	case "workers":
-		value, err := strconv.Atoi(value[0])
+		value, err := strconv.Atoi(c.RemainingArgs()[0])
 		if err != nil {
 			return c.ArgErr()
 		}
 		gomods.Workers = value
 
 	case "cache":
-		var inside bool
+		gomods.Cache.Enable = true
+		c.NextArg()
+		if c.Val() != "{" {
+			break
+		}
 		for c.Next() {
-			if c.Val() != "{" && inside == false {
-				gomods.Cache.Enable = true
-				break
-			}
 			if c.Val() == "}" {
-				gomods.Cache.Enable = true
 				break
 			}
-			if c.Val() == "{" {
-				inside = true
-				gomods.Cache.Enable = true
-				continue
+			err := gomods.Cache.ParseCache(c)
+			if err != nil {
+				return err
 			}
-			gomods.Cache.ParseCache(c, c.Val(), c.RemainingArgs()[0])
 		}
 	default:
 		return c.ArgErr() // unhandled option for gomods
@@ -215,12 +212,12 @@ func (gomods *Gomods) ParseGomods(c *caddy.Controller, key string, value []strin
 }
 
 // ParseCache parses the txtdirect config for gomods cache
-func (cache *Cache) ParseCache(c *caddy.Controller, key, value string) error {
-	switch key {
+func (cache *Cache) ParseCache(c *caddy.Controller) error {
+	switch c.Val() {
 	case "type":
-		cache.Type = value
+		cache.Type = c.RemainingArgs()[0]
 	case "path":
-		cache.Path = value
+		cache.Path = c.RemainingArgs()[0]
 	default:
 		return c.ArgErr() // unhandled option for gomods cache
 	}

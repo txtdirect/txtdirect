@@ -86,22 +86,21 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 			}
 			parseLogfile(logfile[0])
 		case "gomods":
+			c.NextArg()
+			if c.Val() != "{" {
+				gomods.Enable = true
+				continue
+			}
 			for c.Next() {
-				if c.Val() != "{" {
-					gomods.Enable = true
-					break
+				err := gomods.ParseGomods(c, c.Val(), c.RemainingArgs())
+				if err != nil {
+					return txtdirect.Config{}, err
 				}
 				if c.Val() == "}" {
 					break
 				}
-				if c.Val() == "{" {
-					continue
-				}
-				err := gomods.ParseGomods(c, c.Val(), c.RemainingArgs()[0])
-				if err != nil {
-					return txtdirect.Config{}, err
-				}
 			}
+			gomods.Enable = true
 
 		case "prometheus":
 			for c.Next() {
@@ -216,10 +215,12 @@ func setDefaultConfigs(c *txtdirect.Config) {
 	if c.Gomods.GoBinary == "" {
 		c.Gomods.GoBinary = os.Getenv("GOROOT") + "/bin/go"
 	}
-	if c.Gomods.Cache.Type == "" {
-		c.Gomods.Cache.Type = "local"
-	}
-	if c.Gomods.Cache.Path == "" {
-		c.Gomods.Cache.Path = "/tmp/txtdirect/gomods"
+	if c.Gomods.Cache.Enable {
+		if c.Gomods.Cache.Type == "" {
+			c.Gomods.Cache.Type = "tmp"
+		}
+		if c.Gomods.Cache.Path == "" {
+			c.Gomods.Cache.Path = "/tmp/txtdirect/gomods"
+		}
 	}
 }

@@ -180,6 +180,7 @@ func TestParse(t *testing.T) {
 				enable host gomods
 				redirect https://example.com
 				gomods
+				resolver 127.0.0.1
 			}
 			`,
 			false,
@@ -189,13 +190,100 @@ func TestParse(t *testing.T) {
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: os.Getenv("GOROOT") + "/bin/go",
+				},
+				Resolver: "127.0.0.1",
+			},
+		},
+		{
+			`
+			txtdirect {
+				enable host gomods
+				redirect https://example.com
+				gomods {
+					gobinary /my/go/binary
+					cache
+				}
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
+				Resolver: "127.0.0.1",
+				Gomods: txtdirect.Gomods{
+					Enable:   true,
+					GoBinary: "/my/go/binary",
 					Cache: txtdirect.Cache{
-						Type: "local",
-						Path: "/tmp/txtdirect/gomods",
+						Enable: true,
+						Type:   "tmp",
+						Path:   "/tmp/txtdirect/gomods",
 					},
 				},
 			},
 		},
+		{
+			`
+			txtdirect {
+				enable host gomods
+				redirect https://example.com
+				gomods {
+					gobinary /my/go/binary
+					cache {
+						type local
+						path /my/cache/path
+					}
+				}
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
+				Resolver: "127.0.0.1",
+				Gomods: txtdirect.Gomods{
+					Enable:   true,
+					GoBinary: "/my/go/binary",
+					Cache: txtdirect.Cache{
+						Enable: true,
+						Type:   "local",
+						Path:   "/my/cache/path",
+					},
+				},
+			},
+		},
+		// {
+		// 	`
+		// 	txtdirect {
+		// 		enable host gomods
+		// 		redirect https://example.com
+		// 		gomods {
+		// 			gobinary /my/go/binary
+		// 			cache {
+		// 				type local
+		// 				path /my/cache/path
+		// 			}
+		// 		}
+		// 		resolver 127.0.0.1
+		// 	}
+		// 	`,
+		// 	false,
+		// 	txtdirect.Config{
+		// 		Redirect: "https://example.com",
+		// 		Enable:   []string{"host", "gomods"},
+		// 		Resolver: "127.0.0.1",
+		// 		Gomods: txtdirect.Gomods{
+		// 			Enable:   true,
+		// 			GoBinary: "/my/go/binary",
+		// 			Cache: txtdirect.Cache{
+		// 				Enable: true,
+		// 				Type:   "local",
+		// 				Path:   "/my/cache/path",
+		// 			},
+		// 		},
+		// 	},
+		// },
 	}
 
 	for i, test := range tests {

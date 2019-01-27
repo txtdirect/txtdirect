@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -44,6 +45,32 @@ type ModuleHandler interface {
 
 var gomodsRegex = regexp.MustCompile("(list|info|mod|zip)")
 var modVersionRegex = regexp.MustCompile("@v\\/(v\\d+\\.\\d+\\.\\d+\\-\\d+\\-[\\w\\d]+|v\\d+\\.\\d+\\.\\d+|v\\d+\\.\\d+|latest|master)")
+var DefaultGoBinaryPath = os.Getenv("GOROOT") + "/bin/go"
+
+const (
+	DefaultGomodsCachePath = "/tmp/txtdirect/gomods"
+	DefaultGomodsCacheType = "tmp"
+	DefaultGomodsWorkers   = 1
+)
+
+// SetDefaults sets the default values for gomods config
+// if the fields are empty
+func (gomods *Gomods) SetDefaults() {
+	if gomods.GoBinary == "" {
+		gomods.GoBinary = DefaultGoBinaryPath
+	}
+	if gomods.Cache.Enable {
+		if gomods.Cache.Type == "" {
+			gomods.Cache.Type = DefaultGomodsCacheType
+		}
+		if gomods.Cache.Path == "" {
+			gomods.Cache.Path = DefaultGomodsCachePath
+		}
+	}
+	if gomods.Workers == 0 {
+		gomods.Workers = DefaultGomodsWorkers
+	}
+}
 
 func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error {
 	moduleName, version, ext := moduleNameAndVersion(path)

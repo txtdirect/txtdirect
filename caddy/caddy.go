@@ -102,8 +102,8 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				if err != nil {
 					return txtdirect.Config{}, err
 				}
-
 			}
+			gomods.SetDefaults()
 
 		case "prometheus":
 			for c.Next() {
@@ -136,7 +136,6 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 		Gomods:     gomods,
 		Prometheus: prometheus,
 	}
-	setDefaultConfigs(&config)
 
 	return config, nil
 }
@@ -210,23 +209,5 @@ func parseLogfile(logfile string) {
 			MaxAge:     14,
 			MaxBackups: 10,
 		})
-	}
-}
-
-func setDefaultConfigs(c *txtdirect.Config) {
-	// Gomods config defaults
-	if c.Gomods.GoBinary == "" {
-		c.Gomods.GoBinary = os.Getenv("GOROOT") + "/bin/go"
-	}
-	if c.Gomods.Cache.Enable {
-		if c.Gomods.Cache.Type == "" {
-			c.Gomods.Cache.Type = "tmp"
-		}
-		if c.Gomods.Cache.Path == "" {
-			c.Gomods.Cache.Path = "/tmp/txtdirect/gomods"
-		}
-	}
-	if c.Gomods.Workers == 0 {
-		c.Gomods.Workers = 1
 	}
 }

@@ -43,6 +43,7 @@ func Test_gomods(t *testing.T) {
 				},
 			},
 		}
+		c.Gomods.SetDefaults()
 		err := gomods(w, r, test.path, c)
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err.Error())

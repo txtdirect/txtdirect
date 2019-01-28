@@ -25,7 +25,9 @@ type Gomods struct {
 	GoBinary string
 	Workers  int
 	Cache    Cache
+	Fs       afero.Fs
 }
+
 type Cache struct {
 	Enable bool
 	Type   string
@@ -48,7 +50,6 @@ var modVersionRegex = regexp.MustCompile("@v\\/(v\\d+\\.\\d+\\.\\d+\\-\\d+\\-[\\
 var DefaultGoBinaryPath = os.Getenv("GOROOT") + "/bin/go"
 
 const (
-	DefaultGomodsCachePath = "/tmp/txtdirect/gomods"
 	DefaultGomodsCacheType = "tmp"
 	DefaultGomodsWorkers   = 1
 )
@@ -56,6 +57,7 @@ const (
 // SetDefaults sets the default values for gomods config
 // if the fields are empty
 func (gomods *Gomods) SetDefaults() {
+	gomods.Fs = afero.NewOsFs()
 	if gomods.GoBinary == "" {
 		gomods.GoBinary = DefaultGoBinaryPath
 	}
@@ -64,7 +66,7 @@ func (gomods *Gomods) SetDefaults() {
 			gomods.Cache.Type = DefaultGomodsCacheType
 		}
 		if gomods.Cache.Path == "" {
-			gomods.Cache.Path = DefaultGomodsCachePath
+			gomods.Cache.Path = afero.GetTempDir(gomods.Fs, "")
 		}
 	}
 	if gomods.Workers == 0 {
@@ -148,8 +150,7 @@ func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error
 }
 
 func (m Module) fetch(r *http.Request, c Config) (download.Protocol, error) {
-	fs := afero.NewOsFs()
-	fetcher, err := module.NewGoGetFetcher(c.Gomods.GoBinary, fs)
+	fetcher, err := module.NewGoGetFetcher(c.Gomods.GoBinary, c.Gomods.Fs)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +158,7 @@ func (m Module) fetch(r *http.Request, c Config) (download.Protocol, error) {
 	if err != nil {
 		return nil, err
 	}
-	dp := m.dp(fetcher, s, fs, c)
+	dp := m.dp(fetcher, s, c)
 	return dp, nil
 }
 
@@ -173,8 +174,8 @@ func (m Module) storage(c Config) (storage.Backend, error) {
 	return nil, fmt.Errorf("Invalid storage config for gomods")
 }
 
-func (m Module) dp(fetcher module.Fetcher, s storage.Backend, fs afero.Fs, c Config) download.Protocol {
-	lister := download.NewVCSLister(c.Gomods.GoBinary, fs)
+func (m Module) dp(fetcher module.Fetcher, s storage.Backend, c Config) download.Protocol {
+	lister := download.NewVCSLister(c.Gomods.GoBinary, c.Gomods.Fs)
 	st := stash.New(fetcher, s, stash.WithPool(c.Gomods.Workers), stash.WithSingleflight)
 	dpOpts := &download.Opts{
 		Storage: s,

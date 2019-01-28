@@ -19,6 +19,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/afero"
+
 	"github.com/txtdirect/txtdirect"
 
 	"github.com/mholt/caddy"
@@ -309,6 +311,13 @@ func TestParse(t *testing.T) {
 		for _, e := range conf.Enable {
 			switch e {
 			case "gomods":
+				// Fs field gets filled by default when parsing the config
+				test.expected.Gomods.Fs = conf.Gomods.Fs
+				// Set the default cache path for expected config if cache type is tmp
+				if conf.Gomods.Cache.Type == "tmp" {
+					test.expected.Gomods.Cache.Path = afero.GetTempDir(test.expected.Gomods.Fs, "")
+				}
+
 				if conf.Gomods != test.expected.Gomods {
 					t.Errorf("Expected %+v for gomods config got %+v", test.expected.Gomods, conf.Gomods)
 				}

@@ -2,7 +2,7 @@ language: go
 
 go:
   - "1.x"
-  - "1.10.x"
+  - "1.11.x"
   - master
 
 services:
@@ -12,6 +12,9 @@ script:
   - go get -u github.com/mholt/caddy
   - go get -u gopkg.in/natefinch/lumberjack.v2
   - go get -u github.com/miekg/dns
+  - go get -u github.com/gomods/athens/...
+  - rm -rf ${TRAVIS_HOME}/gopath/src/github.com/gomods/athens/vendor/github.com/spf13/afero
+  - go get -u github.com/spf13/afero
   - go get github.com/prometheus/client_golang/...
   - go test -v -race ./...
   - make travis-build

@@ -18,9 +18,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
-	"gopkg.in/natefinch/lumberjack.v2"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
@@ -40,6 +39,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	var enable []string
 	var redirect string
 	var resolver string
+	var gomods txtdirect.Gomods
 	var prometheus txtdirect.Prometheus
 
 	c.Next() // skip directive name
@@ -84,20 +84,21 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 			if len(logfile) != 1 {
 
 			}
-			switch logfile[0] {
-			case "stdout":
-				log.SetOutput(os.Stdout)
-			case "stderr":
-				log.SetOutput(os.Stderr)
-			case "":
-				log.SetOutput(ioutil.Discard)
-			default:
-				log.SetOutput(&lumberjack.Logger{
-					Filename:   logfile[0],
-					MaxSize:    100,
-					MaxAge:     14,
-					MaxBackups: 10,
-				})
+			parseLogfile(logfile[0])
+		case "gomods":
+			gomods.Enable = true
+			c.NextArg()
+			if c.Val() != "{" {
+				continue
+			}
+			for c.Next() {
+				if c.Val() == "}" {
+					break
+				}
+				err := gomods.ParseGomods(c)
+				if err != nil {
+					return txtdirect.Config{}, err
+				}
 			}
 
 		case "prometheus":
@@ -108,23 +109,9 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				if c.Val() == "{" {
 					continue
 				}
-				switch c.Val() {
-				case "enable":
-					args := c.RemainingArgs()
-					value, err := strconv.ParseBool(args[0])
-					if err != nil {
-						return txtdirect.Config{}, c.ArgErr()
-					}
-					prometheus.Enable = value
-				case "address":
-					// TODO: validate the given address
-					args := c.RemainingArgs()
-					prometheus.Address = args[0]
-				case "path":
-					args := c.RemainingArgs()
-					prometheus.Path = args[0]
-				default:
-					return txtdirect.Config{}, c.ArgErr() // unhandled option for prometheus
+				err := prometheus.ParsePrometheus(c, c.Val(), c.RemainingArgs()[0])
+				if err != nil {
+					return txtdirect.Config{}, err
 				}
 			}
 
@@ -138,12 +125,18 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 		enable = allOptions
 	}
 
+	if gomods.Enable == true {
+		gomods.SetDefaults()
+	}
+
 	config := txtdirect.Config{
 		Enable:     enable,
 		Redirect:   redirect,
 		Resolver:   resolver,
+		Gomods:     gomods,
 		Prometheus: prometheus,
 	}
+
 	return config, nil
 }
 
@@ -199,4 +192,22 @@ func (rd Redirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error
 		return http.StatusInternalServerError, err
 	}
 	return 0, nil
+}
+
+func parseLogfile(logfile string) {
+	switch logfile {
+	case "stdout":
+		log.SetOutput(os.Stdout)
+	case "stderr":
+		log.SetOutput(os.Stderr)
+	case "":
+		log.SetOutput(ioutil.Discard)
+	default:
+		log.SetOutput(&lumberjack.Logger{
+			Filename:   logfile,
+			MaxSize:    100,
+			MaxAge:     14,
+			MaxBackups: 10,
+		})
+	}
 }

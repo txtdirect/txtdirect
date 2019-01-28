@@ -15,8 +15,11 @@ package caddy
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
+
+	"github.com/spf13/afero"
 
 	"github.com/txtdirect/txtdirect"
 
@@ -173,6 +176,121 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			`
+			txtdirect {
+				enable host gomods
+				redirect https://example.com
+				gomods
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
+				Gomods: txtdirect.Gomods{
+					Enable:   true,
+					GoBinary: os.Getenv("GOROOT") + "/bin/go",
+					Workers:  1,
+				},
+				Resolver: "127.0.0.1",
+			},
+		},
+		{
+			`
+			txtdirect {
+				enable host gomods
+				redirect https://example.com
+				gomods {
+					gobinary /my/go/binary
+					cache
+				}
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
+				Resolver: "127.0.0.1",
+				Gomods: txtdirect.Gomods{
+					Enable:   true,
+					GoBinary: "/my/go/binary",
+					Workers:  1,
+					Cache: txtdirect.Cache{
+						Enable: true,
+						Type:   "tmp",
+						Path:   "/tmp/txtdirect/gomods",
+					},
+				},
+			},
+		},
+		{
+			`
+			txtdirect {
+				enable host gomods
+				redirect https://example.com
+				gomods {
+					gobinary /my/go/binary
+					cache {
+						type local
+						path /my/cache/path
+					}
+				}
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
+				Resolver: "127.0.0.1",
+				Gomods: txtdirect.Gomods{
+					Enable:   true,
+					GoBinary: "/my/go/binary",
+					Workers:  1,
+					Cache: txtdirect.Cache{
+						Enable: true,
+						Type:   "local",
+						Path:   "/my/cache/path",
+					},
+				},
+			},
+		},
+		{
+			`
+			txtdirect {
+				enable host gomods
+				redirect https://example.com
+				gomods {
+					gobinary /my/go/binary
+					cache {
+						type local
+						path /my/cache/path
+					}
+					workers 5
+				}
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
+				Resolver: "127.0.0.1",
+				Gomods: txtdirect.Gomods{
+					Enable:   true,
+					GoBinary: "/my/go/binary",
+					Cache: txtdirect.Cache{
+						Enable: true,
+						Type:   "local",
+						Path:   "/my/cache/path",
+					},
+					Workers: 5,
+				},
+			},
+		},
 	}
 
 	for i, test := range tests {
@@ -187,6 +305,27 @@ func TestParse(t *testing.T) {
 				t.Errorf("Test %d: Expected error", i)
 			}
 			continue
+		}
+
+		// Check configs for each enabled type
+		for _, e := range conf.Enable {
+			switch e {
+			case "gomods":
+				// Fs field gets filled by default when parsing the config
+				test.expected.Gomods.Fs = conf.Gomods.Fs
+				// Set the default cache path for expected config if cache type is tmp
+				if conf.Gomods.Cache.Type == "tmp" {
+					test.expected.Gomods.Cache.Path = afero.GetTempDir(test.expected.Gomods.Fs, "")
+				}
+
+				if conf.Gomods != test.expected.Gomods {
+					t.Errorf("Expected %+v for gomods config got %+v", test.expected.Gomods, conf.Gomods)
+				}
+			}
+		}
+
+		if test.expected.Resolver != conf.Resolver {
+			t.Errorf("Expected resolver to be %s, but got %s", test.expected.Resolver, conf.Resolver)
 		}
 
 		if !identical(conf.Enable, test.expected.Enable) {

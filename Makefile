@@ -1,10 +1,18 @@
-BIN=txtdirect
-TAG=$(if $(TRAVIS_TAG),$(TRAVIS_TAG),dev)
-COMMIT=$(if $(TRAVIS_COMMIT),$(TRAVIS_COMMIT),$(shell git rev-parse HEAD))
-BUILD_REF=$(shell echo $(COMMIT) | cut -c1-6)
+BIN := txtdirect
+MAINTAINER := okkurlabs
+VERSION := 0.4.0
+IMAGE := $(MAINTAINER)/$(BIN):$(VERSION)
 
-build: fetch-dependencies
-	rm -rf caddy-copy
+BUILD_GOOS := $(if $(GOOS),$(GOOS),linux)
+BUILD_GOARCH := $(if $(GOARCH),$(GOARCH),amd64)
+
+# Repo's root import path (under GOPATH).
+PKG := github.com/txtdirect/txtdirect
+CONTAINER ?= $(BIN)
+
+.DEFAULT_GOAL := build
+
+recipe:
 	git clone https://github.com/mholt/caddy caddy-copy
 	find caddy-copy/caddyhttp/httpserver -name 'plugin.go' -type f -exec sed -i -e "s/gopkg/txtdirect/" -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e "s/\/\/ This is where other plugins get plugged in (imported)/_ \"github.com\/txtdirect\/txtdirect\/caddy\"/" -- {} +
@@ -12,21 +20,10 @@ build: fetch-dependencies
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/captncraig\/caddy-realip"' -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e 's/var EnableTelemetry = true/var EnableTelemetry = false/' -- {} +
 	cd caddy-copy/caddy && \
-	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w"
+	CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w"
 	mv caddy-copy/caddy/caddy ./$(BIN)
 
-travis-build: fetch-dependencies
-	cd $$GOPATH/src/github.com/mholt/caddy && \
-	find caddyhttp/httpserver -name 'plugin.go' -type f -exec sed -i -e "s/gopkg/txtdirect/" -- {} + && \
-	find caddy/caddymain -name 'run.go' -type f -exec sed -i -e "s/\/\/ This is where other plugins get plugged in (imported)/_ \"github.com\/txtdirect\/txtdirect\/caddy\"/" -- {} + && \
-	find caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/miekg\/caddy-prometheus"' -- {} + && \
-	find caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/captncraig\/caddy-realip"' -- {} + && \
-	find caddy/caddymain -name 'run.go' -type f -exec sed -i -e 's/var EnableTelemetry = true/var EnableTelemetry = false/' -- {} + && \
-	cd caddy && \
-	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w"
-	mv $$GOPATH/src/github.com/mholt/caddy/caddy/caddy txtdirect
-
-fetch-dependencies:
+dependencies:
 	go get github.com/mholt/caddy/caddy
 	go get github.com/caddyserver/builds
 	go get github.com/miekg/caddy-prometheus
@@ -36,15 +33,14 @@ fetch-dependencies:
 	go get github.com/gomods/athens/...
 	go get github.com/spf13/afero
 	go get github.com/prometheus/client_golang/...
-	go get -d -u
 
-docker:
-	docker build -t seetheprogress/txtdirect:$(TAG)-$(BUILD_REF) .
+build: build-container run-container get-binary
 
-docker-push:
-	docker push seetheprogress/txtdirect:$(TAG)-$(BUILD_REF)
+build-container:
+	docker build -t $(IMAGE) .
 
-.PHONY: clean
-clean:
-	rm -rf caddy-copy/
-	rm $(BIN)
+run-container:
+	docker run --name $(CONTAINER) $(IMAGE)
+
+get-binary:
+	docker cp $(CONTAINER):/go/src/$(PKG)/$(BIN) .

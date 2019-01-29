@@ -9,6 +9,7 @@ services:
   - docker
 
 script:
+  - make dependencies
   - go test -v -race ./...
   - make
 

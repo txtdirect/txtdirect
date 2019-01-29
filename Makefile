@@ -40,7 +40,7 @@ build-container:
 	docker build -t $(IMAGE) .
 
 run-container:
-	docker run --name $(CONTAINER) $(IMAGE)
+	docker run --name $(CONTAINER) $(IMAGE) -d
 
 get-binary:
 	docker cp $(CONTAINER):/go/src/$(PKG)/$(BIN) .

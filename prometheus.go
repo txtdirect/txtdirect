@@ -48,18 +48,15 @@ const (
 	prometheusPath string = "/metrics"
 )
 
-func NewPrometheus(addr, path string) *Prometheus {
-	if addr == "" {
-		addr = prometheusAddr
+// SetDefaults sets the default values for prometheus config
+// if the fields are empty
+func (p *Prometheus) SetDefaults() {
+	if p.Address == "" {
+		p.Address = prometheusAddr
 	}
-	if path == "" {
-		path = prometheusPath
+	if p.Path == "" {
+		p.Path = prometheusPath
 	}
-	p := &Prometheus{
-		Path:    path,
-		Address: addr,
-	}
-	return p
 }
 
 func (p *Prometheus) start() error {

@@ -102,12 +102,14 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 			}
 
 		case "prometheus":
+			prometheus.Enable = true
+			c.NextArg()
+			if c.Val() != "{" {
+				continue
+			}
 			for c.Next() {
 				if c.Val() == "}" {
 					break
-				}
-				if c.Val() == "{" {
-					continue
 				}
 				err := prometheus.ParsePrometheus(c, c.Val(), c.RemainingArgs()[0])
 				if err != nil {
@@ -127,6 +129,9 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 
 	if gomods.Enable == true {
 		gomods.SetDefaults()
+	}
+	if prometheus.Enable == true {
+		prometheus.SetDefaults()
 	}
 
 	config := txtdirect.Config{
@@ -156,8 +161,8 @@ func setup(c *caddy.Controller) error {
 	}
 	cfg.AddMiddleware(mid)
 	if config.Prometheus.Enable {
-		p := txtdirect.NewPrometheus(config.Prometheus.Address, config.Prometheus.Path)
-		p.Setup(c)
+		config.Prometheus.SetDefaults()
+		config.Prometheus.Setup(c)
 	}
 
 	return nil

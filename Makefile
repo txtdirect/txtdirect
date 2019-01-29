@@ -35,6 +35,7 @@ fetch-dependencies:
 	go get github.com/miekg/dns
 	go get github.com/gomods/athens/...
 	go get github.com/spf13/afero
+	rm -rf ${GOPATH}/src/github.com/gomods/athens/vendor/github.com/spf13/afero
 	go get github.com/prometheus/client_golang/...
 	go get -d -u
 

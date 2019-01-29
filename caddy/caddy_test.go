@@ -160,9 +160,28 @@ func TestParse(t *testing.T) {
 			txtdirect {
 				enable host
 				redirect https://example.com
+				prometheus
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host"},
+				Prometheus: txtdirect.Prometheus{
+					Enable:  true,
+					Address: "localhost:9183",
+					Path:    "/metrics",
+				},
+			},
+		},
+		{
+			`
+			txtdirect {
+				enable host
+				redirect https://example.com
 				prometheus {
-					enable true
 					address localhost:6666
+					path /metrics
 				}
 			}
 			`,
@@ -173,6 +192,7 @@ func TestParse(t *testing.T) {
 				Prometheus: txtdirect.Prometheus{
 					Enable:  true,
 					Address: "localhost:6666",
+					Path:    "/metrics",
 				},
 			},
 		},
@@ -321,6 +341,12 @@ func TestParse(t *testing.T) {
 				if conf.Gomods != test.expected.Gomods {
 					t.Errorf("Expected %+v for gomods config got %+v", test.expected.Gomods, conf.Gomods)
 				}
+			}
+		}
+
+		if test.expected.Prometheus.Enable == true {
+			if conf.Prometheus != test.expected.Prometheus {
+				t.Errorf("Expected %+v for prometheus config got %+v", test.expected.Prometheus, conf.Prometheus)
 			}
 		}
 

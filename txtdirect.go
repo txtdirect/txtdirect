@@ -289,7 +289,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if bl[path] {
 		redirect := strings.Join([]string{host, path}, "")
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, redirect)
-		http.Redirect(w, r, redirect, http.StatusOK)
+		// Empty Content-Type to prevent http.Redirect from writing an html response body
+		w.Header().Set("Content-Type", "")
+		http.Redirect(w, r, redirect, http.StatusNotFound)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(host, string(http.StatusOK)).Add(1)
 		}

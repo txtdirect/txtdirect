@@ -177,7 +177,7 @@ func (m Module) storage(c Config) (storage.Backend, error) {
 		}
 		return s, nil
 	case "tmp":
-		s, err := fs.NewStorage(afero.GetTempDir(c.Gomods.Fs, ""), afero.NewOsFs())
+		s, err := fs.NewStorage(c.Gomods.Cache.Path, afero.NewOsFs())
 		if err != nil {
 			return nil, fmt.Errorf("could not create new storage from os fs (%s)", err)
 		}

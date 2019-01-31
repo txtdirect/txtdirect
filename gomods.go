@@ -165,6 +165,12 @@ func (m Module) fetch(r *http.Request, c Config) (download.Protocol, error) {
 func (m Module) storage(c Config) (storage.Backend, error) {
 	switch c.Gomods.Cache.Type {
 	case "local":
+		// Check if cache storage path exists, if not create it
+		if _, err := os.Stat(c.Gomods.Cache.Path); os.IsNotExist(err) {
+			if err = os.MkdirAll(c.Gomods.Cache.Path, os.ModePerm); err != nil {
+				return nil, fmt.Errorf("couldn't create the cache storage directory on %s: %s", c.Gomods.Cache.Path, err.Error())
+			}
+		}
 		s, err := fs.NewStorage(c.Gomods.Cache.Path, afero.NewOsFs())
 		if err != nil {
 			return nil, fmt.Errorf("could not create new storage from os fs (%s)", err)

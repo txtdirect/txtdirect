@@ -170,6 +170,12 @@ func (m Module) storage(c Config) (storage.Backend, error) {
 			return nil, fmt.Errorf("could not create new storage from os fs (%s)", err)
 		}
 		return s, nil
+	case "tmp":
+		s, err := fs.NewStorage(afero.GetTempDir(c.Gomods.Fs, ""), afero.NewOsFs())
+		if err != nil {
+			return nil, fmt.Errorf("could not create new storage from os fs (%s)", err)
+		}
+		return s, nil
 	}
 	return nil, fmt.Errorf("Invalid storage config for gomods")
 }

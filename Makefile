@@ -31,16 +31,23 @@ dependencies:
 	go get gopkg.in/natefinch/lumberjack.v2
 	go get github.com/miekg/dns
 	go get github.com/gomods/athens/...
+	rm -rf $(GOPATH)/src/github.com/gomods/athens/vendor/github.com/spf13/afero
 	go get github.com/spf13/afero
 	go get github.com/prometheus/client_golang/...
 
-build: build-container run-container get-binary
+build: dependencies recipe
 
-build-container:
+test: dependencies
+	go test -v ./...
+
+image-build:
 	docker build -t $(IMAGE) .
 
-run-container:
-	docker run --name $(CONTAINER) $(IMAGE) -d
+docker-run: image-build
+	docker run --name $(CONTAINER) $(IMAGE)
 
-get-binary:
-	docker cp $(CONTAINER):/go/src/$(PKG)/$(BIN) .
+docker-test:
+	docker run -v $(shell pwd):/go/src/github.com/txtdirect/txtdirect golang:1.11-alpine /bin/sh -c "cd /go/src/github.com/txtdirect/txtdirect && apk add git gcc musl-dev make && GOROOT=\"/usr/local/go\" make test"
+
+docker-build:
+	docker run -v $(shell pwd):/go/src/github.com/txtdirect/txtdirect golang:1.11-alpine /bin/sh -c "cd /go/src/github.com/txtdirect/txtdirect && apk add git gcc musl-dev make && make build"

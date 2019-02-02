@@ -1,0 +1,3 @@
+steps:
+- name: 'gcr.io/cloud-community-builders/make'
+  args: ['docker-build']

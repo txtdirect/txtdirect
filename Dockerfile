@@ -1,14 +1,7 @@
-FROM golang:1.11-alpine
+FROM alpine:3.9
 
-RUN apk --no-cache add ca-certificates make git && \
-  mkdir -p $GOPATH/src/github.com/txtdirect/txtdirect
+RUN apk --no-cache add ca-certificates
 
-WORKDIR $GOPATH/src/github.com/txtdirect/txtdirect
+ADD txtdirect /caddy
 
-COPY . .
-
-RUN make dependencies
-
-RUN make recipe
-
-CMD ["./txtdirect"]
+CMD ["/caddy"]

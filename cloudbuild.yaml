@@ -1,3 +1,3 @@
 steps:
-- name: 'gcr.io/cloud-community-builders/make'
+- name: 'gcr.io/erfanb-223517/docker-make'
   args: ['docker-build']

@@ -10,21 +10,3 @@ services:
 
 script:
   - make docker-test
-
-stages:
-  - test
-  - name: deploy
-    if: (branch = master) AND (type != pull_request)
-
-jobs:
-  include:
-    - stage: deploy
-      script:
-        # build caddy
-        - make travis-build
-        # build image and push
-        - docker login --username="$DOCKER_USER" --password="$DOCKER_PASSWORD"
-        - make docker
-        - make docker-push
-
-      go: 1.x

@@ -82,7 +82,7 @@ func TestParse(t *testing.T) {
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
-				Code:    301,
+				Code:    302,
 				Type:    "host",
 			},
 			nil,
@@ -149,7 +149,7 @@ func TestParse(t *testing.T) {
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/",
-				Code:    301,
+				Code:    302,
 				Type:    "host",
 			},
 			nil,
@@ -159,7 +159,7 @@ func TestParse(t *testing.T) {
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/testing",
-				Code:    301,
+				Code:    302,
 				Type:    "host",
 			},
 			nil,
@@ -169,7 +169,7 @@ func TestParse(t *testing.T) {
 			record{
 				Version: "txtv0",
 				To:      "https://example.com/testing",
-				Code:    301,
+				Code:    302,
 				Type:    "host",
 				From:    "GET",
 			},

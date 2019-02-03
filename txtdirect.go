@@ -28,12 +28,13 @@ import (
 )
 
 const (
-	basezone        = "_redirect"
-	defaultSub      = "www"
-	defaultProtocol = "https"
-	proxyKeepalive  = 30
-	fallbackDelay   = 300 * time.Millisecond
-	proxyTimeout    = 30 * time.Second
+	basezone          = "_redirect"
+	defaultSub        = "www"
+	defaultProtocol   = "https"
+	proxyKeepalive    = 30
+	fallbackDelay     = 300 * time.Millisecond
+	proxyTimeout      = 30 * time.Second
+	status301CacheAge = 604800
 )
 
 type record struct {
@@ -133,7 +134,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 	}
 
 	if r.Code == 0 {
-		r.Code = http.StatusMovedPermanently
+		r.Code = http.StatusFound
 	}
 
 	if r.Type == "" {
@@ -210,6 +211,9 @@ func getRecord(host string, ctx context.Context, c Config, r *http.Request) (rec
 func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int, c Config) {
 	if fallback != "" {
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, fallback)
+		if code == http.StatusMovedPermanently {
+			w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+		}
 		http.Redirect(w, r, fallback, code)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
@@ -301,6 +305,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {
 				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
+				w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
 				if c.Prometheus.Enable {
 					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
@@ -310,6 +315,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			if contains(c.Enable, "www") {
 				s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", host}, "")
 				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, s)
+				w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 				http.Redirect(w, r, s, http.StatusMovedPermanently)
 				if c.Prometheus.Enable {
 					RequestsByStatus.WithLabelValues(host, string(http.StatusMovedPermanently)).Add(1)
@@ -346,6 +352,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 				return nil
 			}
 			log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, rec.Root)
+			if rec.Code == http.StatusMovedPermanently {
+				w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+			}
 			http.Redirect(w, r, rec.Root, rec.Code)
 			if c.Prometheus.Enable {
 				RequestsByStatus.WithLabelValues(host, string(rec.Code)).Add(1)
@@ -398,6 +407,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			return err
 		}
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, to)
+		if code == http.StatusMovedPermanently {
+			w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+		}
 		http.Redirect(w, r, to, code)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(host, string(code)).Add(1)

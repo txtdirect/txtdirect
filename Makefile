@@ -51,3 +51,6 @@ docker-test:
 
 docker-build:
 	docker run -v $(shell pwd):/go/src/github.com/txtdirect/txtdirect golang:1.11-alpine /bin/sh -c "cd /go/src/github.com/txtdirect/txtdirect && apk add git gcc musl-dev make && make build"
+
+version:
+	@echo $(VERSION)

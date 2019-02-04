@@ -9,30 +9,4 @@ services:
   - docker
 
 script:
-  - go get -u github.com/mholt/caddy
-  - go get -u gopkg.in/natefinch/lumberjack.v2
-  - go get -u github.com/miekg/dns
-  - go get -u github.com/gomods/athens/...
-  - rm -rf ${TRAVIS_HOME}/gopath/src/github.com/gomods/athens/vendor/github.com/spf13/afero
-  - go get -u github.com/spf13/afero
-  - go get github.com/prometheus/client_golang/...
-  - go test -v -race ./...
-  - make travis-build
-
-stages:
-  - test
-  - name: deploy
-    if: (branch = master) AND (type != pull_request)
-
-jobs:
-  include:
-    - stage: deploy
-      script:
-        # build caddy
-        - make travis-build
-        # build image and push
-        - docker login --username="$DOCKER_USER" --password="$DOCKER_PASSWORD"
-        - make docker
-        - make docker-push
-
-      go: 1.x
+  - make docker-test

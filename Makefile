@@ -13,7 +13,7 @@ CONTAINER ?= $(BIN)
 .DEFAULT_GOAL := build
 
 recipe:
-	git clone https://github.com/mholt/caddy caddy-copy
+	if [ -d caddy-copy ]; then cd caddy-copy && git pull && cd ..; else git clone https://github.com/mholt/caddy caddy-copy; fi
 	find caddy-copy/caddyhttp/httpserver -name 'plugin.go' -type f -exec sed -i -e "s/gopkg/txtdirect/" -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e "s/\/\/ This is where other plugins get plugged in (imported)/_ \"github.com\/txtdirect\/txtdirect\/caddy\"/" -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/miekg\/caddy-prometheus"' -- {} +

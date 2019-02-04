@@ -33,13 +33,12 @@ dependencies:
 	go get github.com/gomods/athens/...
 	rm -rf $(GOPATH)/src/github.com/gomods/athens/vendor/github.com/spf13/afero
 	go get github.com/spf13/afero
-	rm -rf ${GOPATH}/src/github.com/gomods/athens/vendor/github.com/spf13/afero
 	go get github.com/prometheus/client_golang/...
 
 build: dependencies recipe
 
 test: dependencies
-	go test -v ./...
+	go test -v `go list ./... | grep -v caddy-copy`
 
 image-build:
 	docker build -t $(IMAGE) .

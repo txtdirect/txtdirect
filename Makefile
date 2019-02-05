@@ -13,7 +13,7 @@ CONTAINER ?= $(BIN)
 .DEFAULT_GOAL := build
 
 recipe:
-	git clone https://github.com/mholt/caddy caddy-copy
+	if [ -d caddy-copy ]; then cd caddy-copy && git pull && cd ..; else git clone https://github.com/mholt/caddy caddy-copy; fi
 	find caddy-copy/caddyhttp/httpserver -name 'plugin.go' -type f -exec sed -i -e "s/gopkg/txtdirect/" -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e "s/\/\/ This is where other plugins get plugged in (imported)/_ \"github.com\/txtdirect\/txtdirect\/caddy\"/" -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/miekg\/caddy-prometheus"' -- {} +
@@ -33,15 +33,14 @@ dependencies:
 	go get github.com/gomods/athens/...
 	rm -rf $(GOPATH)/src/github.com/gomods/athens/vendor/github.com/spf13/afero
 	go get github.com/spf13/afero
-	rm -rf ${GOPATH}/src/github.com/gomods/athens/vendor/github.com/spf13/afero
 	go get github.com/prometheus/client_golang/...
 
 build: dependencies recipe
 
 test: dependencies
-	go test -v ./...
+	go test -v `go list ./... | grep -v caddy-copy`
 
-image-build:
+image-build: docker-build
 	docker build -t $(IMAGE) .
 
 docker-run: image-build

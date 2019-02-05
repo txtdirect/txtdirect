@@ -40,8 +40,7 @@ build: dependencies recipe
 test: dependencies
 	go test -v `go list ./... | grep -v caddy-copy`
 
-image-build:
-	if [ ! -f $(BIN) ]; then make docker-build; fi
+image-build: docker-build
 	docker build -t $(IMAGE) .
 
 docker-run: image-build

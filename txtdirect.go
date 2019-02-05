@@ -219,13 +219,12 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback string, code int,
 			RequestsByStatus.WithLabelValues(r.URL.Host, string(code)).Add(1)
 		}
 	} else if c.Redirect != "" {
-		for _, enable := range c.Enable {
-			if enable == "www" {
-				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
-				http.Redirect(w, r, c.Redirect, http.StatusForbidden)
-				if c.Prometheus.Enable {
-					RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
-				}
+		if contains(c.Enable, "www") {
+			log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
+			w.Header().Set("Content-Type", "")
+			http.Redirect(w, r, c.Redirect, http.StatusForbidden)
+			if c.Prometheus.Enable {
+				RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
 			}
 		}
 	} else {
@@ -293,7 +292,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if bl[path] {
 		redirect := strings.Join([]string{host, path}, "")
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, redirect)
-		http.Redirect(w, r, redirect, http.StatusOK)
+		// Empty Content-Type to prevent http.Redirect from writing an html response body
+		w.Header().Set("Content-Type", "")
+		http.Redirect(w, r, redirect, http.StatusNotFound)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(host, string(http.StatusOK)).Add(1)
 		}
@@ -379,7 +380,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
 			fallback(w, r, fallbackURL, code, c)
-			return err
+			return nil
 		}
 		u, err := url.Parse(to)
 		if err != nil {
@@ -395,6 +396,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if err != nil {
 			log.Printf("[txtdirect]: couldn't redirect to the requested container: %s", err.Error())
 			fallback(w, r, fallbackURL, code, c)
+			return nil
 		}
 		return nil
 	}
@@ -404,7 +406,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
 			fallback(w, r, fallbackURL, code, c)
-			return err
+			return nil
 		}
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, to)
 		if code == http.StatusMovedPermanently {

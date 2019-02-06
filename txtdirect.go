@@ -301,6 +301,12 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
+	if host == "127.0.0.1" {
+		log.Println("[txtdirect]: Trying to access 127.0.0.1, fallback triggered.")
+		fallback(w, r, "", 0, c)
+		return nil
+	}
+
 	rec, err := getRecord(host, r.Context(), c, r)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "no such host") {

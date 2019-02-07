@@ -38,6 +38,7 @@ type Cache struct {
 type Module struct {
 	Name    string
 	Version string
+	FileExt string
 }
 
 type ModuleHandler interface {
@@ -76,20 +77,9 @@ func (gomods *Gomods) SetDefaults() {
 }
 
 func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error {
-	moduleName, version, ext := moduleNameAndVersion(path)
-	if moduleName == "" {
+	m := Module{}
+	if err := m.ParseImportPath(path); err != nil {
 		return fmt.Errorf("module url is empty")
-	}
-
-	// Decode module's import path
-	moduleName, err := paths.DecodePath(moduleName)
-	if err != nil {
-		return err
-	}
-
-	m := Module{
-		Name:    moduleName,
-		Version: version,
 	}
 
 	dp, err := m.fetch(r, c)
@@ -97,7 +87,7 @@ func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error
 		return err
 	}
 
-	switch ext {
+	switch m.FileExt {
 	case "list":
 		list, err := dp.List(r.Context(), m.Name)
 		if err != nil {
@@ -208,20 +198,46 @@ func (m Module) dp(fetcher module.Fetcher, s storage.Backend, c Config) download
 	return dp
 }
 
-func moduleNameAndVersion(path string) (string, string, string) {
+// ParseImportPath parses the request path and exports the
+// module's import path, module's version and file extension
+func (m *Module) ParseImportPath(path string) error {
 	if strings.Contains(path, "@latest") {
 		pathLatest := strings.Split(path, "/@")
-		return pathLatest[0][1:], "", pathLatest[1]
+		m.Name, m.Version, m.FileExt = pathLatest[0][1:], "", pathLatest[1]
+		if err := m.DecodeImportPath(); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// First item in array is modules import path and the secondd item is version+extension
 	pathSlice := strings.Split(path, "/@v/")
 	if pathSlice[1] == "list" {
-		return pathSlice[0][1:], "", "list"
+		m.Name, m.Version, m.FileExt = pathSlice[0][1:], "", "list"
+		if err := m.DecodeImportPath(); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	versionExt := modVersionRegex.FindAllStringSubmatch(pathSlice[1], -1)[0]
-	return pathSlice[0][1:], versionExt[1], versionExt[2]
+	m.Name, m.Version, m.FileExt = pathSlice[0][1:], versionExt[1], versionExt[2]
+	if err := m.DecodeImportPath(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DecodeImportPath decodes the module's import path. For more information check
+// https://github.com/golang/go/blob/master/src/cmd/go/internal/module/module.go#L375-L433
+func (m *Module) DecodeImportPath() error {
+	decoded, err := paths.DecodePath(m.Name)
+	if err != nil {
+		return err
+	}
+	m.Name = decoded
+	return nil
 }
 
 // ParseGomods parses the txtdirect config for gomods

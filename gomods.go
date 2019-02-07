@@ -13,6 +13,7 @@ import (
 	"github.com/gomods/athens/pkg/download"
 	"github.com/gomods/athens/pkg/download/addons"
 	"github.com/gomods/athens/pkg/module"
+	"github.com/gomods/athens/pkg/paths"
 	"github.com/gomods/athens/pkg/stash"
 	"github.com/gomods/athens/pkg/storage"
 	"github.com/gomods/athens/pkg/storage/fs"
@@ -46,7 +47,7 @@ type ModuleHandler interface {
 }
 
 var gomodsRegex = regexp.MustCompile("(list|info|mod|zip)")
-var modVersionRegex = regexp.MustCompile("@v\\/(v\\d+\\.\\d+\\.\\d+\\-\\d+\\-[\\w\\d]+|v\\d+\\.\\d+\\.\\d+|v\\d+\\.\\d+|latest|master)")
+var modVersionRegex = regexp.MustCompile("(.*)\\.(info|mod|zip)")
 var DefaultGoBinaryPath = os.Getenv("GOROOT") + "/bin/go"
 
 const (
@@ -79,14 +80,23 @@ func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error
 	if moduleName == "" {
 		return fmt.Errorf("module url is empty")
 	}
+
+	// Decode module's import path
+	moduleName, err := paths.DecodePath(moduleName)
+	if err != nil {
+		return err
+	}
+
 	m := Module{
 		Name:    moduleName,
 		Version: version,
 	}
+
 	dp, err := m.fetch(r, c)
 	if err != nil {
 		return err
 	}
+
 	switch ext {
 	case "list":
 		list, err := dp.List(r.Context(), m.Name)
@@ -199,22 +209,19 @@ func (m Module) dp(fetcher module.Fetcher, s storage.Backend, c Config) download
 }
 
 func moduleNameAndVersion(path string) (string, string, string) {
-	pathSlice := strings.Split(path, "/")[1:] // [1:] ignores the empty slice item
-	var ext, version string
-	for k, v := range pathSlice {
-		if v == "@v" {
-			ext = gomodsRegex.FindAllStringSubmatch(pathSlice[k+1], -1)[0][0]
-			break
-		}
-	}
-	moduleName := strings.Join(pathSlice[0:3], "/")
 	if strings.Contains(path, "@latest") {
-		return strings.Join(pathSlice[0:3], "/"), "", "latest"
+		pathLatest := strings.Split(path, "/@")
+		return pathLatest[0][1:], "", pathLatest[1]
 	}
-	if !strings.Contains(path, "list") {
-		version = modVersionRegex.FindAllStringSubmatch(path, -1)[0][1]
+
+	// First item in array is modules import path and the secondd item is version+extension
+	pathSlice := strings.Split(path, "/@v/")
+	if pathSlice[1] == "list" {
+		return pathSlice[0][1:], "", "list"
 	}
-	return moduleName, version, ext
+
+	versionExt := modVersionRegex.FindAllStringSubmatch(pathSlice[1], -1)[0]
+	return pathSlice[0][1:], versionExt[1], versionExt[2]
 }
 
 // ParseGomods parses the txtdirect config for gomods

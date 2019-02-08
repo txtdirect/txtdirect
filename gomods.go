@@ -13,6 +13,7 @@ import (
 	"github.com/gomods/athens/pkg/download"
 	"github.com/gomods/athens/pkg/download/addons"
 	"github.com/gomods/athens/pkg/module"
+	"github.com/gomods/athens/pkg/paths"
 	"github.com/gomods/athens/pkg/stash"
 	"github.com/gomods/athens/pkg/storage"
 	"github.com/gomods/athens/pkg/storage/fs"
@@ -37,6 +38,7 @@ type Cache struct {
 type Module struct {
 	Name    string
 	Version string
+	FileExt string
 }
 
 type ModuleHandler interface {
@@ -46,7 +48,7 @@ type ModuleHandler interface {
 }
 
 var gomodsRegex = regexp.MustCompile("(list|info|mod|zip)")
-var modVersionRegex = regexp.MustCompile("@v\\/(v\\d+\\.\\d+\\.\\d+\\-\\d+\\-[\\w\\d]+|v\\d+\\.\\d+\\.\\d+|v\\d+\\.\\d+|latest|master)")
+var modVersionRegex = regexp.MustCompile("(.*)\\.(info|mod|zip)")
 var DefaultGoBinaryPath = os.Getenv("GOROOT") + "/bin/go"
 
 const (
@@ -75,19 +77,17 @@ func (gomods *Gomods) SetDefaults() {
 }
 
 func gomods(w http.ResponseWriter, r *http.Request, path string, c Config) error {
-	moduleName, version, ext := moduleNameAndVersion(path)
-	if moduleName == "" {
+	m := Module{}
+	if err := m.ParseImportPath(path); err != nil {
 		return fmt.Errorf("module url is empty")
 	}
-	m := Module{
-		Name:    moduleName,
-		Version: version,
-	}
+
 	dp, err := m.fetch(r, c)
 	if err != nil {
 		return err
 	}
-	switch ext {
+
+	switch m.FileExt {
 	case "list":
 		list, err := dp.List(r.Context(), m.Name)
 		if err != nil {
@@ -198,23 +198,46 @@ func (m Module) dp(fetcher module.Fetcher, s storage.Backend, c Config) download
 	return dp
 }
 
-func moduleNameAndVersion(path string) (string, string, string) {
-	pathSlice := strings.Split(path, "/")[1:] // [1:] ignores the empty slice item
-	var ext, version string
-	for k, v := range pathSlice {
-		if v == "@v" {
-			ext = gomodsRegex.FindAllStringSubmatch(pathSlice[k+1], -1)[0][0]
-			break
-		}
-	}
-	moduleName := strings.Join(pathSlice[0:3], "/")
+// ParseImportPath parses the request path and exports the
+// module's import path, module's version and file extension
+func (m *Module) ParseImportPath(path string) error {
 	if strings.Contains(path, "@latest") {
-		return strings.Join(pathSlice[0:3], "/"), "", "latest"
+		pathLatest := strings.Split(path, "/@")
+		m.Name, m.Version, m.FileExt = pathLatest[0][1:], "", pathLatest[1]
+		if err := m.DecodeImportPath(); err != nil {
+			return err
+		}
+		return nil
 	}
-	if !strings.Contains(path, "list") {
-		version = modVersionRegex.FindAllStringSubmatch(path, -1)[0][1]
+
+	// First item in array is modules import path and the secondd item is version+extension
+	pathSlice := strings.Split(path, "/@v/")
+	if pathSlice[1] == "list" {
+		m.Name, m.Version, m.FileExt = pathSlice[0][1:], "", "list"
+		if err := m.DecodeImportPath(); err != nil {
+			return err
+		}
+		return nil
 	}
-	return moduleName, version, ext
+
+	versionExt := modVersionRegex.FindAllStringSubmatch(pathSlice[1], -1)[0]
+	m.Name, m.Version, m.FileExt = pathSlice[0][1:], versionExt[1], versionExt[2]
+	if err := m.DecodeImportPath(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DecodeImportPath decodes the module's import path. For more information check
+// https://github.com/golang/go/blob/master/src/cmd/go/internal/module/module.go#L375-L433
+func (m *Module) DecodeImportPath() error {
+	decoded, err := paths.DecodePath(m.Name)
+	if err != nil {
+		return err
+	}
+	m.Name = decoded
+	return nil
 }
 
 // ParseGomods parses the txtdirect config for gomods

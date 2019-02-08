@@ -59,6 +59,9 @@ func zoneFromPath(host string, path string, rec record) (string, int, []string, 
 	from := len(pathSlice)
 	if rec.From != "" {
 		fromSubmatch := FromRegex.FindAllStringSubmatch(rec.From, -1)
+		if len(fromSubmatch) != len(pathSlice) {
+			return "", 0, []string{}, fmt.Errorf("length of path doesn't match with length of from= in record")
+		}
 		fromSlice := make(map[int]string)
 		for k, v := range fromSubmatch {
 			index, _ := strconv.Atoi(v[1])

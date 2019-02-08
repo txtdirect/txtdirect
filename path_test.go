@@ -1,6 +1,7 @@
 package txtdirect
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -149,6 +150,14 @@ func Test_zoneFromPath(t *testing.T) {
 			"_redirect.stuff.testing.string.example.com",
 			nil,
 		},
+		{
+			"example.com",
+			"/test",
+			"/$2/$1",
+			"",
+			"",
+			fmt.Errorf("length of path doesn't match with length of from= in record"),
+		},
 	}
 	for _, test := range tests {
 		rec := record{}
@@ -156,6 +165,10 @@ func Test_zoneFromPath(t *testing.T) {
 		rec.From = test.from
 		zone, _, _, err := zoneFromPath(test.host, test.path, rec)
 		if err != nil {
+			// Check negative tests
+			if err.Error() == test.err.Error() {
+				continue
+			}
 			t.Errorf("Got error: %s", err.Error())
 		}
 		if zone != test.expected {

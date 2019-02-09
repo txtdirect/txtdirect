@@ -392,6 +392,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "dockerv2" {
+		if !strings.Contains(r.Header.Get("User-Agent"), "Docker-Client") {
+			log.Println("[txtdirect]: The request is not from docker client, fallback triggered.")
+			fallback(w, r, fallbackURL, code, c)
+			return nil
+		}
 		err := redirectDockerv2(w, r, rec)
 		if err != nil {
 			log.Printf("[txtdirect]: couldn't redirect to the requested container: %s", err.Error())

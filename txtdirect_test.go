@@ -370,6 +370,18 @@ func TestRedirectE2e(t *testing.T) {
 			"https://github.com/okkur/reposeed",
 			[]string{"gometa", "path"},
 		},
+		{
+			"https://127.0.0.1/test",
+			txts["_redirect.fail.record."],
+			"404",
+			[]string{"host"},
+		},
+		{
+			"https://192.168.1.2",
+			txts["_redirect.fail.record."],
+			"404",
+			[]string{"host"},
+		},
 	}
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)

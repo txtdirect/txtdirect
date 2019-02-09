@@ -279,6 +279,15 @@ func query(zone string, ctx context.Context, c Config) ([]string, error) {
 	return txts, nil
 }
 
+func isIP(host string) bool {
+	hostSlice := strings.Split(host, ".")
+	_, err := strconv.Atoi(hostSlice[len(hostSlice)-1])
+	if err == nil {
+		return true
+	}
+	return false
+}
+
 // Redirect the request depending on the redirect record found
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
@@ -301,7 +310,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
-	if host == "127.0.0.1" {
+	if isIP(host) {
 		log.Println("[txtdirect]: Trying to access 127.0.0.1, fallback triggered.")
 		fallback(w, r, "", 0, c)
 		return nil

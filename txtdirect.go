@@ -425,6 +425,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "gometa" {
+		// Trigger fallback when request isn't from `go get`
+		if r.URL.Query().Get("go-get") != "1" {
+			fallback(w, r, rec.Website, http.StatusFound, c)
+			return nil
+		}
 		return gometa(w, rec, host)
 	}
 

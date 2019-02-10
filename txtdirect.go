@@ -28,12 +28,13 @@ import (
 )
 
 const (
-	basezone        = "_redirect"
-	defaultSub      = "www"
-	defaultProtocol = "https"
-	proxyKeepalive  = 30
-	fallbackDelay   = 300 * time.Millisecond
-	proxyTimeout    = 30 * time.Second
+	basezone          = "_redirect"
+	defaultSub        = "www"
+	defaultProtocol   = "https"
+	proxyKeepalive    = 30
+	fallbackDelay     = 300 * time.Millisecond
+	proxyTimeout      = 30 * time.Second
+	status301CacheAge = 604800
 )
 
 type record struct {
@@ -53,6 +54,7 @@ type Config struct {
 	Enable     []string
 	Redirect   string
 	Resolver   string
+	Gomods     Gomods
 	Prometheus Prometheus
 }
 
@@ -132,7 +134,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 	}
 
 	if r.Code == 0 {
-		r.Code = http.StatusMovedPermanently
+		r.Code = http.StatusFound
 	}
 
 	if r.Type == "" {
@@ -210,18 +212,20 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType strin
 	FallbacksCount.WithLabelValues(r.Host, recordType).Add(1)
 	if fallback != "" {
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, fallback)
+		if code == http.StatusMovedPermanently {
+			w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+		}
 		http.Redirect(w, r, fallback, code)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(r.URL.Host, strconv.Itoa(code)).Add(1)
 		}
 	} else if c.Redirect != "" {
-		for _, enable := range c.Enable {
-			if enable == "www" {
-				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
-				http.Redirect(w, r, c.Redirect, http.StatusForbidden)
-				if c.Prometheus.Enable {
-					RequestsByStatus.WithLabelValues(r.URL.Host, strconv.Itoa(http.StatusForbidden)).Add(1)
-				}
+		if contains(c.Enable, "www") {
+			log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
+			w.Header().Set("Content-Type", "")
+			http.Redirect(w, r, c.Redirect, http.StatusForbidden)
+			if c.Prometheus.Enable {
+				RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
 			}
 		}
 	} else {
@@ -289,7 +293,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if bl[path] {
 		redirect := strings.Join([]string{host, path}, "")
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, redirect)
-		http.Redirect(w, r, redirect, http.StatusOK)
+		// Empty Content-Type to prevent http.Redirect from writing an html response body
+		w.Header().Set("Content-Type", "")
+		http.Redirect(w, r, redirect, http.StatusNotFound)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusOK)).Add(1)
 		}
@@ -301,6 +307,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if strings.HasSuffix(err.Error(), "no such host") {
 			if c.Redirect != "" {
 				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
+				w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
 				if c.Prometheus.Enable {
 					RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusMovedPermanently)).Add(1)
@@ -310,6 +317,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			if contains(c.Enable, "www") {
 				s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", host}, "")
 				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, s)
+				w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 				http.Redirect(w, r, s, http.StatusMovedPermanently)
 				if c.Prometheus.Enable {
 					RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusMovedPermanently)).Add(1)
@@ -347,6 +355,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 				return nil
 			}
 			log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, rec.Root)
+			if rec.Code == http.StatusMovedPermanently {
+				w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+			}
 			http.Redirect(w, r, rec.Root, rec.Code)
 			if c.Prometheus.Enable {
 				RequestsByStatus.WithLabelValues(host, strconv.Itoa(rec.Code)).Add(1)
@@ -373,7 +384,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
 			fallback(w, r, fallbackURL, rec.Type, code, c)
-			return err
+			return nil
 		}
 		u, err := url.Parse(to)
 		if err != nil {
@@ -389,7 +400,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		err := redirectDockerv2(w, r, rec)
 		if err != nil {
 			log.Printf("[txtdirect]: couldn't redirect to the requested container: %s", err.Error())
-      fallback(w, r, fallbackURL, rec.Type, code, c)
+			fallback(w, r, fallbackURL, rec.Type, code, c)
+			return nil
 		}
 		return nil
 	}
@@ -400,9 +412,12 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
 			fallback(w, r, fallbackURL, rec.Type, code, c)
-			return err
+			return nil
 		}
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, to)
+		if code == http.StatusMovedPermanently {
+			w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+		}
 		http.Redirect(w, r, to, code)
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(host, strconv.Itoa(code)).Add(1)
@@ -413,6 +428,10 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "gometa" {
 		RequestsCountBasedOnType.WithLabelValues(host, "gometa").Add(1)
 		return gometa(w, rec, host, path)
+	}
+
+	if rec.Type == "gomods" {
+		return gomods(w, r, path, c)
 	}
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)

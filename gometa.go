@@ -25,7 +25,7 @@ var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 <html>
 <head>
 <meta name="go-import" content="{{.Host}}{{.Path}} {{.Vcs}} {{.NewURL}}">
-{{if .HasGoSource}}<meta name="go-source" content="{{.Host}}{{.Path}} _ {{.NewURL}}/tree/v2{/dir} {{.NewURL}}/blob/v2{/dir}/{file}#L{line}">{{end}}
+{{if .HasGoSource}}<meta name="go-source" content="{{.Host}}{{.Path}} _ {{.NewURL}}/tree/master{/dir} {{.NewURL}}/blob/master{/dir}/{file}#L{line}">{{end}}
 </head>
 </html>`))
 

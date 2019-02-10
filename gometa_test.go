@@ -79,7 +79,7 @@ func TestGometa(t *testing.T) {
 <html>
 <head>
 <meta name="go-import" content="root.com git github.com/txtdirect/txtdirect">
-<meta name="go-source" content="root.com _ github.com/txtdirect/txtdirect/tree/v2{/dir} github.com/txtdirect/txtdirect/blob/v2{/dir}/{file}#L{line}">
+<meta name="go-source" content="root.com _ github.com/txtdirect/txtdirect/tree/master{/dir} github.com/txtdirect/txtdirect/blob/master{/dir}/{file}#L{line}">
 </head>
 </html>`,
 		},

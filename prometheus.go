@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -59,18 +60,15 @@ const (
 	prometheusPath string = "/metrics"
 )
 
-func NewPrometheus(addr, path string) *Prometheus {
-	if addr == "" {
-		addr = prometheusAddr
+// SetDefaults sets the default values for prometheus config
+// if the fields are empty
+func (p *Prometheus) SetDefaults() {
+	if p.Address == "" {
+		p.Address = prometheusAddr
 	}
-	if path == "" {
-		path = prometheusPath
+	if p.Path == "" {
+		p.Path = prometheusPath
 	}
-	p := &Prometheus{
-		Path:    path,
-		Address: addr,
-	}
-	return p
 }
 
 func (p *Prometheus) start() error {
@@ -115,4 +113,24 @@ func (p *Prometheus) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, err
 	status, err := next.ServeHTTP(rw, r)
 
 	return status, err
+}
+
+// ParsePrometheus parses the txtdirect config for Prometheus
+func (p *Prometheus) ParsePrometheus(c *caddy.Controller, key, value string) error {
+	switch key {
+	case "enable":
+		value, err := strconv.ParseBool(value)
+		if err != nil {
+			return c.ArgErr()
+		}
+		p.Enable = value
+	case "address":
+		// TODO: validate the given address
+		p.Address = value
+	case "path":
+		p.Path = value
+	default:
+		return c.ArgErr() // unhandled option for prometheus
+	}
+	return nil
 }

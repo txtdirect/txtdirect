@@ -1,0 +1,10 @@
+steps:
+- name: 'gcr.io/okkur-230615/docker-make'
+  args: ['docker-test']
+- name: 'gcr.io/okkur-230615/docker-make'
+  args: ['docker-build']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/txtdirect:dev-$SHORT_SHA', '.']
+
+images:
+- 'gcr.io/$PROJECT_ID/txtdirect:dev-$SHORT_SHA'

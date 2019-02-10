@@ -1,6 +1,7 @@
 package txtdirect
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -34,9 +35,11 @@ func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error 
 		if err != nil {
 			return err
 		}
+		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 		http.Redirect(w, r, uri, http.StatusMovedPermanently)
 		return nil
 	}
+	w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 	http.Redirect(w, r, rec.To, http.StatusMovedPermanently)
 	return nil
 }

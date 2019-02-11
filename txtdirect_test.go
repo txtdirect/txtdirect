@@ -49,6 +49,14 @@ var txts = map[string]string{
 	// type=""
 	"_redirect.about.test.": "v=txtv0;to=https://about.txtdirect.org",
 	"_redirect.pkg.test.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
+
+	//
+	//	Fallback records
+	//
+
+	// type=path
+	"_redirect.fallbackpath.test.":             "v=txtv0;type=path",
+	"_redirect.withoutroot.fallbackpath.test.": "v=txtv0;type=path",
 }
 
 // Testing DNS server port
@@ -462,6 +470,50 @@ func Test_fallback(t *testing.T) {
 		fallback(resp, req, test.url, test.code, c)
 		if resp.Code != test.code {
 			t.Errorf("Response's status code (%d) doesn't match with expected status code (%d).", resp.Code, test.code)
+		}
+	}
+}
+
+func TestFallbackE2e(t *testing.T) {
+	tests := []struct {
+		url      string
+		txt      string
+		enable   []string
+		redirect string
+	}{
+		{
+			"https://fallbackpath.test/withoutroot/",
+			txts["_redirect.fallbackpath.test."],
+			[]string{"www", "path"},
+			"http://fallback.test",
+		},
+		{
+			"https://fallbackpath.test/nosubdomain",
+			txts["_redirect.fallbackpath.test."],
+			[]string{"www", "path"},
+			"http://fallback.test",
+		},
+		{
+			"https://fallbackpath.test/",
+			txts["_redirect.fallbackpath.test."],
+			[]string{"www", "path"},
+			"http://fallback.test",
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.url, nil)
+		resp := httptest.NewRecorder()
+		c := Config{
+			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Enable:   test.enable,
+			Redirect: test.redirect,
+		}
+		err := Redirect(resp, req, c)
+		if err != nil {
+			t.Errorf("Unexpected error: %s", err.Error())
+		}
+		if resp.Result().Header.Get("Location") != test.redirect {
+			t.Errorf("Expected %s got %s", test.redirect, resp.Result().Header.Get("Location"))
 		}
 	}
 }

@@ -429,3 +429,39 @@ func TestConfigE2e(t *testing.T) {
 		}
 	}
 }
+
+func Test_fallback(t *testing.T) {
+	tests := []struct {
+		url      string
+		code     int
+		redirect string
+	}{
+		{
+			"https://goto.fallback.test",
+			301,
+			"",
+		},
+		{
+			"",
+			403,
+			"https://goto.redirect.test",
+		},
+		{
+			"https://goto.fallback.test",
+			404,
+			"https://dontgoto.redirect.test",
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", "https://testing.test", nil)
+		resp := httptest.NewRecorder()
+		c := Config{
+			Redirect: test.redirect,
+			Enable:   []string{"www"},
+		}
+		fallback(resp, req, test.url, test.code, c)
+		if resp.Code != test.code {
+			t.Errorf("Response's status code (%d) doesn't match with expected status code (%d).", resp.Code, test.code)
+		}
+	}
+}

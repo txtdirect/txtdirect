@@ -57,6 +57,11 @@ var txts = map[string]string{
 	// type=path
 	"_redirect.fallbackpath.test.":             "v=txtv0;type=path",
 	"_redirect.withoutroot.fallbackpath.test.": "v=txtv0;type=path",
+
+	// type=dockerv2
+	"_redirect.fallbackdockerv2.test.":         "v=txtv0;type=path",
+	"_redirect.correct.fallbackdockerv2.test.": "v=txtv0;to=https://gcr.io/;type=dockerv2",
+	"_redirect.wrong.fallbackdockerv2.test.":   "v=txtv0;to=://gcr.io/;type=dockerv2",
 }
 
 // Testing DNS server port
@@ -476,32 +481,65 @@ func Test_fallback(t *testing.T) {
 
 func TestFallbackE2e(t *testing.T) {
 	tests := []struct {
-		url      string
-		txt      string
-		enable   []string
-		redirect string
+		url         string
+		txt         string
+		enable      []string
+		fallbackURL string
+		redirect    string
+		headers     http.Header
 	}{
 		{
 			"https://fallbackpath.test/withoutroot/",
 			txts["_redirect.fallbackpath.test."],
 			[]string{"www", "path"},
+			"",
 			"http://fallback.test",
+			http.Header{},
 		},
 		{
 			"https://fallbackpath.test/nosubdomain",
 			txts["_redirect.fallbackpath.test."],
 			[]string{"www", "path"},
+			"",
 			"http://fallback.test",
+			http.Header{},
 		},
 		{
 			"https://fallbackpath.test/",
 			txts["_redirect.fallbackpath.test."],
 			[]string{"www", "path"},
+			"",
 			"http://fallback.test",
+			http.Header{},
+		},
+		{
+			"https://fallbackdockerv2.test/correct",
+			txts["_redirect.fallbackdockerv2.test."],
+			[]string{"www", "dockerv2", "path"},
+			"https://gcr.io/",
+			"",
+			http.Header{"User-Agent": []string{"Docker-Server"}},
+		},
+		{
+			"https://fallbackdockerv2.test/wrong",
+			txts["_redirect.fallbackdockerv2.test."],
+			[]string{"www", "dockerv2", "path"},
+			"https://gcr.io/",
+			"",
+			http.Header{"User-Agent": []string{"Docker-Client"}},
+		},
+		{
+			"https://fallbackdockerv2.test/correct",
+			txts["_redirect.fallbackdockerv2.test."],
+			[]string{"www", "dockerv2", "path"},
+			"https://gcr.io/",
+			"",
+			http.Header{"User-Agent": []string{"Docker-Client"}},
 		},
 	}
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)
+		req.Header = test.headers
 		resp := httptest.NewRecorder()
 		c := Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
@@ -509,11 +547,11 @@ func TestFallbackE2e(t *testing.T) {
 			Redirect: test.redirect,
 		}
 		err := Redirect(resp, req, c)
+		if resp.Result().Header.Get("Location") != test.redirect && resp.Result().Header.Get("Location") != test.fallbackURL {
+			t.Errorf("Expected %s got %s", test.redirect, resp.Result().Header.Get("Location"))
+		}
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err.Error())
-		}
-		if resp.Result().Header.Get("Location") != test.redirect {
-			t.Errorf("Expected %s got %s", test.redirect, resp.Result().Header.Get("Location"))
 		}
 	}
 }

@@ -62,6 +62,11 @@ var txts = map[string]string{
 	"_redirect.fallbackdockerv2.test.":         "v=txtv0;type=path",
 	"_redirect.correct.fallbackdockerv2.test.": "v=txtv0;to=https://gcr.io/;type=dockerv2",
 	"_redirect.wrong.fallbackdockerv2.test.":   "v=txtv0;to=://gcr.io/;type=dockerv2",
+
+	// type=gometa
+	"_redirect.fallbackgometa.test.":          "v=txtv0;type=path",
+	"_redirect.website.fallbackgometa.test.":  "v=txtv0;to=https://github.com/okkur/reposeed-server/;website=https://about.okkur.io/;type=gometa",
+	"_redirect.redirect.fallbackgometa.test.": "v=txtv0;to=https://github.com/okkur/reposeed-server/;type=gometa",
 }
 
 // Testing DNS server port
@@ -535,6 +540,22 @@ func TestFallbackE2e(t *testing.T) {
 			"https://gcr.io/",
 			"",
 			http.Header{"User-Agent": []string{"Docker-Client"}},
+		},
+		{
+			"https://fallbackgometa.test/website",
+			txts["_redirect.fallbackgometa.test."],
+			[]string{"www", "host", "path"},
+			"https://about.okkur.io/",
+			"",
+			http.Header{},
+		},
+		{
+			"https://fallbackgometa.test/redirect",
+			txts["_redirect.fallbackgometa.test."],
+			[]string{"www", "host", "path"},
+			"",
+			"https://about.okkur.io/",
+			http.Header{},
 		},
 	}
 	for _, test := range tests {

@@ -401,6 +401,13 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "dockerv2" {
 		RequestsCountBasedOnType.WithLabelValues(host, "dockerv2").Add(1)
+
+		if !strings.Contains(r.Header.Get("User-Agent"), "Docker-Client") {
+			log.Println("[txtdirect]: The request is not from docker client, fallback triggered.")
+			fallback(w, r, fallbackURL, code, c)
+			return nil
+		}
+
 		err := redirectDockerv2(w, r, rec)
 		if err != nil {
 			log.Printf("[txtdirect]: couldn't redirect to the requested container: %s", err.Error())
@@ -432,7 +439,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "gometa" {
 		RequestsCountBasedOnType.WithLabelValues(host, "gometa").Add(1)
-		return gometa(w, rec, host, path)
+
+    // Trigger fallback when request isn't from `go get`
+		if r.URL.Query().Get("go-get") != "1" {
+			fallback(w, r, rec.Website, http.StatusFound, c)
+			return nil
+		}
+
+		return gometa(w, rec, host)
 	}
 
 	if rec.Type == "gomods" {

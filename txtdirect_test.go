@@ -43,6 +43,7 @@ var txts = map[string]string{
 	"_redirect.metapath.e2e.test.":       "v=txtv0;type=path",
 	// type=gometa
 	"_redirect.pkg.txtdirect.test.":           "v=txtv0;to=https://github.com/txtdirect/txtdirect;type=gometa;vcs=git",
+	"_redirect.pkgweb.metapath.e2e.test.":     "v=txtv0;to=https://github.com/txtdirect/txtdirect;type=gometa;website=https://godoc.org/go.txtdirect.org/txtdirect",
 	"_redirect.pkg.metapath.e2e.test.":        "v=txtv0;to=https://github.com/okkur/reposeed-server;type=gometa",
 	"_redirect.second.pkg.metapath.e2e.test.": "v=txtv0;to=https://github.com/okkur/reposeed;type=gometa",
 	// type=""
@@ -353,21 +354,27 @@ func TestRedirectE2e(t *testing.T) {
 			[]string{"path", "host"},
 		},
 		{
-			"https://pkg.txtdirect.test",
+			"https://pkg.txtdirect.test?go-get=1",
 			txts["_redirect.pkg.txtdirect.test."],
 			"https://github.com/txtdirect/txtdirect",
 			[]string{"gometa"},
 		},
 		{
-			"https://metapath.e2e.test/pkg",
+			"https://metapath.e2e.test/pkg?go-get=1",
 			txts["_redirect.metapath.e2e.test."],
 			"https://github.com/okkur/reposeed-server",
 			[]string{"gometa", "path"},
 		},
 		{
-			"https://metapath.e2e.test/pkg/second",
+			"https://metapath.e2e.test/pkg/second?go-get=1",
 			txts["_redirect.metapath.e2e.test."],
 			"https://github.com/okkur/reposeed",
+			[]string{"gometa", "path"},
+		},
+		{
+			"https://metapath.e2e.test/pkgweb",
+			txts["_redirect.metapath.e2e.test."],
+			"https://godoc.org/go.txtdirect.org/txtdirect",
 			[]string{"gometa", "path"},
 		},
 	}

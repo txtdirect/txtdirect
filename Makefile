@@ -17,6 +17,7 @@ recipe:
 	find caddy-copy/caddyhttp/httpserver -name 'plugin.go' -type f -exec sed -i -e "s/gopkg/txtdirect/" -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e "s/\/\/ This is where other plugins get plugged in (imported)/_ \"github.com\/txtdirect\/txtdirect\/caddy\"/" -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/miekg\/caddy-prometheus"' -- {} +
+	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/SchumacherFM\/mailout"' -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/txtdirect\/txtdirect\/caddy"/a _ "github.com\/captncraig\/caddy-realip"' -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e 's/var EnableTelemetry = true/var EnableTelemetry = false/' -- {} +
 	cd caddy-copy/caddy && \
@@ -27,6 +28,7 @@ dependencies:
 	go get github.com/mholt/caddy/caddy
 	go get github.com/caddyserver/builds
 	go get github.com/miekg/caddy-prometheus
+	go get github.com/SchumacherFM/mailout
 	go get github.com/captncraig/caddy-realip
 	go get gopkg.in/natefinch/lumberjack.v2
 	go get github.com/miekg/dns

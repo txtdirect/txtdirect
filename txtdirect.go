@@ -284,11 +284,13 @@ func query(zone string, ctx context.Context, c Config) ([]string, error) {
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
 	path := r.URL.Path
-	if c.Prometheus.Enable {
-		RequestsCount.WithLabelValues(host).Add(1)
-	}
+
 	bl := make(map[string]bool)
 	bl["/favicon.ico"] = true
+
+	if c.Prometheus.Enable && !bl[path] {
+		RequestsCount.WithLabelValues(host).Add(1)
+	}
 
 	if bl[path] {
 		redirect := strings.Join([]string{host, path}, "")
@@ -297,7 +299,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		w.Header().Set("Content-Type", "")
 		http.Redirect(w, r, redirect, http.StatusNotFound)
 		if c.Prometheus.Enable {
-			RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusOK)).Add(1)
+			RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusNotFound)).Add(1)
 		}
 		return nil
 	}

@@ -280,12 +280,12 @@ func query(zone string, ctx context.Context, c Config) ([]string, error) {
 }
 
 func isIP(host string) bool {
-	hostSlice := strings.Split(host, ".")
-	_, err := strconv.Atoi(hostSlice[len(hostSlice)-1])
-	if err == nil {
+	if v6slice := strings.Split(host, ":"); len(v6slice) > 2 {
 		return true
 	}
-	return false
+	hostSlice := strings.Split(host, ".")
+	_, err := strconv.Atoi(hostSlice[len(hostSlice)-1])
+	return err == nil
 }
 
 // Redirect the request depending on the redirect record found

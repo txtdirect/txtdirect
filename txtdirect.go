@@ -404,7 +404,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 		if !strings.Contains(r.Header.Get("User-Agent"), "Docker-Client") {
 			log.Println("[txtdirect]: The request is not from docker client, fallback triggered.")
-			fallback(w, r, fallbackURL, code, c)
+			fallback(w, r, fallbackURL, rec.Type, code, c)
 			return nil
 		}
 
@@ -440,9 +440,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "gometa" {
 		RequestsCountBasedOnType.WithLabelValues(host, "gometa").Add(1)
 
-    // Trigger fallback when request isn't from `go get`
+		// Trigger fallback when request isn't from `go get`
 		if r.URL.Query().Get("go-get") != "1" {
-			fallback(w, r, rec.Website, http.StatusFound, c)
+			fallback(w, r, rec.Website, rec.Type, http.StatusFound, c)
 			return nil
 		}
 

@@ -196,6 +196,14 @@ func (rd Redirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error
 		}
 		return http.StatusInternalServerError, err
 	}
+
+	// Count total redirects if prometheus is enabled
+	if w.Header().Get("Status-Code") == "301" || w.Header().Get("Status-Code") == "302" {
+		if rd.Config.Prometheus.Enable {
+			txtdirect.RequestsCount.WithLabelValues(r.Host).Add(1)
+		}
+	}
+
 	return 0, nil
 }
 

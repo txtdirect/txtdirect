@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -36,10 +37,12 @@ func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error 
 			return err
 		}
 		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+		w.Header().Add("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
 		http.Redirect(w, r, uri, http.StatusMovedPermanently)
 		return nil
 	}
 	w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+	w.Header().Add("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
 	http.Redirect(w, r, rec.To, http.StatusMovedPermanently)
 	return nil
 }

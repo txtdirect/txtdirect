@@ -82,11 +82,9 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 
 		case "logfile":
 			// Set stdout as the default value
-			if !c.NextArg() {
-				parseLogfile(logfile)
-				continue
+			if c.NextArg() {
+				logfile = c.Val()
 			}
-			logfile = c.Val()
 			parseLogfile(logfile)
 		case "gomods":
 			gomods.Enable = true

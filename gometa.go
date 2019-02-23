@@ -16,6 +16,7 @@ package txtdirect
 import (
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -36,7 +37,7 @@ func gometa(w http.ResponseWriter, r record, host string) error {
 
 	gosource := strings.Contains(r.To, "github.com")
 
-	RequestsByStatus.WithLabelValues(host, string(http.StatusFound)).Add(1)
+	RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusFound)).Add(1)
 	return tmpl.Execute(w, struct {
 		Host        string
 		Vcs         string

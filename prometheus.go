@@ -28,15 +28,27 @@ type Prometheus struct {
 var (
 	RequestsCount = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
-		Name:      "total_requests_per_host",
+		Name:      "redirect_count_total",
 		Help:      "Total requests per host",
 	}, []string{"host"})
 
 	RequestsByStatus = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
-		Name:      "total_returned_statuses_per_host",
+		Name:      "redirect_status_count_total",
 		Help:      "Total returned statuses per host",
 	}, []string{"host", "status"})
+
+	RequestsCountBasedOnType = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "txtdirect",
+		Name:      "redirect_type_count_total",
+		Help:      "Total requests for each host based on type",
+	}, []string{"host", "type"})
+
+	FallbacksCount = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "txtdirect",
+		Name:      "fallback_type_count_total",
+		Help:      "Total fallbacks triggered for each type",
+	}, []string{"host", "type"})
 
 	once sync.Once
 )
@@ -63,6 +75,8 @@ func (p *Prometheus) start() error {
 	p.once.Do(func() {
 		prometheus.MustRegister(RequestsCount)
 		prometheus.MustRegister(RequestsByStatus)
+		prometheus.MustRegister(RequestsCountBasedOnType)
+		prometheus.MustRegister(FallbacksCount)
 		http.Handle(p.Path, p.handler)
 		go func() {
 			err := http.ListenAndServe(p.Address, nil)

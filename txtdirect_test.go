@@ -49,6 +49,24 @@ var txts = map[string]string{
 	// type=""
 	"_redirect.about.test.": "v=txtv0;to=https://about.txtdirect.org",
 	"_redirect.pkg.test.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
+
+	//
+	//	Fallback records
+	//
+
+	// type=path
+	"_redirect.fallbackpath.test.":             "v=txtv0;type=path",
+	"_redirect.withoutroot.fallbackpath.test.": "v=txtv0;type=path",
+
+	// type=dockerv2
+	"_redirect.fallbackdockerv2.test.":         "v=txtv0;type=path",
+	"_redirect.correct.fallbackdockerv2.test.": "v=txtv0;to=https://gcr.io/;type=dockerv2",
+	"_redirect.wrong.fallbackdockerv2.test.":   "v=txtv0;to=://gcr.io/;type=dockerv2",
+
+	// type=gometa
+	"_redirect.fallbackgometa.test.":          "v=txtv0;type=path",
+	"_redirect.website.fallbackgometa.test.":  "v=txtv0;to=https://github.com/okkur/reposeed-server/;website=https://about.okkur.io/;type=gometa",
+	"_redirect.redirect.fallbackgometa.test.": "v=txtv0;to=https://github.com/okkur/reposeed-server/;type=gometa",
 }
 
 // Testing DNS server port
@@ -444,6 +462,135 @@ func TestConfigE2e(t *testing.T) {
 		err := Redirect(resp, req, c)
 		if err == nil && !strings.Contains(err.Error(), "option disabled") {
 			t.Fatalf("required option is not enabled, but there is no error returned")
+		}
+	}
+}
+
+func Test_fallback(t *testing.T) {
+	tests := []struct {
+		url      string
+		code     int
+		redirect string
+	}{
+		{
+			"https://goto.fallback.test",
+			301,
+			"",
+		},
+		{
+			"",
+			403,
+			"https://goto.redirect.test",
+		},
+		{
+			"https://goto.fallback.test",
+			404,
+			"https://dontgoto.redirect.test",
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", "https://testing.test", nil)
+		resp := httptest.NewRecorder()
+		c := Config{
+			Redirect: test.redirect,
+			Enable:   []string{"www"},
+		}
+		fallback(resp, req, test.url, test.code, c)
+		if resp.Code != test.code {
+			t.Errorf("Response's status code (%d) doesn't match with expected status code (%d).", resp.Code, test.code)
+		}
+	}
+}
+
+func TestFallbackE2e(t *testing.T) {
+	tests := []struct {
+		url         string
+		txt         string
+		enable      []string
+		fallbackURL string
+		redirect    string
+		headers     http.Header
+	}{
+		{
+			"https://fallbackpath.test/withoutroot/",
+			txts["_redirect.fallbackpath.test."],
+			[]string{"www", "path"},
+			"",
+			"http://fallback.test",
+			http.Header{},
+		},
+		{
+			"https://fallbackpath.test/nosubdomain",
+			txts["_redirect.fallbackpath.test."],
+			[]string{"www", "path"},
+			"",
+			"http://fallback.test",
+			http.Header{},
+		},
+		{
+			"https://fallbackpath.test/",
+			txts["_redirect.fallbackpath.test."],
+			[]string{"www", "path"},
+			"",
+			"http://fallback.test",
+			http.Header{},
+		},
+		{
+			"https://fallbackdockerv2.test/correct",
+			txts["_redirect.fallbackdockerv2.test."],
+			[]string{"www", "dockerv2", "path"},
+			"https://gcr.io/",
+			"",
+			http.Header{"User-Agent": []string{"Docker-Server"}},
+		},
+		{
+			"https://fallbackdockerv2.test/wrong",
+			txts["_redirect.fallbackdockerv2.test."],
+			[]string{"www", "dockerv2", "path"},
+			"https://gcr.io/",
+			"",
+			http.Header{"User-Agent": []string{"Docker-Client"}},
+		},
+		{
+			"https://fallbackdockerv2.test/correct",
+			txts["_redirect.fallbackdockerv2.test."],
+			[]string{"www", "dockerv2", "path"},
+			"https://gcr.io/",
+			"",
+			http.Header{"User-Agent": []string{"Docker-Client"}},
+		},
+		{
+			"https://fallbackgometa.test/website",
+			txts["_redirect.fallbackgometa.test."],
+			[]string{"www", "host", "path"},
+			"https://about.okkur.io/",
+			"",
+			http.Header{},
+		},
+		{
+			"https://fallbackgometa.test/redirect",
+			txts["_redirect.fallbackgometa.test."],
+			[]string{"www", "host", "path"},
+			"",
+			"https://about.okkur.io/",
+			http.Header{},
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.url, nil)
+		req.Header = test.headers
+		resp := httptest.NewRecorder()
+		c := Config{
+			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Enable:   test.enable,
+			Redirect: test.redirect,
+		}
+		err := Redirect(resp, req, c)
+		if resp.Result().Header.Get("Location") != test.redirect && resp.Result().Header.Get("Location") != test.fallbackURL {
+			t.Errorf("Expected %s got %s", test.redirect, resp.Result().Header.Get("Location"))
+		}
+		if err != nil {
+			t.Errorf("Unexpected error: %s", err.Error())
 		}
 	}
 }

@@ -279,6 +279,15 @@ func query(zone string, ctx context.Context, c Config) ([]string, error) {
 	return txts, nil
 }
 
+func isIP(host string) bool {
+	if v6slice := strings.Split(host, ":"); len(v6slice) > 2 {
+		return true
+	}
+	hostSlice := strings.Split(host, ".")
+	_, err := strconv.Atoi(hostSlice[len(hostSlice)-1])
+	return err == nil
+}
+
 // Redirect the request depending on the redirect record found
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
@@ -298,6 +307,12 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if c.Prometheus.Enable {
 			RequestsByStatus.WithLabelValues(host, string(http.StatusOK)).Add(1)
 		}
+		return nil
+	}
+
+	if isIP(host) {
+		log.Println("[txtdirect]: Trying to access 127.0.0.1, fallback triggered.")
+		fallback(w, r, "", 0, c)
 		return nil
 	}
 

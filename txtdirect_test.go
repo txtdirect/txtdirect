@@ -372,10 +372,28 @@ func TestRedirectE2e(t *testing.T) {
 			[]string{"gometa", "path"},
 		},
 		{
-			"https://metapath.e2e.test/pkgweb",
-			txts["_redirect.metapath.e2e.test."],
-			"https://godoc.org/go.txtdirect.org/txtdirect",
-			[]string{"gometa", "path"},
+			"https://127.0.0.1/test",
+			txts["_redirect.fail.record."],
+			"404",
+			[]string{"host"},
+		},
+		{
+			"https://192.168.1.2",
+			txts["_redirect.fail.record."],
+			"404",
+			[]string{"host"},
+		},
+		{
+			"https://2001:db8:1234:0000:0000:0000:0000:0000",
+			txts["_redirect.fail.record."],
+			"404",
+			[]string{"host"},
+		},
+		{
+			"https://2001:db8:1234::/48",
+			txts["_redirect.fail.record."],
+			"404",
+			[]string{"host"},
 		},
 	}
 	for _, test := range tests {

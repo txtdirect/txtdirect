@@ -314,7 +314,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if isIP(host) {
 		log.Println("[txtdirect]: Trying to access 127.0.0.1, fallback triggered.")
-		fallback(w, r, "", 0, c)
+		fallback(w, r, "", "", 0, c)
 		return nil
 	}
 

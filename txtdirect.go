@@ -54,6 +54,7 @@ type Config struct {
 	Enable     []string
 	Redirect   string
 	Resolver   string
+	LogOutput  string
 	Gomods     Gomods
 	Prometheus Prometheus
 }

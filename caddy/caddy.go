@@ -41,6 +41,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	var resolver string
 	var gomods txtdirect.Gomods
 	var prometheus txtdirect.Prometheus
+	logfile := "stdout"
 
 	c.Next() // skip directive name
 	for c.NextBlock() {
@@ -80,11 +81,11 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 			resolver = resolverAddr[0]
 
 		case "logfile":
-			logfile := c.RemainingArgs()
-			if len(logfile) != 1 {
-
+			// Set stdout as the default value
+			if c.NextArg() {
+				logfile = c.Val()
 			}
-			parseLogfile(logfile[0])
+			parseLogfile(logfile)
 		case "gomods":
 			gomods.Enable = true
 			c.NextArg()
@@ -138,6 +139,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 		Enable:     enable,
 		Redirect:   redirect,
 		Resolver:   resolver,
+		LogOutput:  logfile,
 		Gomods:     gomods,
 		Prometheus: prometheus,
 	}

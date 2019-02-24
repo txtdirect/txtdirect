@@ -15,6 +15,7 @@ package caddy
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"testing"
@@ -92,7 +93,8 @@ func TestParse(t *testing.T) {
 			`txtdirect`,
 			false,
 			txtdirect.Config{
-				Enable: allOptions,
+				Enable:    allOptions,
+				LogOutput: "stdout",
 			},
 		},
 		{
@@ -103,7 +105,8 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Enable: []string{"host"},
+				Enable:    []string{"host"},
+				LogOutput: "stdout",
 			},
 		},
 		{
@@ -114,7 +117,8 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Enable: []string{"path", "gometa", "www"},
+				Enable:    []string{"path", "gometa", "www"},
+				LogOutput: "stdout",
 			},
 		},
 		{
@@ -125,8 +129,9 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect: "https://example.com",
-				Enable:   allOptions,
+				Redirect:  "https://example.com",
+				Enable:    allOptions,
+				LogOutput: "stdout",
 			},
 		},
 		{
@@ -138,8 +143,9 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host"},
+				Redirect:  "https://example.com",
+				Enable:    []string{"host"},
+				LogOutput: "stdout",
 			},
 		},
 		{
@@ -151,8 +157,9 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"path"},
+				Redirect:  "https://example.com",
+				Enable:    []string{"path"},
+				LogOutput: "stdout",
 			},
 		},
 		{
@@ -165,8 +172,9 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host"},
+				Redirect:  "https://example.com",
+				Enable:    []string{"host"},
+				LogOutput: "stdout",
 				Prometheus: txtdirect.Prometheus{
 					Enable:  true,
 					Address: "localhost:9183",
@@ -187,8 +195,9 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host"},
+				Redirect:  "https://example.com",
+				Enable:    []string{"host"},
+				LogOutput: "stdout",
 				Prometheus: txtdirect.Prometheus{
 					Enable:  true,
 					Address: "localhost:6666",
@@ -207,8 +216,9 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host", "gomods"},
+				Redirect:  "https://example.com",
+				Enable:    []string{"host", "gomods"},
+				LogOutput: "stdout",
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: os.Getenv("GOROOT") + "/bin/go",
@@ -231,9 +241,10 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host", "gomods"},
-				Resolver: "127.0.0.1",
+				Redirect:  "https://example.com",
+				Enable:    []string{"host", "gomods"},
+				Resolver:  "127.0.0.1",
+				LogOutput: "stdout",
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: "/my/go/binary",
@@ -263,9 +274,10 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host", "gomods"},
-				Resolver: "127.0.0.1",
+				Redirect:  "https://example.com",
+				Enable:    []string{"host", "gomods"},
+				Resolver:  "127.0.0.1",
+				LogOutput: "stdout",
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: "/my/go/binary",
@@ -296,9 +308,10 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host", "gomods"},
-				Resolver: "127.0.0.1",
+				Redirect:  "https://example.com",
+				Enable:    []string{"host", "gomods"},
+				Resolver:  "127.0.0.1",
+				LogOutput: "stdout",
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: "/my/go/binary",
@@ -311,9 +324,40 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			`
+			txtdirect {
+				enable host gomods
+				logfile stderr
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Enable:    []string{"host", "gomods"},
+				Resolver:  "127.0.0.1",
+				LogOutput: "stderr",
+			},
+		},
+		{
+			`
+			txtdirect {
+				enable host gomods
+				logfile
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Enable:    []string{"host", "gomods"},
+				Resolver:  "127.0.0.1",
+				LogOutput: "stdout",
+			},
+		},
 	}
 
 	for i, test := range tests {
+		log.Println(log.Flags())
 		c := caddy.NewTestController("http", test.input)
 		conf, err := parse(c)
 		if !test.shouldErr && err != nil {
@@ -352,6 +396,10 @@ func TestParse(t *testing.T) {
 
 		if test.expected.Resolver != conf.Resolver {
 			t.Errorf("Expected resolver to be %s, but got %s", test.expected.Resolver, conf.Resolver)
+		}
+
+		if test.expected.LogOutput != conf.LogOutput {
+			t.Errorf("Expected log output to be %s, but got %s", test.expected.LogOutput, conf.LogOutput)
 		}
 
 		if !identical(conf.Enable, test.expected.Enable) {

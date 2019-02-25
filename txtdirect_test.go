@@ -334,7 +334,6 @@ func Test_fallback(t *testing.T) {
 func TestFallbackE2e(t *testing.T) {
 	tests := []struct {
 		url         string
-		txt         string
 		enable      []string
 		fallbackURL string
 		redirect    string
@@ -342,7 +341,6 @@ func TestFallbackE2e(t *testing.T) {
 	}{
 		{
 			"https://fallbackpath.test/withoutroot/",
-			txts["_redirect.fallbackpath.test."],
 			[]string{"www", "path"},
 			"",
 			"http://fallback.test",
@@ -350,7 +348,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackpath.test/nosubdomain",
-			txts["_redirect.fallbackpath.test."],
 			[]string{"www", "path"},
 			"",
 			"http://fallback.test",
@@ -358,7 +355,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackpath.test/",
-			txts["_redirect.fallbackpath.test."],
 			[]string{"www", "path"},
 			"",
 			"http://fallback.test",
@@ -366,7 +362,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackdockerv2.test/correct",
-			txts["_redirect.fallbackdockerv2.test."],
 			[]string{"www", "dockerv2", "path"},
 			"https://gcr.io/",
 			"",
@@ -374,7 +369,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackdockerv2.test/wrong",
-			txts["_redirect.fallbackdockerv2.test."],
 			[]string{"www", "dockerv2", "path"},
 			"https://gcr.io/",
 			"",
@@ -382,7 +376,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackdockerv2.test/correct",
-			txts["_redirect.fallbackdockerv2.test."],
 			[]string{"www", "dockerv2", "path"},
 			"https://gcr.io/",
 			"",
@@ -390,7 +383,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackgometa.test/website",
-			txts["_redirect.fallbackgometa.test."],
 			[]string{"www", "host", "path"},
 			"https://about.okkur.io/",
 			"",
@@ -398,7 +390,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackgometa.test/redirect",
-			txts["_redirect.fallbackgometa.test."],
 			[]string{"www", "host", "path"},
 			"",
 			"https://about.okkur.io/",
@@ -420,6 +411,47 @@ func TestFallbackE2e(t *testing.T) {
 		}
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err.Error())
+		}
+	}
+}
+
+func Test_isIP(t *testing.T) {
+	tests := []struct {
+		host     string
+		expected bool
+	}{
+		{
+			"https://example.test",
+			false,
+		},
+		{
+			"http://example.test",
+			false,
+		},
+		{
+			"http://192.168.test.subdomain.test",
+			false,
+		},
+		{
+			"192.168.1.1",
+			true,
+		},
+		{
+			"https://122.221.122.221",
+			true,
+		},
+		{
+			"FE80:0000:0000:0000:0202:B3FF:FE1E:8329",
+			true,
+		},
+		{
+			"FE80::0202:B3FF:FE1E:8329",
+			true,
+		},
+	}
+	for _, test := range tests {
+		if result := isIP(test.host); result != test.expected {
+			t.Errorf("%s is an IP not a domain", test.host)
 		}
 	}
 }

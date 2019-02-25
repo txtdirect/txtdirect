@@ -313,103 +313,86 @@ func RunDNSServer() {
 func TestRedirectE2e(t *testing.T) {
 	tests := []struct {
 		url      string
-		txt      string
 		expected string
 		enable   []string
 	}{
 		{
 			"https://host.e2e.test",
-			txts["_redirect.host.e2e.test"],
 			"https://plain.host.test",
 			[]string{"host"},
 		},
 		{
 			"https://nocode.host.e2e.test",
-			txts["_redirect.nocode.host.e2e.test."],
 			"https://nocode.host.test",
 			[]string{"host"},
 		},
 		{
 			"https://noversion.host.e2e.test",
-			txts["_redirect.noversion.host.e2e.test."],
 			"https://noversion.host.test",
 			[]string{"host"},
 		},
 		{
 			"https://noto.host.e2e.test",
-			txts["_redirect.noto.host.e2e.test."],
 			"",
 			[]string{"host"},
 		},
 		{
 			"https://path.e2e.test/",
-			txts["_redirect.path.e2e.test."],
 			"https://root.fallback.test",
 			[]string{"path", "host"},
 		},
 		{
 			"https://path.e2e.test/nocode",
-			txts["_redirect.nocode.path.e2e.test."],
 			"https://nocode.fallback.path.test",
 			[]string{"path", "host"},
 		},
 		{
 			"https://path.e2e.test/noversion",
-			txts["_redirect.noversion.path.e2e.test."],
 			"https://fallback.path.test",
 			[]string{"path", "host"},
 		},
 		{
 			"https://path.e2e.test/noto",
-			txts["_redirect.noto.path.e2e.test."],
 			"",
 			[]string{"path", "host"},
 		},
 		{
 			"https://path.e2e.test/noroot",
-			txts["_redirect.noroot.path.e2e.test."],
 			"https://fallback.path.test",
 			[]string{"path", "host"},
 		},
 		{
 			"https://pkg.txtdirect.test?go-get=1",
-			txts["_redirect.pkg.txtdirect.test."],
 			"https://github.com/txtdirect/txtdirect",
 			[]string{"gometa"},
 		},
 		{
 			"https://metapath.e2e.test/pkg?go-get=1",
-			txts["_redirect.metapath.e2e.test."],
 			"https://github.com/okkur/reposeed-server",
 			[]string{"gometa", "path"},
 		},
 		{
 			"https://metapath.e2e.test/pkg/second?go-get=1",
-			txts["_redirect.metapath.e2e.test."],
 			"https://github.com/okkur/reposeed",
 			[]string{"gometa", "path"},
 		},
 		{
 			"https://127.0.0.1/test",
-			txts["_redirect.fail.record."],
 			"404",
 			[]string{"host"},
 		},
 		{
 			"https://192.168.1.2",
-			txts["_redirect.fail.record."],
 			"404",
 			[]string{"host"},
 		},
 		{
 			"https://2001:db8:1234:0000:0000:0000:0000:0000",
-			txts["_redirect.fail.record."],
 			"404",
 			[]string{"host"},
 		},
 		{
 			"https://2001:db8:1234::/48",
-			txts["_redirect.fail.record."],
 			"404",
 			[]string{"host"},
 		},

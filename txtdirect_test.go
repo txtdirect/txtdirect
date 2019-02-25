@@ -478,3 +478,32 @@ func Test_customResolver(t *testing.T) {
 		}
 	}
 }
+
+func Test_contains(t *testing.T) {
+	tests := []struct {
+		array    []string
+		word     string
+		expected bool
+	}{
+		{
+			[]string{"test", "txtdirect"},
+			"test",
+			true,
+		},
+		{
+			[]string{"test", "txtdirect", "contains"},
+			"txtdirect",
+			true,
+		},
+		{
+			[]string{"test", "txtdirect", "random"},
+			"contains",
+			false,
+		},
+	}
+	for _, test := range tests {
+		if result := contains(test.array, test.word); result != test.expected {
+			t.Errorf("Expected %t but got %t.\nArray: %v \nWord: %v", test.expected, result, test.array, test.word)
+		}
+	}
+}

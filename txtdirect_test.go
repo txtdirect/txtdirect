@@ -455,3 +455,26 @@ func Test_isIP(t *testing.T) {
 		}
 	}
 }
+
+func Test_customResolver(t *testing.T) {
+	tests := []struct {
+		config Config
+	}{
+		{
+			Config{
+				Resolver: "127.0.0.1",
+			},
+		},
+		{
+			Config{
+				Resolver: "8.8.8.8",
+			},
+		},
+	}
+	for _, test := range tests {
+		resolver := customResolver(test.config)
+		if resolver.PreferGo != true {
+			t.Errorf("Expected PreferGo option to be enabled in the returned resolver")
+		}
+	}
+}

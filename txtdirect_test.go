@@ -507,3 +507,53 @@ func Test_contains(t *testing.T) {
 		}
 	}
 }
+
+func Test_getBaseTarget(t *testing.T) {
+	tests := []struct {
+		record record
+		reqURL string
+		url    string
+		status int
+	}{
+		{
+			record{
+				To:   "https://example.test",
+				Code: 200,
+			},
+			"https://nowhere.test",
+			"https://example.test",
+			200,
+		},
+		{
+			record{
+				To:   "https://{host}/{method}",
+				Code: 200,
+			},
+			"https://somewhere.test",
+			"https://somewhere.test/GET",
+			200,
+		},
+		{
+			record{
+				To:   "https://testing.test{path}",
+				Code: 301,
+			},
+			"https://example.test/testing/path",
+			"https://testing.test/testing/path",
+			301,
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.reqURL, nil)
+		to, status, err := getBaseTarget(test.record, req)
+		if err != nil {
+			t.Errorf("Expected the err to be nil but got %s", err)
+		}
+		if to != test.url {
+			t.Errorf("Expected %s but got %s", test.url, to)
+		}
+		if err != nil {
+			t.Errorf("Expected %d but got %d", test.status, status)
+		}
+	}
+}

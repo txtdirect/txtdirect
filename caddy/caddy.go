@@ -153,6 +153,12 @@ func setup(c *caddy.Controller) error {
 		return err
 	}
 
+	// Setup and add promethues middleware to caddy
+	if config.Prometheus.Enable {
+		config.Prometheus.SetDefaults()
+		config.Prometheus.Setup(c)
+	}
+
 	// Add handler to Caddy
 	cfg := httpserver.GetConfig(c)
 	mid := func(next httpserver.Handler) httpserver.Handler {
@@ -162,10 +168,6 @@ func setup(c *caddy.Controller) error {
 		}
 	}
 	cfg.AddMiddleware(mid)
-	if config.Prometheus.Enable {
-		config.Prometheus.SetDefaults()
-		config.Prometheus.Setup(c)
-	}
 
 	return nil
 }

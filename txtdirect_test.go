@@ -24,6 +24,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mholt/caddy/caddyhttp/header"
+	"github.com/mholt/caddy/caddyhttp/httpserver"
 	"github.com/miekg/dns"
 )
 
@@ -591,6 +593,68 @@ func TestFallbackE2e(t *testing.T) {
 		}
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err.Error())
+		}
+	}
+}
+
+// Note: ServerHeader isn't a function, this test is for checking
+// response's Server header.
+func TestServerHeaderE2E(t *testing.T) {
+	tests := []struct {
+		url          string
+		enable       []string
+		headerPlugin bool
+		proxyPlugin  bool
+		expected     string
+	}{
+		{
+			"https://host.e2e.test",
+			[]string{"host"},
+			false,
+			false,
+			"TXTDirect",
+		},
+		{
+			"https://host.e2e.test",
+			[]string{"host"},
+			true,
+			false,
+			"Testing-TXTDirect",
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.url, nil)
+		resp := httptest.NewRecorder()
+		c := Config{
+			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Enable:   test.enable,
+		}
+		err := Redirect(resp, req, c)
+		if err != nil {
+			t.Errorf("Unexpected Error: %s", err.Error())
+		}
+
+		// Use Caddy's header plugin to replace the header
+		if test.headerPlugin {
+			s := header.Headers{
+				Next: httpserver.HandlerFunc(func(w http.ResponseWriter, r *http.Request) (int, error) {
+					w.WriteHeader(http.StatusOK)
+					return 0, nil
+				}),
+				Rules: []header.Rule{
+					{Path: "/", Headers: http.Header{
+						"Server": []string{test.expected},
+					}},
+				},
+			}
+			_, err := s.ServeHTTP(resp, req)
+			if err != nil {
+				t.Errorf("Couldn't replace the header using caddy's header plugin: %s", err.Error())
+			}
+		}
+
+		if resp.Header().Get("Server") != test.expected {
+			t.Errorf("Expected \"Server\" header to be %s but it's %s", test.expected, resp.Header().Get("Server"))
 		}
 	}
 }

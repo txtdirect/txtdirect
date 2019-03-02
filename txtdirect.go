@@ -294,6 +294,8 @@ func isIP(host string) bool {
 
 // Redirect the request depending on the redirect record found
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
+	w.Header().Set("Server", "TXTDirect")
+
 	host := r.Host
 	path := r.URL.Path
 

@@ -19,13 +19,16 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/mholt/caddy/caddyhttp/header"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"github.com/mholt/caddy/caddyhttp/proxy"
 	"github.com/miekg/dns"
 )
 
@@ -621,6 +624,13 @@ func TestServerHeaderE2E(t *testing.T) {
 			false,
 			"Testing-TXTDirect",
 		},
+		{
+			"https://host.e2e.test",
+			[]string{"host"},
+			false,
+			true,
+			"Testing-TXTDirect",
+		},
 	}
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)
@@ -653,8 +663,68 @@ func TestServerHeaderE2E(t *testing.T) {
 			}
 		}
 
-		if resp.Header().Get("Server") != test.expected {
+		if test.proxyPlugin {
+			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Server", test.expected)
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("Hello, client"))
+			}))
+			defer backend.Close()
+
+			// Setup the fake upsteam
+			uri, _ := url.Parse(backend.URL)
+			u := fakeUpstream{
+				name:          backend.URL,
+				from:          "/",
+				timeout:       proxyTimeout,
+				fallbackDelay: fallbackDelay,
+				host: &proxy.UpstreamHost{
+					Name:         backend.URL,
+					ReverseProxy: proxy.NewSingleHostReverseProxy(uri, "", http.DefaultMaxIdleConnsPerHost, proxyTimeout, fallbackDelay),
+				},
+			}
+
+			p := &proxy.Proxy{
+				Next:      httpserver.EmptyNext, // prevents panic in some cases when test fails
+				Upstreams: []proxy.Upstream{&u},
+			}
+			p.ServeHTTP(resp, req)
+		}
+
+		if !contains(resp.Header()["Server"], test.expected) {
 			t.Errorf("Expected \"Server\" header to be %s but it's %s", test.expected, resp.Header().Get("Server"))
 		}
 	}
+}
+
+// Setup fakeUpstream type and methods
+type fakeUpstream struct {
+	name          string
+	host          *proxy.UpstreamHost
+	from          string
+	without       string
+	timeout       time.Duration
+	fallbackDelay time.Duration
+}
+
+func (u *fakeUpstream) AllowedPath(requestPath string) bool { return true }
+func (u *fakeUpstream) GetFallbackDelay() time.Duration     { return 300 * time.Millisecond }
+func (u *fakeUpstream) GetTryDuration() time.Duration       { return 1 * time.Second }
+func (u *fakeUpstream) GetTryInterval() time.Duration       { return 250 * time.Millisecond }
+func (u *fakeUpstream) GetTimeout() time.Duration           { return u.timeout }
+func (u *fakeUpstream) GetHostCount() int                   { return 1 }
+func (u *fakeUpstream) Stop() error                         { return nil }
+func (u *fakeUpstream) From() string                        { return u.from }
+func (u *fakeUpstream) Select(r *http.Request) *proxy.UpstreamHost {
+	if u.host == nil {
+		uri, err := url.Parse(u.name)
+		if err != nil {
+			log.Fatalf("Unable to url.Parse %s: %v", u.name, err)
+		}
+		u.host = &proxy.UpstreamHost{
+			Name:         u.name,
+			ReverseProxy: proxy.NewSingleHostReverseProxy(uri, u.without, http.DefaultMaxIdleConnsPerHost, u.GetTimeout(), u.GetFallbackDelay()),
+		}
+	}
+	return u.host
 }

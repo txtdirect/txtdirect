@@ -93,8 +93,7 @@ func TestParse(t *testing.T) {
 			`txtdirect`,
 			false,
 			txtdirect.Config{
-				Enable:    allOptions,
-				LogOutput: "stdout",
+				Enable: allOptions,
 			},
 		},
 		{
@@ -105,8 +104,7 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Enable:    []string{"host"},
-				LogOutput: "stdout",
+				Enable: []string{"host"},
 			},
 		},
 		{
@@ -117,8 +115,7 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Enable:    []string{"path", "gometa", "www"},
-				LogOutput: "stdout",
+				Enable: []string{"path", "gometa", "www"},
 			},
 		},
 		{
@@ -129,9 +126,8 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect:  "https://example.com",
-				Enable:    allOptions,
-				LogOutput: "stdout",
+				Redirect: "https://example.com",
+				Enable:   allOptions,
 			},
 		},
 		{
@@ -143,9 +139,8 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect:  "https://example.com",
-				Enable:    []string{"host"},
-				LogOutput: "stdout",
+				Redirect: "https://example.com",
+				Enable:   []string{"host"},
 			},
 		},
 		{
@@ -157,9 +152,8 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect:  "https://example.com",
-				Enable:    []string{"path"},
-				LogOutput: "stdout",
+				Redirect: "https://example.com",
+				Enable:   []string{"path"},
 			},
 		},
 		{
@@ -172,9 +166,8 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect:  "https://example.com",
-				Enable:    []string{"host"},
-				LogOutput: "stdout",
+				Redirect: "https://example.com",
+				Enable:   []string{"host"},
 				Prometheus: txtdirect.Prometheus{
 					Enable:  true,
 					Address: "localhost:9183",
@@ -195,9 +188,8 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect:  "https://example.com",
-				Enable:    []string{"host"},
-				LogOutput: "stdout",
+				Redirect: "https://example.com",
+				Enable:   []string{"host"},
 				Prometheus: txtdirect.Prometheus{
 					Enable:  true,
 					Address: "localhost:6666",
@@ -216,9 +208,8 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect:  "https://example.com",
-				Enable:    []string{"host", "gomods"},
-				LogOutput: "stdout",
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: os.Getenv("GOROOT") + "/bin/go",
@@ -241,10 +232,9 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect:  "https://example.com",
-				Enable:    []string{"host", "gomods"},
-				Resolver:  "127.0.0.1",
-				LogOutput: "stdout",
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
+				Resolver: "127.0.0.1",
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: "/my/go/binary",
@@ -274,10 +264,9 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect:  "https://example.com",
-				Enable:    []string{"host", "gomods"},
-				Resolver:  "127.0.0.1",
-				LogOutput: "stdout",
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
+				Resolver: "127.0.0.1",
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: "/my/go/binary",
@@ -308,10 +297,9 @@ func TestParse(t *testing.T) {
 			`,
 			false,
 			txtdirect.Config{
-				Redirect:  "https://example.com",
-				Enable:    []string{"host", "gomods"},
-				Resolver:  "127.0.0.1",
-				LogOutput: "stdout",
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "gomods"},
+				Resolver: "127.0.0.1",
 				Gomods: txtdirect.Gomods{
 					Enable:   true,
 					GoBinary: "/my/go/binary",

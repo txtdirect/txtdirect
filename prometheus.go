@@ -48,7 +48,7 @@ var (
 		Namespace: "txtdirect",
 		Name:      "fallback_type_count_total",
 		Help:      "Total fallbacks triggered for each type",
-	}, []string{"host", "type"})
+	}, []string{"host", "type", "fallback"})
 
 	once sync.Once
 )

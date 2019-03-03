@@ -500,7 +500,7 @@ func Test_fallback(t *testing.T) {
 			Redirect: test.redirect,
 			Enable:   []string{"www"},
 		}
-		fallback(resp, req, test.url, "test", test.code, c)
+		fallback(resp, req, test.url, "test", "test", test.code, c)
 		if resp.Code != test.code {
 			t.Errorf("Response's status code (%d) doesn't match with expected status code (%d).", resp.Code, test.code)
 		}

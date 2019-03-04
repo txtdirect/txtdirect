@@ -18,11 +18,16 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/mholt/caddy/caddyhttp/header"
+	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"github.com/mholt/caddy/caddyhttp/proxy"
 	"github.com/miekg/dns"
 )
 
@@ -324,7 +329,7 @@ func Test_fallback(t *testing.T) {
 			Redirect: test.redirect,
 			Enable:   []string{"www"},
 		}
-		fallback(resp, req, test.url, "test", test.code, c)
+		fallback(resp, req, test.url, "test", "test", test.code, c)
 		if resp.Code != test.code {
 			t.Errorf("Response's status code (%d) doesn't match with expected status code (%d).", resp.Code, test.code)
 		}
@@ -504,6 +509,100 @@ func Test_contains(t *testing.T) {
 	for _, test := range tests {
 		if result := contains(test.array, test.word); result != test.expected {
 			t.Errorf("Expected %t but got %t.\nArray: %v \nWord: %v", test.expected, result, test.array, test.word)
+
+// Note: ServerHeader isn't a function, this test is for checking
+// response's Server header.
+func TestServerHeaderE2E(t *testing.T) {
+	tests := []struct {
+		url          string
+		enable       []string
+		headerPlugin bool
+		proxyPlugin  bool
+		expected     string
+	}{
+		{
+			"https://host.e2e.test",
+			[]string{"host"},
+			false,
+			false,
+			"TXTDirect",
+		},
+		{
+			"https://host.e2e.test",
+			[]string{"host"},
+			true,
+			false,
+			"Testing-TXTDirect",
+		},
+		{
+			"https://host.e2e.test",
+			[]string{"host"},
+			false,
+			true,
+			"Testing-TXTDirect",
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.url, nil)
+		resp := httptest.NewRecorder()
+		c := Config{
+			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Enable:   test.enable,
+		}
+		err := Redirect(resp, req, c)
+		if err != nil {
+			t.Errorf("Unexpected Error: %s", err.Error())
+		}
+
+		// Use Caddy's header plugin to replace the header
+		if test.headerPlugin {
+			s := header.Headers{
+				Next: httpserver.HandlerFunc(func(w http.ResponseWriter, r *http.Request) (int, error) {
+					w.WriteHeader(http.StatusOK)
+					return 0, nil
+				}),
+				Rules: []header.Rule{
+					{Path: "/", Headers: http.Header{
+						"Server": []string{test.expected},
+					}},
+				},
+			}
+			_, err := s.ServeHTTP(resp, req)
+			if err != nil {
+				t.Errorf("Couldn't replace the header using caddy's header plugin: %s", err.Error())
+			}
+		}
+
+		if test.proxyPlugin {
+			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Server", test.expected)
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("Hello, client"))
+			}))
+			defer backend.Close()
+
+			// Setup the fake upsteam
+			uri, _ := url.Parse(backend.URL)
+			u := fakeUpstream{
+				name:          backend.URL,
+				from:          "/",
+				timeout:       proxyTimeout,
+				fallbackDelay: fallbackDelay,
+				host: &proxy.UpstreamHost{
+					Name:         backend.URL,
+					ReverseProxy: proxy.NewSingleHostReverseProxy(uri, "", http.DefaultMaxIdleConnsPerHost, proxyTimeout, fallbackDelay),
+				},
+			}
+
+			p := &proxy.Proxy{
+				Next:      httpserver.EmptyNext, // prevents panic in some cases when test fails
+				Upstreams: []proxy.Upstream{&u},
+			}
+			p.ServeHTTP(resp, req)
+		}
+
+		if !contains(resp.Header()["Server"], test.expected) {
+			t.Errorf("Expected \"Server\" header to be %s but it's %s", test.expected, resp.Header().Get("Server"))
 		}
 	}
 }
@@ -556,4 +655,35 @@ func Test_getBaseTarget(t *testing.T) {
 			t.Errorf("Expected %d but got %d", test.status, status)
 		}
 	}
+
+// Setup fakeUpstream type and methods
+type fakeUpstream struct {
+	name          string
+	host          *proxy.UpstreamHost
+	from          string
+	without       string
+	timeout       time.Duration
+	fallbackDelay time.Duration
+}
+
+func (u *fakeUpstream) AllowedPath(requestPath string) bool { return true }
+func (u *fakeUpstream) GetFallbackDelay() time.Duration     { return 300 * time.Millisecond }
+func (u *fakeUpstream) GetTryDuration() time.Duration       { return 1 * time.Second }
+func (u *fakeUpstream) GetTryInterval() time.Duration       { return 250 * time.Millisecond }
+func (u *fakeUpstream) GetTimeout() time.Duration           { return u.timeout }
+func (u *fakeUpstream) GetHostCount() int                   { return 1 }
+func (u *fakeUpstream) Stop() error                         { return nil }
+func (u *fakeUpstream) From() string                        { return u.from }
+func (u *fakeUpstream) Select(r *http.Request) *proxy.UpstreamHost {
+	if u.host == nil {
+		uri, err := url.Parse(u.name)
+		if err != nil {
+			log.Fatalf("Unable to url.Parse %s: %v", u.name, err)
+		}
+		u.host = &proxy.UpstreamHost{
+			Name:         u.name,
+			ReverseProxy: proxy.NewSingleHostReverseProxy(uri, u.without, http.DefaultMaxIdleConnsPerHost, u.GetTimeout(), u.GetFallbackDelay()),
+		}
+	}
+	return u.host
 }

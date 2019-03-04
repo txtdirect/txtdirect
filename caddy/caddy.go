@@ -41,7 +41,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	var resolver string
 	var gomods txtdirect.Gomods
 	var prometheus txtdirect.Prometheus
-	logfile := "stdout"
+	var logfile string
 
 	c.Next() // skip directive name
 	for c.NextBlock() {
@@ -81,11 +81,11 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 			resolver = resolverAddr[0]
 
 		case "logfile":
+			logfile = "stdout"
 			// Set stdout as the default value
 			if c.NextArg() {
 				logfile = c.Val()
 			}
-			parseLogfile(logfile)
 		case "gomods":
 			gomods.Enable = true
 			c.NextArg()
@@ -144,6 +144,8 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 		Prometheus: prometheus,
 	}
 
+	parseLogfile(logfile)
+
 	return config, nil
 }
 
@@ -151,6 +153,12 @@ func setup(c *caddy.Controller) error {
 	config, err := parse(c)
 	if err != nil {
 		return err
+	}
+
+	// Setup and add promethues middleware to caddy
+	if config.Prometheus.Enable {
+		config.Prometheus.SetDefaults()
+		config.Prometheus.Setup(c)
 	}
 
 	// Add handler to Caddy
@@ -162,10 +170,6 @@ func setup(c *caddy.Controller) error {
 		}
 	}
 	cfg.AddMiddleware(mid)
-	if config.Prometheus.Enable {
-		config.Prometheus.SetDefaults()
-		config.Prometheus.Setup(c)
-	}
 
 	return nil
 }

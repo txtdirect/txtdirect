@@ -15,7 +15,6 @@ package txtdirect
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -83,159 +82,6 @@ var server = &dns.Server{Addr: ":" + strconv.Itoa(port), Net: "udp"}
 func TestMain(m *testing.M) {
 	go RunDNSServer()
 	os.Exit(m.Run())
-}
-
-func TestParse(t *testing.T) {
-	tests := []struct {
-		txtRecord string
-		expected  record
-		err       error
-	}{
-		{
-			"v=txtv0;to=https://example.com/;code=302",
-			record{
-				Version: "txtv0",
-				To:      "https://example.com/",
-				Code:    302,
-				Type:    "host",
-			},
-			nil,
-		},
-		{
-			"v=txtv0;to=https://example.com/",
-			record{
-				Version: "txtv0",
-				To:      "https://example.com/",
-				Code:    302,
-				Type:    "host",
-			},
-			nil,
-		},
-		{
-			"v=txtv0;to=https://example.com/;code=302",
-			record{
-				Version: "txtv0",
-				To:      "https://example.com/",
-				Code:    302,
-				Type:    "host",
-			},
-			nil,
-		},
-		{
-			"v=txtv0;to=https://example.com/;code=302;vcs=hg;type=gometa",
-			record{
-				Version: "txtv0",
-				To:      "https://example.com/",
-				Code:    302,
-				Vcs:     "hg",
-				Type:    "gometa",
-			},
-			nil,
-		},
-		{
-			"v=txtv0;to=https://example.com/;code=302;type=gometa;vcs=git",
-			record{
-				Version: "txtv0",
-				To:      "https://example.com/",
-				Code:    302,
-				Vcs:     "git",
-				Type:    "gometa",
-			},
-			nil,
-		},
-		{
-			"v=txtv0;to=https://example.com/;code=test",
-			record{},
-			fmt.Errorf("could not parse status code"),
-		},
-		{
-			"v=txtv1;to=https://example.com/;code=test",
-			record{},
-			fmt.Errorf("unhandled version 'txtv1'"),
-		},
-		{
-			"v=txtv0;https://example.com/",
-			record{},
-			fmt.Errorf("arbitrary data not allowed"),
-		},
-		{
-			"v=txtv0;to=https://example.com/caddy;type=path;code=302",
-			record{
-				Version: "txtv0",
-				To:      "https://example.com/caddy",
-				Type:    "path",
-				Code:    302,
-			},
-			nil,
-		},
-		{
-			"v=txtv0;to=https://example.com/;key=value",
-			record{
-				Version: "txtv0",
-				To:      "https://example.com/",
-				Code:    302,
-				Type:    "host",
-			},
-			nil,
-		},
-		{
-			"v=txtv0;to={?url}",
-			record{
-				Version: "txtv0",
-				To:      "https://example.com/testing",
-				Code:    302,
-				Type:    "host",
-			},
-			nil,
-		},
-		{
-			"v=txtv0;to={?url};from={method}",
-			record{
-				Version: "txtv0",
-				To:      "https://example.com/testing",
-				Code:    302,
-				Type:    "host",
-				From:    "GET",
-			},
-			nil,
-		},
-	}
-
-	for i, test := range tests {
-		r := record{}
-		c := Config{
-			Enable: []string{test.expected.Type},
-		}
-		req, _ := http.NewRequest("GET", "http://example.com?url=https://example.com/testing", nil)
-		err := r.Parse(test.txtRecord, req, c)
-
-		if err != nil {
-			if test.err == nil || !strings.HasPrefix(err.Error(), test.err.Error()) {
-				t.Errorf("Test %d: Unexpected error: %s", i, err)
-			}
-			continue
-		}
-		if err == nil && test.err != nil {
-			t.Errorf("Test %d: Expected error, got nil", i)
-			continue
-		}
-
-		if got, want := r.Version, test.expected.Version; got != want {
-			t.Errorf("Test %d: Expected Version to be '%s', got '%s'", i, want, got)
-		}
-		if got, want := r.To, test.expected.To; got != want {
-			t.Errorf("Test %d: Expected To to be '%s', got '%s'", i, want, got)
-		}
-		if got, want := r.Code, test.expected.Code; got != want {
-			t.Errorf("Test %d: Expected Code to be '%d', got '%d'", i, want, got)
-		}
-		if got, want := r.Type, test.expected.Type; got != want {
-			t.Errorf("Test %d: Expected Type to be '%s', got '%s'", i, want, got)
-		}
-		if got, want := r.Vcs, test.expected.Vcs; got != want {
-			t.Errorf("Test %d: Expected Vcs to be '%s', got '%s'", i, want, got)
-		}
-	}
 }
 
 func TestRedirectBlacklist(t *testing.T) {
@@ -318,103 +164,86 @@ func RunDNSServer() {
 func TestRedirectE2e(t *testing.T) {
 	tests := []struct {
 		url      string
-		txt      string
 		expected string
 		enable   []string
 	}{
 		{
 			"https://host.e2e.test",
-			txts["_redirect.host.e2e.test"],
 			"https://plain.host.test",
 			[]string{"host"},
 		},
 		{
 			"https://nocode.host.e2e.test",
-			txts["_redirect.nocode.host.e2e.test."],
 			"https://nocode.host.test",
 			[]string{"host"},
 		},
 		{
 			"https://noversion.host.e2e.test",
-			txts["_redirect.noversion.host.e2e.test."],
 			"https://noversion.host.test",
 			[]string{"host"},
 		},
 		{
 			"https://noto.host.e2e.test",
-			txts["_redirect.noto.host.e2e.test."],
 			"",
 			[]string{"host"},
 		},
 		{
 			"https://path.e2e.test/",
-			txts["_redirect.path.e2e.test."],
 			"https://root.fallback.test",
 			[]string{"path", "host"},
 		},
 		{
 			"https://path.e2e.test/nocode",
-			txts["_redirect.nocode.path.e2e.test."],
 			"https://nocode.fallback.path.test",
 			[]string{"path", "host"},
 		},
 		{
 			"https://path.e2e.test/noversion",
-			txts["_redirect.noversion.path.e2e.test."],
 			"https://fallback.path.test",
 			[]string{"path", "host"},
 		},
 		{
 			"https://path.e2e.test/noto",
-			txts["_redirect.noto.path.e2e.test."],
 			"",
 			[]string{"path", "host"},
 		},
 		{
 			"https://path.e2e.test/noroot",
-			txts["_redirect.noroot.path.e2e.test."],
 			"https://fallback.path.test",
 			[]string{"path", "host"},
 		},
 		{
 			"https://pkg.txtdirect.test?go-get=1",
-			txts["_redirect.pkg.txtdirect.test."],
 			"https://github.com/txtdirect/txtdirect",
 			[]string{"gometa"},
 		},
 		{
 			"https://metapath.e2e.test/pkg?go-get=1",
-			txts["_redirect.metapath.e2e.test."],
 			"https://github.com/okkur/reposeed-server",
 			[]string{"gometa", "path"},
 		},
 		{
 			"https://metapath.e2e.test/pkg/second?go-get=1",
-			txts["_redirect.metapath.e2e.test."],
 			"https://github.com/okkur/reposeed",
 			[]string{"gometa", "path"},
 		},
 		{
 			"https://127.0.0.1/test",
-			txts["_redirect.fail.record."],
 			"404",
 			[]string{"host"},
 		},
 		{
 			"https://192.168.1.2",
-			txts["_redirect.fail.record."],
 			"404",
 			[]string{"host"},
 		},
 		{
 			"https://2001:db8:1234:0000:0000:0000:0000:0000",
-			txts["_redirect.fail.record."],
 			"404",
 			[]string{"host"},
 		},
 		{
 			"https://2001:db8:1234::/48",
-			txts["_redirect.fail.record."],
 			"404",
 			[]string{"host"},
 		},
@@ -510,7 +339,6 @@ func Test_fallback(t *testing.T) {
 func TestFallbackE2e(t *testing.T) {
 	tests := []struct {
 		url         string
-		txt         string
 		enable      []string
 		fallbackURL string
 		redirect    string
@@ -518,7 +346,6 @@ func TestFallbackE2e(t *testing.T) {
 	}{
 		{
 			"https://fallbackpath.test/withoutroot/",
-			txts["_redirect.fallbackpath.test."],
 			[]string{"www", "path"},
 			"",
 			"http://fallback.test",
@@ -526,7 +353,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackpath.test/nosubdomain",
-			txts["_redirect.fallbackpath.test."],
 			[]string{"www", "path"},
 			"",
 			"http://fallback.test",
@@ -534,7 +360,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackpath.test/",
-			txts["_redirect.fallbackpath.test."],
 			[]string{"www", "path"},
 			"",
 			"http://fallback.test",
@@ -542,7 +367,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackdockerv2.test/correct",
-			txts["_redirect.fallbackdockerv2.test."],
 			[]string{"www", "dockerv2", "path"},
 			"https://gcr.io/",
 			"",
@@ -550,7 +374,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackdockerv2.test/wrong",
-			txts["_redirect.fallbackdockerv2.test."],
 			[]string{"www", "dockerv2", "path"},
 			"https://gcr.io/",
 			"",
@@ -558,7 +381,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackdockerv2.test/correct",
-			txts["_redirect.fallbackdockerv2.test."],
 			[]string{"www", "dockerv2", "path"},
 			"https://gcr.io/",
 			"",
@@ -566,7 +388,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackgometa.test/website",
-			txts["_redirect.fallbackgometa.test."],
 			[]string{"www", "host", "path"},
 			"https://about.okkur.io/",
 			"",
@@ -574,7 +395,6 @@ func TestFallbackE2e(t *testing.T) {
 		},
 		{
 			"https://fallbackgometa.test/redirect",
-			txts["_redirect.fallbackgometa.test."],
 			[]string{"www", "host", "path"},
 			"",
 			"https://about.okkur.io/",
@@ -596,6 +416,149 @@ func TestFallbackE2e(t *testing.T) {
 		}
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err.Error())
+		}
+	}
+}
+
+func Test_isIP(t *testing.T) {
+	tests := []struct {
+		host     string
+		expected bool
+	}{
+		{
+			"https://example.test",
+			false,
+		},
+		{
+			"http://example.test",
+			false,
+		},
+		{
+			"http://192.168.test.subdomain.test",
+			false,
+		},
+		{
+			"192.168.1.1",
+			true,
+		},
+		{
+			"https://122.221.122.221",
+			true,
+		},
+		{
+			"FE80:0000:0000:0000:0202:B3FF:FE1E:8329",
+			true,
+		},
+		{
+			"FE80::0202:B3FF:FE1E:8329",
+			true,
+		},
+	}
+	for _, test := range tests {
+		if result := isIP(test.host); result != test.expected {
+			t.Errorf("%s is an IP not a domain", test.host)
+		}
+	}
+}
+
+func Test_customResolver(t *testing.T) {
+	tests := []struct {
+		config Config
+	}{
+		{
+			Config{
+				Resolver: "127.0.0.1",
+			},
+		},
+		{
+			Config{
+				Resolver: "8.8.8.8",
+			},
+		},
+	}
+	for _, test := range tests {
+		resolver := customResolver(test.config)
+		if resolver.PreferGo != true {
+			t.Errorf("Expected PreferGo option to be enabled in the returned resolver")
+		}
+	}
+}
+
+func Test_contains(t *testing.T) {
+	tests := []struct {
+		array    []string
+		word     string
+		expected bool
+	}{
+		{
+			[]string{"test", "txtdirect"},
+			"test",
+			true,
+		},
+		{
+			[]string{"test", "txtdirect", "contains"},
+			"txtdirect",
+			true,
+		},
+		{
+			[]string{"test", "txtdirect", "random"},
+			"contains",
+			false,
+		},
+	}
+	for _, test := range tests {
+		if result := contains(test.array, test.word); result != test.expected {
+			t.Errorf("Expected %t but got %t.\nArray: %v \nWord: %v", test.expected, result, test.array, test.word)
+		}
+	}
+}
+
+func Test_getBaseTarget(t *testing.T) {
+	tests := []struct {
+		record record
+		reqURL string
+		url    string
+		status int
+	}{
+		{
+			record{
+				To:   "https://example.test",
+				Code: 200,
+			},
+			"https://nowhere.test",
+			"https://example.test",
+			200,
+		},
+		{
+			record{
+				To:   "https://{host}/{method}",
+				Code: 200,
+			},
+			"https://somewhere.test",
+			"https://somewhere.test/GET",
+			200,
+		},
+		{
+			record{
+				To:   "https://testing.test{path}",
+				Code: 301,
+			},
+			"https://example.test/testing/path",
+			"https://testing.test/testing/path",
+			301,
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.reqURL, nil)
+		to, status, err := getBaseTarget(test.record, req)
+		if err != nil {
+			t.Errorf("Expected the err to be nil but got %s", err)
+		}
+		if to != test.url {
+			t.Errorf("Expected %s but got %s", test.url, to)
+		}
+		if err != nil {
+			t.Errorf("Expected %d but got %d", test.status, status)
 		}
 	}
 }

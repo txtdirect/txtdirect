@@ -561,6 +561,7 @@ func Test_getBaseTarget(t *testing.T) {
 			t.Errorf("Expected %d but got %d", test.status, status)
 		}
 	}
+}
 
 // Note: ServerHeader isn't a function, this test is for checking
 // response's Server header.

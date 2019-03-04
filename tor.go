@@ -112,7 +112,6 @@ func (t *Tor) Proxy(w http.ResponseWriter, r *http.Request, rec record, c Config
 	if err != nil {
 		return err
 	}
-	u.Path = r.URL.Path
 
 	// Create a socks5 dialer
 	dialer, err := proxy.SOCKS5("tcp", fmt.Sprintf("127.0.0.1:%d", t.Port), nil, proxy.Direct)

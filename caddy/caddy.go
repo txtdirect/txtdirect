@@ -18,6 +18,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
@@ -25,6 +26,8 @@ import (
 	"github.com/mholt/caddy/caddyhttp/httpserver"
 	"github.com/txtdirect/txtdirect"
 )
+
+var torOnce sync.Once
 
 func init() {
 	caddy.RegisterPlugin("txtdirect", caddy.Plugin{
@@ -42,6 +45,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	var gomods txtdirect.Gomods
 	var prometheus txtdirect.Prometheus
 	var logfile string
+	var tor txtdirect.Tor
 
 	c.Next() // skip directive name
 	for c.NextBlock() {
@@ -118,6 +122,21 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				}
 			}
 
+		case "tor":
+			tor.Enable = true
+			c.NextArg()
+			if c.Val() != "{" {
+				continue
+			}
+			for c.Next() {
+				if c.Val() == "}" {
+					break
+				}
+				if err := tor.ParseTor(c); err != nil {
+					return txtdirect.Config{}, err
+				}
+			}
+
 		default:
 			return txtdirect.Config{}, c.ArgErr() // unhandled option
 		}
@@ -128,11 +147,14 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 		enable = allOptions
 	}
 
-	if gomods.Enable == true {
+	if gomods.Enable {
 		gomods.SetDefaults()
 	}
-	if prometheus.Enable == true {
+	if prometheus.Enable {
 		prometheus.SetDefaults()
+	}
+	if tor.Enable {
+		tor.SetDefaults()
 	}
 
 	config := txtdirect.Config{
@@ -142,6 +164,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 		LogOutput:  logfile,
 		Gomods:     gomods,
 		Prometheus: prometheus,
+		Tor:        tor,
 	}
 
 	parseLogfile(logfile)
@@ -170,6 +193,16 @@ func setup(c *caddy.Controller) error {
 		}
 	}
 	cfg.AddMiddleware(mid)
+
+	if config.Tor.Enable {
+		torOnce.Do(func() {
+			go config.Tor.Start(c)
+		})
+	}
+
+	c.OnShutdown(func() error {
+		return config.Tor.Stop()
+	})
 
 	return nil
 }

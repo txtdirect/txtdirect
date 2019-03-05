@@ -144,6 +144,9 @@ func (t *Tor) Proxy(w http.ResponseWriter, r *http.Request, rec record, c Config
 
 	copyHeader(w.Header(), tmpResponse.Header())
 
+	// Write the status from the temporary ResponseWriter to the main ResponseWriter
+	w.WriteHeader(tmpResponse.status)
+
 	// Write the final response from the temporary ResponseWriter to the main ResponseWriter
 	if _, err := w.Write(tmpResponse.Body()); err != nil {
 		return fmt.Errorf("[txtdirect]: Couldn't write the temporary response to main response body: %s", err.Error())

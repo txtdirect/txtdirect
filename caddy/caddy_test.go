@@ -342,6 +342,48 @@ func TestParse(t *testing.T) {
 				LogOutput: "stdout",
 			},
 		},
+		{
+			`
+			txtdirect {
+				enable host tor
+				redirect https://example.com
+				tor
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "tor"},
+				Resolver: "127.0.0.1",
+				Tor: txtdirect.Tor{
+					Enable: true,
+					Port:   4242,
+				},
+			},
+		},
+		{
+			`
+			txtdirect {
+				enable host tor
+				redirect https://example.com
+				tor {
+					port 4243
+				}
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			txtdirect.Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "tor"},
+				Resolver: "127.0.0.1",
+				Tor: txtdirect.Tor{
+					Enable: true,
+					Port:   4243,
+				},
+			},
+		},
 	}
 
 	for i, test := range tests {
@@ -372,6 +414,10 @@ func TestParse(t *testing.T) {
 
 				if conf.Gomods != test.expected.Gomods {
 					t.Errorf("Expected %+v for gomods config got %+v", test.expected.Gomods, conf.Gomods)
+				}
+			case "tor":
+				if conf.Tor.Port != test.expected.Tor.Port {
+					t.Errorf("Expected the onion service port to be %d but got %d", test.expected.Tor.Port, conf.Tor.Port)
 				}
 			}
 		}

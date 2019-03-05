@@ -1,9 +1,4 @@
-language: go
-
-go:
-  - "1.x"
-  - "1.11.x"
-  - master
+language: minimal
 
 services:
   - docker

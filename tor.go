@@ -127,25 +127,25 @@ func (t *Tor) Proxy(w http.ResponseWriter, r *http.Request, rec record, c Config
 		Dial: dialer.Dial,
 	}
 
-	tmpResposne := TorResponse{headers: make(http.Header)}
-	if err := reverseProxy.ServeHTTP(&tmpResposne, r, nil); err != nil {
+	tmpResponse := TorResponse{headers: make(http.Header)}
+	if err := reverseProxy.ServeHTTP(&tmpResponse, r, nil); err != nil {
 		return fmt.Errorf("[txtdirect]: Coudln't proxy the request to the background onion service. %s", err.Error())
 	}
 
 	// Decompress the body based on "Content-Encoding" header and write to a writer buffer
-	if err := tmpResposne.WriteBody(); err != nil {
+	if err := tmpResponse.WriteBody(); err != nil {
 		return fmt.Errorf("[txtdirect]: Couldn't write the response body: %s", err.Error())
 	}
 
 	// Replace the URL hosts with the request's host
-	if err := tmpResposne.ReplaceBody(u.Scheme, u.Host, r.Host); err != nil {
+	if err := tmpResponse.ReplaceBody(u.Scheme, u.Host, r.Host); err != nil {
 		return fmt.Errorf("[txtdirect]: Couldn't replace urls inside the response body: %s", err.Error())
 	}
 
-	copyHeader(w.Header(), tmpResposne.Header())
+	copyHeader(w.Header(), tmpResponse.Header())
 
 	// Write the final response from the temporary ResponseWriter to the main ResponseWriter
-	if _, err := w.Write(tmpResposne.Body()); err != nil {
+	if _, err := w.Write(tmpResponse.Body()); err != nil {
 		return fmt.Errorf("[txtdirect]: Couldn't write the temporary response to main response body: %s", err.Error())
 	}
 

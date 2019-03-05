@@ -108,12 +108,19 @@ func (t *Tor) Stop() error {
 // Proxy redirects the request to the local onion serivce and the actual proxying
 // happens inside onion service's http handler
 func (t *Tor) Proxy(w http.ResponseWriter, r *http.Request, rec record, c Config) error {
+	// Support placeholders within rec.To
+	to, err := parsePlaceholders(rec.To, r, []string{})
+	if err != nil {
+		return err
+	}
+	rec.To = to
+
 	u, err := url.Parse(rec.To)
 	if err != nil {
 		return err
 	}
 
-	// Use Proxied Host
+	// Use proxied Host
 	r.Host = u.Host
 
 	// Create a socks5 dialer

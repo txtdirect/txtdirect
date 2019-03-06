@@ -1,13 +1,11 @@
 BIN := txtdirect
-MAINTAINER := okkurlabs
+MAINTAINER := okkur
 VERSION := 0.4.0
 IMAGE := $(MAINTAINER)/$(BIN):$(VERSION)
 
 BUILD_GOOS := $(if $(GOOS),$(GOOS),linux)
 BUILD_GOARCH := $(if $(GOARCH),$(GOARCH),amd64)
 
-# Repo's root import path (under GOPATH).
-PKG := github.com/txtdirect/txtdirect
 CONTAINER ?= $(BIN)
 
 .DEFAULT_GOAL := build
@@ -47,10 +45,10 @@ docker-run: image-build
 	docker run --name $(CONTAINER) $(IMAGE)
 
 docker-test:
-	docker run --network=host -v $(shell pwd):/go/src/github.com/txtdirect/txtdirect golang:1.12-alpine /bin/sh -c "cd /go/src/github.com/txtdirect/txtdirect && apk add git gcc musl-dev make && GOROOT=\"/usr/local/go\" make test"
+	docker run --network=host -v $(shell pwd):/source golang:1.12-alpine /bin/sh -c "cd /source && apk add git gcc musl-dev make && make test"
 
 docker-build:
-	docker run --network=host -v $(shell pwd):/go/src/github.com/txtdirect/txtdirect golang:1.12-alpine /bin/sh -c "cd /go/src/github.com/txtdirect/txtdirect && apk add git gcc musl-dev make && make build && rm -rf caddy-copy"
+	docker run --network=host -v $(shell pwd):/source golang:1.12-alpine /bin/sh -c "cd /source && apk add git gcc musl-dev make && make build && rm -rf caddy-copy"
 
 version:
 	@echo $(VERSION)

@@ -19,7 +19,7 @@ recipe:
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e 's/var EnableTelemetry = true/var EnableTelemetry = false/' -- {} +
 	cd caddy-copy/caddy && \
 	GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w"
-	rm ./$(BIN)
+	if [ -f ./$(BIN) ]; then rm ./$(BIN); fi
 	mv caddy-copy/caddy/caddy ./$(BIN)
 
 dependencies:

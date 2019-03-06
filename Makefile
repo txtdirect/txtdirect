@@ -13,35 +13,32 @@ CONTAINER ?= $(BIN)
 .DEFAULT_GOAL := build
 
 recipe:
-	if [ -d caddy-copy ]; then cd caddy-copy && git checkout . && git pull && cd ..; else git clone https://github.com/mholt/caddy caddy-copy; fi
-	find caddy-copy/caddyhttp/httpserver -name 'plugin.go' -type f -exec sed -i -e "s/gopkg/txtdirect/" -- {} + 
+	find caddy-copy/caddyhttp/httpserver -name 'plugin.go' -type f -exec sed -i -e "s/gopkg/txtdirect/" -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e "s/\/\/ This is where other plugins get plugged in (imported)/_ \"github.com\/miekg\/caddy-prometheus\"/" -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/miekg\/caddy-prometheus"/a _ "github.com\/txtdirect\/txtdirect\/caddy"' -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/miekg\/caddy-prometheus"/a _ "github.com\/SchumacherFM\/mailout"' -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/miekg\/caddy-prometheus"/a _ "github.com\/captncraig\/caddy-realip"' -- {} +
 	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e 's/var EnableTelemetry = true/var EnableTelemetry = false/' -- {} +
 	cd caddy-copy/caddy && \
-	CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w"
+	GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w"
 	mv caddy-copy/caddy/caddy ./$(BIN)
 
 dependencies:
-	go get github.com/mholt/caddy/caddy
-	go get github.com/caddyserver/builds
-	go get github.com/miekg/caddy-prometheus
-	go get github.com/SchumacherFM/mailout
-	go get github.com/captncraig/caddy-realip
-	go get gopkg.in/natefinch/lumberjack.v2
-	go get github.com/miekg/dns
-	go get github.com/gomods/athens/...
-	rm -rf $(GOPATH)/src/github.com/gomods/athens/vendor/github.com/spf13/afero
-	go get github.com/spf13/afero
-	go get github.com/prometheus/client_golang/...
-	go get github.com/cretz/bine/tor/...
+	if [ -d caddy-copy ]; then cd caddy-copy && git checkout . && git pull && cd ..; else git clone https://github.com/mholt/caddy caddy-copy; fi
+	echo "replace github.com/txtdirect/txtdirect/caddy => ../../caddy" >> caddy-copy/go.mod
+	echo "replace github.com/mholt/caddy => ../caddy-copy" >> caddy-copy/go.mod
+	cd caddy-copy
+	GO111MODULE=on go get github.com/lucas-clemente/quic-go@master
+	GO111MODULE=on go get github.com/russross/blackfriday@master
+	GO111MODULE=on go get github.com/SchumacherFM/mailout
+	GO111MODULE=on go get github.com/captncraig/caddy-realip
+	GO111MODULE=on go get github.com/miekg/caddy-prometheus
+	cd ..
 
 build: dependencies recipe
 
 test: dependencies
-	go test -v `go list ./... | grep -v caddy-copy`
+	GO111MODULE=on go test -v `go list ./... | grep -v caddy-copy`
 
 image-build: docker-build
 	docker build -t $(IMAGE) .
@@ -50,10 +47,10 @@ docker-run: image-build
 	docker run --name $(CONTAINER) $(IMAGE)
 
 docker-test:
-	docker run -v $(shell pwd):/go/src/github.com/txtdirect/txtdirect golang:1.12-alpine /bin/sh -c "cd /go/src/github.com/txtdirect/txtdirect && apk add git gcc musl-dev make && GOROOT=\"/usr/local/go\" make test"
+	docker run --network=host -v $(shell pwd):/go/src/github.com/txtdirect/txtdirect golang:1.12-alpine /bin/sh -c "cd /go/src/github.com/txtdirect/txtdirect && apk add git gcc musl-dev make && GOROOT=\"/usr/local/go\" make test"
 
 docker-build:
-	docker run -v $(shell pwd):/go/src/github.com/txtdirect/txtdirect golang:1.12-alpine /bin/sh -c "cd /go/src/github.com/txtdirect/txtdirect && apk add git gcc musl-dev make && make build && rm -rf caddy-copy"
+	docker run --network=host -v $(shell pwd):/go/src/github.com/txtdirect/txtdirect golang:1.12-alpine /bin/sh -c "cd /go/src/github.com/txtdirect/txtdirect && apk add git gcc musl-dev make && make build && rm -rf caddy-copy"
 
 version:
 	@echo $(VERSION)

@@ -19,12 +19,9 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/mholt/caddy/caddyhttp/proxy"
 )
 
 const (
@@ -269,18 +266,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		RequestsCountBasedOnType.WithLabelValues(host, "proxy").Add(1)
 		log.Printf("[txtdirect]: %s > %s", rec.From, rec.To)
 
-		to, _, err := getBaseTarget(rec, r)
-		if err != nil {
+		if err = proxyRequest(w, r, rec, c, fallbackURL, code); err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
 			fallback(w, r, fallbackURL, rec.Type, "to", code, c)
-			return nil
 		}
-		u, err := url.Parse(to)
-		if err != nil {
-			return err
-		}
-		reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout, fallbackDelay)
-		reverseProxy.ServeHTTP(w, r, nil)
+
 		return nil
 	}
 

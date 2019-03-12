@@ -26,8 +26,10 @@ dependencies:
 	if [ -d caddy-copy ]; then cd caddy-copy && git checkout . && git pull && cd ..; else git clone https://github.com/mholt/caddy caddy-copy; fi
 	cd caddy-copy && \
 	if [ -f go.mod ]; then echo "already initialized go modules"; else go mod init; fi && \
-	echo "replace github.com/txtdirect/txtdirect => ../" >> go.mod && \
-	echo "replace github.com/mholt/caddy => ../caddy-copy" >> go.mod && \
+	if ! grep -q "txtdirect => ../" go.mod; then \
+		echo -e "\nreplace github.com/txtdirect/txtdirect => ../" >> go.mod && \
+		echo "replace github.com/mholt/caddy => ../caddy-copy" >> go.mod; \
+	fi && \
 	GO111MODULE=on go get github.com/lucas-clemente/quic-go@master && \
 	GO111MODULE=on go get github.com/russross/blackfriday@master && \
 	GO111MODULE=on go get github.com/txtdirect/txtdirect@master && \

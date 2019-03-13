@@ -50,6 +50,12 @@ var (
 		Help:      "Total fallbacks triggered for each type",
 	}, []string{"host", "type", "fallback"})
 
+	PathRedirectCount = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "txtdirect",
+		Name:      "redirect_path_count_total",
+		Help:      "Total redirects per path for each host",
+	}, []string{"host", "path"})
+
 	once sync.Once
 )
 

@@ -234,6 +234,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "path" {
 		RequestsCountBasedOnType.WithLabelValues(host, "path").Add(1)
+		PathRedirectCount.WithLabelValues(host, path).Add(1)
 		if path == "/" {
 			if rec.Root == "" {
 				fallback(w, r, fallbackURL, rec.Type, "to", code, c)

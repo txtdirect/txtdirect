@@ -403,6 +403,27 @@ func TestFallbackE2e(t *testing.T) {
 			"https://about.okkur.io/",
 			http.Header{},
 		},
+		{
+			"https://fallbackhost.test",
+			[]string{"www"},
+			"",
+			"https://www.fallbackhost.test",
+			http.Header{},
+		},
+		{
+			"https://test.fallbackhost.test",
+			[]string{"www"},
+			"",
+			"https://www.test.fallbackhost.test",
+			http.Header{},
+		},
+		{
+			"https://fallbackhost.test",
+			[]string{"host"},
+			"",
+			"https://about.okkur.io",
+			http.Header{},
+		},
 	}
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)

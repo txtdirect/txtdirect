@@ -58,6 +58,9 @@ var txts = map[string]string{
 	//	Fallback records
 	//
 
+	// type=host
+	"_redirect.fallbackhost.test.": "v=txtv0;to=https://{label3};type=host;code=302",
+
 	// type=path
 	"_redirect.fallbackpath.test.":             "v=txtv0;type=path",
 	"_redirect.withoutroot.fallbackpath.test.": "v=txtv0;type=path",
@@ -291,11 +294,11 @@ func TestConfigE2e(t *testing.T) {
 		resp := httptest.NewRecorder()
 		c := Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
-			Enable:   test.enable,
+			Redirect: "https://txtdirect.org",
 		}
-		err := Redirect(resp, req, c)
-		if err == nil && !strings.Contains(err.Error(), "option disabled") {
-			t.Fatalf("required option is not enabled, but there is no error returned")
+		Redirect(resp, req, c)
+		if resp.Header().Get("Location") != c.Redirect {
+			t.Errorf("Request didn't redirect to the specified URI after failure")
 		}
 	}
 }
@@ -346,58 +349,79 @@ func TestFallbackE2e(t *testing.T) {
 	}{
 		{
 			"https://fallbackpath.test/withoutroot/",
-			[]string{"www", "path"},
+			[]string{"path"},
 			"",
 			"http://fallback.test",
 			http.Header{},
 		},
 		{
 			"https://fallbackpath.test/nosubdomain",
-			[]string{"www", "path"},
+			[]string{"path"},
 			"",
 			"http://fallback.test",
 			http.Header{},
 		},
 		{
 			"https://fallbackpath.test/",
-			[]string{"www", "path"},
+			[]string{"path"},
 			"",
 			"http://fallback.test",
 			http.Header{},
 		},
 		{
 			"https://fallbackdockerv2.test/correct",
-			[]string{"www", "dockerv2", "path"},
+			[]string{"dockerv2", "path"},
 			"https://gcr.io/",
 			"",
 			http.Header{"User-Agent": []string{"Docker-Server"}},
 		},
 		{
 			"https://fallbackdockerv2.test/wrong",
-			[]string{"www", "dockerv2", "path"},
+			[]string{"dockerv2", "path"},
 			"https://gcr.io/",
 			"",
 			http.Header{"User-Agent": []string{"Docker-Client"}},
 		},
 		{
 			"https://fallbackdockerv2.test/correct",
-			[]string{"www", "dockerv2", "path"},
+			[]string{"dockerv2", "path"},
 			"https://gcr.io/",
 			"",
 			http.Header{"User-Agent": []string{"Docker-Client"}},
 		},
 		{
 			"https://fallbackgometa.test/website",
-			[]string{"www", "host", "path"},
+			[]string{"host", "path"},
 			"https://about.okkur.io/",
 			"",
 			http.Header{},
 		},
 		{
 			"https://fallbackgometa.test/redirect",
-			[]string{"www", "host", "path"},
+			[]string{"host", "path"},
 			"",
 			"https://about.okkur.io/",
+			http.Header{},
+		},
+		{
+			"https://fallbackhost.test",
+			[]string{"www"},
+			"",
+			"https://www.fallbackhost.test",
+			http.Header{},
+		},
+		{
+			"https://test.fallbackhost.test",
+			[]string{"www"},
+			"",
+			"https://www.test.fallbackhost.test",
+			http.Header{},
+		},
+		{
+			"https://fallbackhost.test",
+			[]string{"host"},
+			"",
+			"https://about.okkur.io",
 			http.Header{},
 		},
 	}

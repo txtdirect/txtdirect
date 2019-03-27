@@ -73,31 +73,37 @@ func contains(array []string, word string) bool {
 // and if it's not provided it will check txtdirect config for
 // default fallback address
 func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType, fallbackType string, code int, c Config) {
-	if fallback != "" {
-		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, fallback)
-		if code == http.StatusMovedPermanently {
-			w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-		}
-		w.Header().Add("Status-Code", strconv.Itoa(code))
+	if code == http.StatusMovedPermanently {
+		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+	}
+	w.Header().Add("Status-Code", strconv.Itoa(code))
+
+	if fallback != "" && fallbackType != "global" {
 		http.Redirect(w, r, fallback, code)
 		if c.Prometheus.Enable {
 			FallbacksCount.WithLabelValues(r.Host, recordType, fallbackType).Add(1)
 			RequestsByStatus.WithLabelValues(r.URL.Host, strconv.Itoa(code)).Add(1)
 		}
+	} else if contains(c.Enable, "www") {
+		s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", r.URL.Host}, "")
+		http.Redirect(w, r, s, code)
+		if c.Prometheus.Enable {
+			FallbacksCount.WithLabelValues(r.Host, recordType, "subdomain").Add(1)
+			RequestsByStatus.WithLabelValues(r.URL.Host, strconv.Itoa(code)).Add(1)
+		}
 	} else if c.Redirect != "" {
-		if contains(c.Enable, "www") {
-			log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
-			w.Header().Set("Content-Type", "")
-			w.Header().Add("Status-Code", strconv.Itoa(http.StatusForbidden))
-			http.Redirect(w, r, c.Redirect, http.StatusForbidden)
-			if c.Prometheus.Enable {
-				FallbacksCount.WithLabelValues(r.Host, recordType, "global").Add(1)
-				RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
-			}
+		w.Header().Set("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
+
+		http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
+
+		if c.Prometheus.Enable {
+			FallbacksCount.WithLabelValues(r.Host, recordType, "redirect").Add(1)
+			RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusMovedPermanently)).Add(1)
 		}
 	} else {
 		http.NotFound(w, r)
 	}
+	log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, w.Header().Get("Location"))
 }
 
 // customResolver returns a net.Resolver instance based
@@ -181,53 +187,24 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if isIP(host) {
 		log.Println("[txtdirect]: Trying to access 127.0.0.1, fallback triggered.")
-		fallback(w, r, "", "", "", 0, c)
+		fallback(w, r, "", "", "global", 0, c)
 		return nil
 	}
 
 	rec, err := getRecord(host, r.Context(), c, r)
 	if err != nil {
-		if strings.HasSuffix(err.Error(), "no such host") {
-			if c.Redirect != "" {
-				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, c.Redirect)
-				w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-				w.Header().Add("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
-				http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
-				if c.Prometheus.Enable {
-					RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusMovedPermanently)).Add(1)
-				}
-				return nil
-			}
-			if contains(c.Enable, "www") {
-				s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", host}, "")
-				log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, s)
-				w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-				w.Header().Add("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
-				http.Redirect(w, r, s, http.StatusMovedPermanently)
-				if c.Prometheus.Enable {
-					RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusMovedPermanently)).Add(1)
-				}
-				return nil
-			}
-			http.NotFound(w, r)
-			if c.Prometheus.Enable {
-				RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusNotFound)).Add(1)
-			}
-			return nil
-		}
-		return err
+		fallback(w, r, "", "", "global", http.StatusFound, c)
+		return nil
 	}
 
 	if !contains(c.Enable, rec.Type) {
 		return fmt.Errorf("option disabled")
 	}
 
-	fallbackURL, code, err := getBaseTarget(rec, r)
-	if err != nil {
-		return err
-	}
+	fallbackURL, code := rec.To, rec.Code
 
 	if rec.Re != "" && rec.From != "" {
+		log.Println("[txtdirect]: It's not allowed to use both re= and from= in a record.")
 		fallback(w, r, fallbackURL, rec.Type, "to", code, c)
 		return nil
 	}

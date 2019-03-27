@@ -86,19 +86,19 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType, fall
 		}
 	} else if contains(c.Enable, "www") {
 		s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", r.URL.Host}, "")
+		http.Redirect(w, r, s, code)
 		if c.Prometheus.Enable {
+			FallbacksCount.WithLabelValues(r.Host, recordType, "subdomain").Add(1)
 			RequestsByStatus.WithLabelValues(r.URL.Host, strconv.Itoa(code)).Add(1)
 		}
-		http.Redirect(w, r, s, code)
 	} else if c.Redirect != "" {
-		w.Header().Set("Content-Type", "")
-		w.Header().Set("Status-Code", strconv.Itoa(http.StatusForbidden))
+		w.Header().Set("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
 
-		http.Redirect(w, r, c.Redirect, http.StatusForbidden)
+		http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
 
 		if c.Prometheus.Enable {
-			FallbacksCount.WithLabelValues(r.Host, recordType, "global").Add(1)
-			RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusForbidden)).Add(1)
+			FallbacksCount.WithLabelValues(r.Host, recordType, "redirect").Add(1)
+			RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusMovedPermanently)).Add(1)
 		}
 	} else {
 		http.NotFound(w, r)
@@ -193,10 +193,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	rec, err := getRecord(host, r.Context(), c, r)
 	if err != nil {
-		if err != nil {
-			fallback(w, r, "", "", "global", http.StatusMovedPermanently, c)
-			return nil
-		}
+		fallback(w, r, "", "", "global", http.StatusFound, c)
+		return nil
 	}
 
 	if !contains(c.Enable, rec.Type) {
@@ -206,6 +204,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	fallbackURL, code := rec.To, rec.Code
 
 	if rec.Re != "" && rec.From != "" {
+		log.Println("[txtdirect]: It's not allowed to use both re= and from= in a record.")
 		fallback(w, r, fallbackURL, rec.Type, "to", code, c)
 		return nil
 	}

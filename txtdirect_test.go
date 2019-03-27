@@ -294,11 +294,11 @@ func TestConfigE2e(t *testing.T) {
 		resp := httptest.NewRecorder()
 		c := Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
-			Enable:   test.enable,
+			Redirect: "https://txtdirect.org",
 		}
-		err := Redirect(resp, req, c)
-		if err == nil && !strings.Contains(err.Error(), "option disabled") {
-			t.Fatalf("required option is not enabled, but there is no error returned")
+		Redirect(resp, req, c)
+		if resp.Header().Get("Location") != c.Redirect {
+			t.Errorf("Request didn't redirect to the specified URI after failure")
 		}
 	}
 }

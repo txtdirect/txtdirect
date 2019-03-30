@@ -23,16 +23,19 @@ import (
 var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 <html>
 <head>
-<meta name="go-import" content="{{.Host}} {{.Vcs}} {{.NewURL}}">
-{{if .HasGoSource}}<meta name="go-source" content="{{.Host}} _ {{.NewURL}}/tree/master{/dir} {{.NewURL}}/blob/master{/dir}/{file}#L{line}">{{end}}
+<meta name="go-import" content="{{.Host}}{{.Path}} {{.Vcs}} {{.NewURL}}">
+{{if .HasGoSource}}<meta name="go-source" content="{{.Host}}{{.Path}} _ {{.NewURL}}/tree/master{/dir} {{.NewURL}}/blob/master{/dir}/{file}#L{line}">{{end}}
 </head>
 </html>`))
 
 // gometa executes a template on the given ResponseWriter
 // that contains go-import meta tag
-func gometa(w http.ResponseWriter, r record, host string) error {
+func gometa(w http.ResponseWriter, r record, host, path string) error {
 	if r.Vcs == "" {
 		r.Vcs = "git"
+	}
+	if path == "/" {
+		path = ""
 	}
 
 	gosource := strings.Contains(r.To, "github.com")
@@ -40,11 +43,13 @@ func gometa(w http.ResponseWriter, r record, host string) error {
 	RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusFound)).Add(1)
 	return tmpl.Execute(w, struct {
 		Host        string
+		Path        string
 		Vcs         string
 		NewURL      string
 		HasGoSource bool
 	}{
 		host,
+		path,
 		r.Vcs,
 		r.To,
 		gosource,

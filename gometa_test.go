@@ -22,11 +22,13 @@ import (
 func TestGometa(t *testing.T) {
 	tests := []struct {
 		host     string
+		path     string
 		record   record
 		expected string
 	}{
 		{
 			host: "example.com",
+			path: "/testing",
 			record: record{
 				Vcs: "git",
 				To:  "redirect.com/my-go-pkg",
@@ -34,24 +36,26 @@ func TestGometa(t *testing.T) {
 			expected: `<!DOCTYPE html>
 <html>
 <head>
-<meta name="go-import" content="example.com git redirect.com/my-go-pkg">
+<meta name="go-import" content="example.com/testing git redirect.com/my-go-pkg">
 
 </head>
 </html>`,
 		},
 		{
 			host:   "empty.com",
+			path:   "/testing",
 			record: record{},
 			expected: `<!DOCTYPE html>
 <html>
 <head>
-<meta name="go-import" content="empty.com git ">
+<meta name="go-import" content="empty.com/testing git ">
 
 </head>
 </html>`,
 		},
 		{
 			host: "root.com",
+			path: "/testing",
 			record: record{
 				Vcs: "git",
 				To:  "redirect.com/my-root-package",
@@ -59,13 +63,14 @@ func TestGometa(t *testing.T) {
 			expected: `<!DOCTYPE html>
 <html>
 <head>
-<meta name="go-import" content="root.com git redirect.com/my-root-package">
+<meta name="go-import" content="root.com/testing git redirect.com/my-root-package">
 
 </head>
 </html>`,
 		},
 		{
 			host: "root.com",
+			path: "/testing",
 			record: record{
 				Vcs: "git",
 				To:  "github.com/txtdirect/txtdirect",
@@ -73,8 +78,8 @@ func TestGometa(t *testing.T) {
 			expected: `<!DOCTYPE html>
 <html>
 <head>
-<meta name="go-import" content="root.com git github.com/txtdirect/txtdirect">
-<meta name="go-source" content="root.com _ github.com/txtdirect/txtdirect/tree/master{/dir} github.com/txtdirect/txtdirect/blob/master{/dir}/{file}#L{line}">
+<meta name="go-import" content="root.com/testing git github.com/txtdirect/txtdirect">
+<meta name="go-source" content="root.com/testing _ github.com/txtdirect/txtdirect/tree/master{/dir} github.com/txtdirect/txtdirect/blob/master{/dir}/{file}#L{line}">
 </head>
 </html>`,
 		},
@@ -82,7 +87,7 @@ func TestGometa(t *testing.T) {
 
 	for i, test := range tests {
 		rec := httptest.NewRecorder()
-		err := gometa(rec, test.record, test.host)
+		err := gometa(rec, test.record, test.host, test.path)
 		if err != nil {
 			t.Errorf("Test %d: Unexpected error: %s", i, err)
 			continue

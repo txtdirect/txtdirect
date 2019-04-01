@@ -299,7 +299,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			return nil
 		}
 
-		return gometa(w, rec, host)
+		return gometa(w, rec, host, path)
 	}
 
 	if rec.Type == "gomods" {

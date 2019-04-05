@@ -230,7 +230,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 
 		if path != "" {
-			zone, from, pathSlice, err := zoneFromPath(host, path, rec)
+			zone, from, pathSlice, err := zoneFromPath(r, rec)
 			rec, err = getFinalRecord(zone, from, r.Context(), c, r, pathSlice)
 			if err != nil {
 				log.Print("Fallback is triggered because an error has occurred: ", err)

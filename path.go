@@ -44,6 +44,7 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 				unordered[group[1]] = pathSlice[i+1]
 			}
 			url := sortMap(unordered)
+			*r = *r.WithContext(context.WithValue(r.Context(), "regexMatches", unordered))
 			reverse(url)
 			from := len(pathSlice)
 			url = append(url, r.Host)
@@ -55,6 +56,7 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 	for _, v := range pathSubmatchs {
 		pathSlice = append(pathSlice, v[1])
 	}
+	*r = *r.WithContext(context.WithValue(r.Context(), "regexMatches", pathSlice))
 	if len(pathSlice) < 1 && rec.Re != "" {
 		log.Printf("<%s> [txtdirect]: custom regex doesn't work on %s", time.Now().String(), path)
 	}

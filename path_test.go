@@ -159,3 +159,75 @@ func Test_zoneFromPath(t *testing.T) {
 		}
 	}
 }
+
+func Test_zoneFromPathRegexPlaceholders(t *testing.T) {
+	tests := []struct {
+		url      string
+		to       string
+		from     string
+		regex    string
+		expected string
+	}{
+		{
+			"https://example.com/12345-some-path?query=string&more=stuff",
+			"https://example.com/{1}",
+			"",
+			"\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)",
+			"https://example.com/12345-some-path",
+		},
+		{
+			"https://example.com/12345-some-path?query=string&more=stuff",
+			"https://example.com/{1}",
+			"",
+			"(\\d+)",
+			"https://example.com/12345",
+		},
+		{
+			"https://example.com/12345-some-path?query=string&more=stuff",
+			"https://example.com/{1}",
+			"",
+			"\\?query=([^&]*)",
+			"https://example.com/string",
+		},
+		{
+			"https://example.com/12345-some-path?query=string&more=stuff",
+			"https://example.com/{a}/{b}",
+			"",
+			"\\?query=(?P<a>[^&]+)\\&more=(?P<b>[^&]+)",
+			"https://example.com/string/stuff",
+		},
+		{
+			"https://example.com/12345-some-path?query=string&more=stuff&test=testing",
+			"https://example.com/{a}/{b}/{c}",
+			"",
+			"\\?query=(?P<b>[^&]+)\\&more=(?P<a>[^&]+)\\&test=(?P<c>[^&]+)",
+			"https://example.com/stuff/string/testing",
+		},
+		{
+			"https://example.com/12345-some-path?query=string&more=stuff&test=testing",
+			"https://example.com/{a}/{b2}/{b1}",
+			"",
+			"\\?query=(?P<a>[^&]+)\\&more=(?P<b2>[^&]+)\\&test=(?P<b1>[^&]+)",
+			"https://example.com/string/stuff/testing",
+		},
+	}
+	for _, test := range tests {
+		rec := record{
+			Re:   test.regex,
+			From: test.from,
+			To:   test.to,
+		}
+		req := httptest.NewRequest("GET", test.url, nil)
+		_, _, _, err := zoneFromPath(req, rec)
+		if err != nil {
+			t.Errorf("Unexpected error while parsing path: %s", err.Error())
+		}
+		to, err := parsePlaceholders(rec.To, req, []string{})
+		if err != nil {
+			t.Errorf("Unexpected error while parsing placeholders: %s", err.Error())
+		}
+		if to != test.expected {
+			t.Errorf("Expected %s, got %s", test.expected, to)
+		}
+	}
+}

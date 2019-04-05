@@ -116,10 +116,13 @@ func parsePlaceholders(input string, r *http.Request, pathSlice []string) (strin
 		// Named regex matches
 		if regexp.MustCompile("([a-zA-Z]+[0-9]*)").MatchString(string(placeholder[0][1 : len(placeholder[0])-1])) {
 			matches := r.Context().Value("regexMatches")
-			iterator := reflect.ValueOf(matches).MapRange()
-			for iterator.Next() {
-				if iterator.Key().String() == string(placeholder[0][1:len(placeholder[0])-1]) {
-					input = strings.Replace(input, placeholder[0], iterator.Value().String(), -1)
+			mapReflect := reflect.ValueOf(matches)
+			if mapReflect.Kind() == reflect.Map {
+				iterator := reflect.ValueOf(matches).MapRange()
+				for iterator.Next() {
+					if iterator.Key().String() == string(placeholder[0][1:len(placeholder[0])-1]) {
+						input = strings.Replace(input, placeholder[0], iterator.Value().String(), -1)
+					}
 				}
 			}
 		}

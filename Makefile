@@ -11,30 +11,14 @@ CONTAINER ?= $(BIN)
 .DEFAULT_GOAL := build
 
 recipe:
-	find caddy-copy/caddyhttp/httpserver -name 'plugin.go' -type f -exec sed -i -e "s/gopkg/txtdirect/" -- {} +
-	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e "s/\/\/ This is where other plugins get plugged in (imported)/_ \"github.com\/miekg\/caddy-prometheus\"/" -- {} +
-	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/miekg\/caddy-prometheus"/a _ "github.com\/txtdirect\/txtdirect\/caddy"' -- {} +
-	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/miekg\/caddy-prometheus"/a _ "github.com\/SchumacherFM\/mailout"' -- {} +
-	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e '/_ "github.com\/miekg\/caddy-prometheus"/a _ "github.com\/captncraig\/caddy-realip"' -- {} +
-	find caddy-copy/caddy/caddymain -name 'run.go' -type f -exec sed -i -e 's/var EnableTelemetry = true/var EnableTelemetry = false/' -- {} +
-	cd caddy-copy/caddy && \
+	cd cmd/txtdirect && \
 	GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w"
-	if [ -f ./$(BIN) ]; then rm ./$(BIN); fi
-	mv caddy-copy/caddy/caddy ./$(BIN)
+	mv cmd/txtdirect/txtdirect ./$(BIN)
 
-dependencies:
-	if [ -d caddy-copy ]; then cd caddy-copy && git checkout . && git pull && cd ..; else git clone https://github.com/mholt/caddy caddy-copy; fi
-	cd caddy-copy && \
-	if ! grep -q "txtdirect => ../" go.mod; then \
-		echo -e "\nreplace github.com/txtdirect/txtdirect => ../" >> go.mod && \
-		echo "replace github.com/mholt/caddy => ../caddy-copy" >> go.mod; \
-	fi && \
-	cd ..
+build: recipe
 
-build: dependencies recipe
-
-test: dependencies
-	GO111MODULE=on go test -v `go list ./... | grep -v caddy-copy`
+test:
+	GO111MODULE=on go test -v `go list ./... | grep -v cmd`
 
 image-build: docker-build
 	docker build -t $(IMAGE) .

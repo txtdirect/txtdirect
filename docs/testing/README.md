@@ -78,16 +78,6 @@
   $ ./txtdirect -conf /<directory>/caddy.test
   ```
 
-## Mac
-
-The instructions for configuring and running TXTDirect on a Mac are the same as Linux with the below exception.
-
-- Since the sed command is not available on Mac, a workaround is to install `gnu-sed`
-
-  ```
-  $ brew install gnu-sed
-  ```
-
 ---
 
 Start your first contribution with some documentation.

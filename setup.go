@@ -39,6 +39,8 @@ func init() {
 		ServerType: "http",
 		Action:     setup,
 	})
+	// TODO: hardcode directive after stable release into Caddy
+	httpserver.RegisterDevDirective("txtdirect", "")
 }
 
 var allOptions = []string{"host", "path", "gometa", "www"}
@@ -192,7 +194,7 @@ func setup(c *caddy.Controller) error {
 	// Add handler to Caddy
 	cfg := httpserver.GetConfig(c)
 	mid := func(next httpserver.Handler) httpserver.Handler {
-		return TXTdirect{
+		return TXTDirect{
 			Next:   next,
 			Config: config,
 		}
@@ -228,12 +230,12 @@ func removeArrayFromArray(array, toBeRemoved []string) []string {
 }
 
 // Redirect is middleware to redirect requests based on TXT records
-type TXTdirect struct {
+type TXTDirect struct {
 	Next   httpserver.Handler
 	Config Config
 }
 
-func (rd TXTdirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
+func (rd TXTDirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 	if err := Redirect(w, r, rd.Config); err != nil {
 		if err.Error() == "option disabled" {
 			return rd.Next.ServeHTTP(w, r)

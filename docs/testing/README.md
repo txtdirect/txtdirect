@@ -1,3 +1,17 @@
+<!--
+Copyright 2019 - The TXTDirect Authors
+
+This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License;
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    https://creativecommons.org/licenses/by-sa/4.0/legalcode
+Unless required by applicable law or agreed to in writing, documentation
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
 # Local TXTDirect Configuration
 
 ## Linux
@@ -76,16 +90,6 @@
 - Start the caddyfile
   ```
   $ ./txtdirect -conf /<directory>/caddy.test
-  ```
-
-## Mac
-
-The instructions for configuring and running TXTDirect on a Mac are the same as Linux with the below exception.
-
-- Since the sed command is not available on Mac, a workaround is to install `gnu-sed`
-
-  ```
-  $ brew install gnu-sed
   ```
 
 ---

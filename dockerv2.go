@@ -49,9 +49,19 @@ func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error 
 		if err != nil {
 			return err
 		}
+
+		// Empty the RequestURI to prevent "http: Request.RequestURI can't be set in client requests" error
+		r.RequestURI = ""
+		r.URL = uri
+
+		resp, err := http.DefaultClient.Do(r)
+		if err != nil {
+			return err
+		}
+
 		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 		w.Header().Add("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
-		http.Redirect(w, r, uri, http.StatusMovedPermanently)
+		resp.Write(w)
 		return nil
 	}
 	w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
@@ -60,15 +70,15 @@ func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error 
 	return nil
 }
 
-func createDockerv2URI(to string, path string) (string, error) {
+func createDockerv2URI(to string, path string) (*url.URL, error) {
 	uri, err := url.Parse(to)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if uri.Path == "/" || uri.Path == "" {
 		uri.Path = path
-		return uri.String(), nil
+		return uri, nil
 	}
 
 	// Replace container's path in docker's request with what's inside rec.To
@@ -83,5 +93,5 @@ func createDockerv2URI(to string, path string) (string, error) {
 		uri.Path = strings.Join(pathSlice, "/")
 	}
 
-	return uri.String(), nil
+	return uri, nil
 }

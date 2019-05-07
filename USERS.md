@@ -1,0 +1,6 @@
+* [nzt.capital](https://example.com)
+* [Okkur Labs](https://okkur.org)
+* [Rekkur Solutions](https://rekkur.com)
+* [Syna](https://syna.okkur.org)
+* [Resumic](https://resumic.org)
+* [Backstage Capital](https://backstage.capital)

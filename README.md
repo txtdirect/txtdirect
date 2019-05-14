@@ -2,15 +2,15 @@
 
 Convenient redirects based on DNS TXT-records
 
- [![state](https://img.shields.io/badge/state-unstable-red.svg)]() [![release](https://img.shields.io/github/release/txtdirect/txtdirect.svg)](https://github.com/txtdirect/txtdirect/releases) [![license](https://img.shields.io/github/license/txtdirect/txtdirect.svg)](LICENSE) [![Build Status](https://travis-ci.org/txtdirect/txtdirect.svg?branch=master)](https://travis-ci.org/txtdirect/txtdirect) [![Go Report Card](https://goreportcard.com/badge/github.com/txtdirect/txtdirect)](https://goreportcard.com/report/github.com/txtdirect/txtdirect)
+ [![state](https://img.shields.io/badge/state-beta-blue.svg)]() [![release](https://img.shields.io/github/release/txtdirect/txtdirect.svg)](https://github.com/txtdirect/txtdirect/releases) [![license](https://img.shields.io/github/license/txtdirect/txtdirect.svg)](LICENSE) [![Build Status](https://travis-ci.org/txtdirect/txtdirect.svg?branch=master)](https://travis-ci.org/txtdirect/txtdirect)
 
-**NOTE: This is a work-in-progress, we do not consider it production ready. Use at your own risk.**
+**NOTE: This is a beta release, we do not consider it completely production ready yet. Use at your own risk.**
 
 # TXTDirect
 Convenient and minimalistic DNS based redirects, while controlling your data with your own DNS records.
 
 ## Using TXTDirect
-Take a look at our full [documentation](/docs).
+Take a look at our full [documentation](https://s.txtdirect.org/docs).
 
 ## Support
 For detailed information on support options see our [support guide](/SUPPORT.md).

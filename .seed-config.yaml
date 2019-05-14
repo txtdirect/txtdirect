@@ -1,7 +1,7 @@
 project:
   name: "TXTDirect"
   state: "beta"
-  image: "https://github.com/txtdirect/txtdirect/blob/master/media/logo.svg"
+  image: "https://raw.githubusercontent.com/txtdirect/txtdirect/master/media/logo.svg?sanitize=true"
   website: "https://about.txtdirect.org"
   oneLiner: "Convenient redirects based on DNS TXT-records"
   description: |

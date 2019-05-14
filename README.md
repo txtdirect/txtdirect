@@ -1,4 +1,4 @@
-<a href='https://about.txtdirect.org'><img src='https://github.com/txtdirect/txtdirect/blob/master/media/logo.svg' width='500'/></a>
+<a href='https://about.txtdirect.org'><img src='https://raw.githubusercontent.com/txtdirect/txtdirect/master/media/logo.svg?sanitize=true' width='500'/></a>
 
 Convenient redirects based on DNS TXT-records
 

@@ -159,6 +159,8 @@ github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0j
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/mholt/caddy v1.0.0 h1:KI6RPGih2GFzWRPG8s9clKK28Ns4ZlVMKR/v7mxq6+c=
 github.com/mholt/caddy v1.0.0/go.mod h1:PzUpQ3yGCTuEuy0KSxEeB4TZOi3zBZ8BR/zY0RBP414=
+github.com/mholt/caddy v1.0.1-0.20190514041736-c238b72d5dbc h1:332xNOVkZo0WLQ64pjppTALM9GkMc57DqeFkVrxcMU8=
+github.com/mholt/caddy v1.0.1-0.20190514041736-c238b72d5dbc/go.mod h1:PzUpQ3yGCTuEuy0KSxEeB4TZOi3zBZ8BR/zY0RBP414=
 github.com/mholt/certmagic v0.5.0 h1:lYXxsLUFya/I3BgDCrfuwcMQOB+4auzI8CCzpK41tjc=
 github.com/mholt/certmagic v0.5.0/go.mod h1:g4cOPxcjV0oFq3qwpjSA30LReKD8AoIfwAY9VvG35NY=
 github.com/miekg/caddy-prometheus v0.0.0-20190322143946-eb0f4d1615b0 h1:kR+wYaWNlAtn8eO0Jo40rRyu2F8FzeZQ5NNIZixWL9Y=

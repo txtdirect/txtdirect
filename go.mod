@@ -9,7 +9,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/gomods/athens v0.3.1
 	github.com/juju/ratelimit v1.0.1 // indirect
-	github.com/mholt/caddy v1.0.0
+	github.com/mholt/caddy v1.0.1-0.20190514041736-c238b72d5dbc
 	github.com/miekg/caddy-prometheus v0.0.0-20190322143946-eb0f4d1615b0
 	github.com/miekg/dns v1.1.3
 	github.com/prometheus/client_golang v0.9.2

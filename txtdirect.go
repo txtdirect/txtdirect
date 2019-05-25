@@ -261,7 +261,12 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			return nil
 		}
 
-		err := redirectDockerv2(w, r, rec)
+		docker := DockerV2{
+			Path:     path,
+			Upstream: rec.To,
+		}
+
+		err := docker.Redirect(w, r, rec)
 		if err != nil {
 			log.Printf("[txtdirect]: couldn't redirect to the requested container: %s", err.Error())
 			fallback(w, r, fallbackURL, rec.Type, "to", code, c)

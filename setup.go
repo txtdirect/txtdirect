@@ -53,6 +53,7 @@ func parse(c *caddy.Controller) (Config, error) {
 	var prometheus Prometheus
 	var logfile string
 	var tor Tor
+	var qr Qr
 
 	c.Next() // skip directive name
 	for c.NextBlock() {
@@ -144,6 +145,20 @@ func parse(c *caddy.Controller) (Config, error) {
 				}
 			}
 
+		case "qr":
+			c.NextArg()
+			if c.Val() != "{" {
+				continue
+			}
+			for c.Next() {
+				if c.Val() == "}" {
+					break
+				}
+				if err := qr.ParseQr(c); err != nil {
+					return Config{}, err
+				}
+			}
+
 		default:
 			return Config{}, c.ArgErr() // unhandled option
 		}
@@ -154,6 +169,7 @@ func parse(c *caddy.Controller) (Config, error) {
 		enable = allOptions
 	}
 
+	// Set the default values
 	if gomods.Enable {
 		gomods.SetDefaults()
 	}
@@ -162,6 +178,9 @@ func parse(c *caddy.Controller) (Config, error) {
 	}
 	if tor.Enable {
 		tor.SetDefaults()
+	}
+	if contains(enable, "qr") {
+		qr.SetDefaults()
 	}
 
 	config := Config{
@@ -172,6 +191,7 @@ func parse(c *caddy.Controller) (Config, error) {
 		Gomods:     gomods,
 		Prometheus: prometheus,
 		Tor:        tor,
+		Qr:         qr,
 	}
 
 	parseLogfile(logfile)

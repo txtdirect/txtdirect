@@ -382,6 +382,51 @@ func TestCaddyParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			`
+			txtdirect {
+				enable host qr
+				redirect https://example.com
+				qr {
+					size 256
+					background "#ffffff"
+					foreground "#000000"
+				}
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "qr"},
+				Resolver: "127.0.0.1",
+				Qr: Qr{
+					Size:            256,
+					BackgroundColor: "#ffffff",
+					ForegroundColor: "#000000",
+				},
+			},
+		},
+		{
+			`
+			txtdirect {
+				enable host qr
+				redirect https://example.com
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host", "qr"},
+				Resolver: "127.0.0.1",
+				Qr: Qr{
+					Size:            256,
+					BackgroundColor: "#ffffff",
+					ForegroundColor: "#000000",
+				},
+			},
+		},
 	}
 
 	for i, test := range tests {
@@ -416,6 +461,10 @@ func TestCaddyParse(t *testing.T) {
 			case "tor":
 				if conf.Tor.Port != test.expected.Tor.Port {
 					t.Errorf("Expected the onion service port to be %d but got %d", test.expected.Tor.Port, conf.Tor.Port)
+				}
+			case "qr":
+				if conf.Qr != test.expected.Qr {
+					t.Errorf("Expected %+v for qr config got %+v", test.expected.Qr, conf.Qr)
 				}
 			}
 		}

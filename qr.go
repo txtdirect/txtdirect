@@ -72,10 +72,10 @@ func (qr *Qr) SetDefaults() {
 		qr.Size = 256
 	}
 	if qr.BackgroundColor == "" {
-		qr.BackgroundColor = "00000000"
+		qr.BackgroundColor = "ffffffff"
 	}
 	if qr.ForegroundColor == "" {
-		qr.ForegroundColor = "ffffffff"
+		qr.ForegroundColor = "00000000"
 	}
 
 	if len(qr.BackgroundColor) == 7 {

@@ -402,8 +402,8 @@ func TestCaddyParse(t *testing.T) {
 				Resolver: "127.0.0.1",
 				Qr: Qr{
 					Size:            256,
-					BackgroundColor: "#ffffff",
-					ForegroundColor: "#000000",
+					BackgroundColor: "ffffffff",
+					ForegroundColor: "000000ff",
 				},
 			},
 		},
@@ -422,8 +422,8 @@ func TestCaddyParse(t *testing.T) {
 				Resolver: "127.0.0.1",
 				Qr: Qr{
 					Size:            256,
-					BackgroundColor: "#ffffff",
-					ForegroundColor: "#000000",
+					BackgroundColor: "ffffffff",
+					ForegroundColor: "00000000",
 				},
 			},
 		},

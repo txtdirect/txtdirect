@@ -14,6 +14,7 @@ require (
 	github.com/miekg/dns v1.1.3
 	github.com/prometheus/client_golang v0.9.2
 	github.com/quasoft/memstore v0.0.0-20180925164028-84a050167438 // indirect
+	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9 // indirect
 	github.com/spf13/afero v1.2.2
 	github.com/steambap/captcha v1.3.0 // indirect
 	golang.org/x/image v0.0.0-20190424155947-59b11bec70c7 // indirect

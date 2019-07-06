@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/mholt/caddy/caddyhttp/proxy"
+	"github.com/caddyserver/caddy/caddyhttp/proxy"
 )
 
 type ProxyResponse struct {

@@ -22,7 +22,7 @@ import (
 
 	"github.com/spf13/afero"
 
-	"github.com/mholt/caddy"
+	"github.com/caddyserver/caddy"
 )
 
 func TestCaddyParse(t *testing.T) {

@@ -28,8 +28,8 @@ import (
 	"time"
 
 	"github.com/cretz/bine/tor"
-	"github.com/mholt/caddy"
-	cproxy "github.com/mholt/caddy/caddyhttp/proxy"
+	"github.com/caddyserver/caddy"
+	cproxy "github.com/caddyserver/caddy/caddyhttp/proxy"
 	"golang.org/x/net/proxy"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )

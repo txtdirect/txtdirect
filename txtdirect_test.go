@@ -25,9 +25,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mholt/caddy/caddyhttp/header"
-	"github.com/mholt/caddy/caddyhttp/httpserver"
-	"github.com/mholt/caddy/caddyhttp/proxy"
+	"github.com/caddyserver/caddy/caddyhttp/header"
+	"github.com/caddyserver/caddy/caddyhttp/httpserver"
+	"github.com/caddyserver/caddy/caddyhttp/proxy"
 	"github.com/miekg/dns"
 )
 

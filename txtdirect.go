@@ -42,7 +42,6 @@ type Config struct {
 	LogOutput  string
 	Gomods     Gomods
 	Prometheus Prometheus
-	Tor        Tor
 }
 
 // getBaseTarget parses the placeholder in the given record's To= field
@@ -304,10 +303,6 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "gomods" {
 		return gomods(w, r, path, c)
-	}
-
-	if rec.Type == "tor" {
-		return c.Tor.Proxy(w, r, rec, c)
 	}
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)

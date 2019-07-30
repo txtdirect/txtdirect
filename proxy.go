@@ -33,7 +33,7 @@ type ProxyResponse struct {
 	status     int
 }
 
-func proxyRequest(w http.ResponseWriter, r *http.Request, rec record, c Config, fallbackURL string, code int) error {
+func proxyRequest(w http.ResponseWriter, r *http.Request, rec record, c Config, code int) error {
 	to, _, err := getBaseTarget(rec, r)
 	if err != nil {
 		return err

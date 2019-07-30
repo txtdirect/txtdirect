@@ -243,7 +243,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		RequestsCountBasedOnType.WithLabelValues(host, "proxy").Add(1)
 		log.Printf("[txtdirect]: %s > %s", rec.From, rec.To)
 
-		if err = proxyRequest(w, r, rec, c, fallbackURL, code); err != nil {
+		if err = proxyRequest(w, r, rec, c, code); err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
 			fallback(w, r, fallbackURL, rec.Type, "to", code, c)
 		}

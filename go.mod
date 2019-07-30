@@ -11,7 +11,6 @@ require (
 	github.com/juju/ratelimit v1.0.1 // indirect
 	github.com/miekg/caddy-prometheus v0.0.0-20190709133612-1fe4cb19becd
 	github.com/miekg/dns v1.1.15
-	github.com/natefinch/lumberjack v0.0.0-20150411233054-6d54cbc97d7e // indirect
 	github.com/prometheus/client_golang v1.0.0
 	github.com/quasoft/memstore v0.0.0-20180925164028-84a050167438 // indirect
 	github.com/spf13/afero v1.2.2

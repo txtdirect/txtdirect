@@ -130,6 +130,8 @@ func getFinalRecord(zone string, from int, ctx context.Context, c Config, r *htt
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
+	r = addRecordToContext(r, rec)
+
 	if rec.Type == "path" {
 		return rec, fmt.Errorf("chaining path is not currently supported")
 	}

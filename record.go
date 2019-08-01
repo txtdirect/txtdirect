@@ -64,6 +64,8 @@ func getRecord(host string, ctx context.Context, c Config, r *http.Request) (rec
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
+	r = addRecordToContext(r, rec)
+
 	return rec, nil
 }
 

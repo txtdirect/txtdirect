@@ -68,43 +68,6 @@ func contains(array []string, word string) bool {
 	return false
 }
 
-// fallback redirects the request to the given fallback address
-// and if it's not provided it will check txtdirect config for
-// default fallback address
-func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType, fallbackType string, code int, c Config) {
-	if code == http.StatusMovedPermanently {
-		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-	}
-	w.Header().Add("Status-Code", strconv.Itoa(code))
-
-	if fallback != "" && fallbackType != "global" {
-		http.Redirect(w, r, fallback, code)
-		if c.Prometheus.Enable {
-			FallbacksCount.WithLabelValues(r.Host, recordType, fallbackType).Add(1)
-			RequestsByStatus.WithLabelValues(r.URL.Host, strconv.Itoa(code)).Add(1)
-		}
-	} else if contains(c.Enable, "www") {
-		s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", r.URL.Host}, "")
-		http.Redirect(w, r, s, code)
-		if c.Prometheus.Enable {
-			FallbacksCount.WithLabelValues(r.Host, recordType, "subdomain").Add(1)
-			RequestsByStatus.WithLabelValues(r.URL.Host, strconv.Itoa(code)).Add(1)
-		}
-	} else if c.Redirect != "" {
-		w.Header().Set("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
-
-		http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
-
-		if c.Prometheus.Enable {
-			FallbacksCount.WithLabelValues(r.Host, recordType, "redirect").Add(1)
-			RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusMovedPermanently)).Add(1)
-		}
-	} else {
-		http.NotFound(w, r)
-	}
-	log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, w.Header().Get("Location"))
-}
-
 // customResolver returns a net.Resolver instance based
 // on the given txtdirect config to use a custom DNS resolver.
 func customResolver(c Config) net.Resolver {

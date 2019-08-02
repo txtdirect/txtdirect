@@ -203,7 +203,6 @@ type TXTDirect struct {
 }
 
 func (rd TXTDirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	r = checkRecordsContext(r)
 	if err := Redirect(w, r, rd.Config); err != nil {
 		if err.Error() == "option disabled" {
 			return rd.Next.ServeHTTP(w, r)

@@ -154,6 +154,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	rec, err := getRecord(host, r.Context(), c, r)
+	r = addRecordToContext(r, rec)
 	if err != nil {
 		fallback(w, r, "", "", "global", http.StatusFound, c)
 		return nil
@@ -193,7 +194,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 		if path != "" {
 			zone, from, pathSlice, err := zoneFromPath(host, path, rec)
-			rec, err = getFinalRecord(zone, from, r.Context(), c, r, pathSlice)
+			rec, err = getFinalRecord(zone, from, c, r, pathSlice)
+			r = addRecordToContext(r, rec)
 			if err != nil {
 				log.Print("Fallback is triggered because an error has occurred: ", err)
 				fallback(w, r, fallbackURL, rec.Type, "to", code, c)

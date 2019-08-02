@@ -19,6 +19,7 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType, fall
 	w.Header().Add("Status-Code", strconv.Itoa(code))
 
 	if fallbackType != "global" {
+
 		// Fetch records from request's context and set the []record type on them
 		records := r.Context().Value("records").([]record)
 
@@ -35,6 +36,14 @@ func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType, fall
 			http.Redirect(w, r, records[0].Website, code)
 			if c.Prometheus.Enable {
 				countFallback(r, records[0].Type, fallbackType, code)
+			}
+		}
+
+		// Dockerv2 root fallback
+		if fallbackType == "root" && records[0].Root != "" {
+			http.Redirect(w, r, records[0].Root, code)
+			if c.Prometheus.Enable {
+				countFallback(r, records[len(records)-1].Type, fallbackType, code)
 			}
 		}
 

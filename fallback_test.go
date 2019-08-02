@@ -142,15 +142,11 @@ func Test_fallbackE2E(t *testing.T) {
 
 func checkGlobalFallback(t *testing.T, resp *httptest.ResponseRecorder, r *http.Request, config Config) {
 	if contains(config.Enable, "www") {
-		if resp.Result().Header.Get("Location") != fmt.Sprintf("https://www.%s", r.URL.Host) {
-			t.Errorf("Expected %s got %s", fmt.Sprintf("https://www.%s", r.URL.Host), resp.Result().Header.Get("Location"))
-		}
+		checkLocationHeader(t, resp, fmt.Sprintf("https://www.%s", r.URL.Host))
 		return
 	}
 	if config.Redirect != "" {
-		if resp.Result().Header.Get("Location") != config.Redirect {
-			t.Errorf("Expected %s got %s", config.Redirect, resp.Result().Header.Get("Location"))
-		}
+		checkLocationHeader(t, resp, config.Redirect)
 		return
 	}
 	if resp.Code != 404 {

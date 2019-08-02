@@ -16,6 +16,7 @@ type Fallback struct {
 
 	records    []record
 	pathRecord record
+	lastRecord record
 
 	fallbackType string
 	code         int
@@ -39,26 +40,25 @@ func fallback(w http.ResponseWriter, r *http.Request, fallbackType string, code 
 	}
 
 	if fallbackType != "global" {
-
 		// Fetch records from request's context and set the []record type on them
 		f.fetchRecords()
 
 		// Redirect to first record's `to=` field
-		if fallbackType == "to" && f.records[0].To != "" {
-			http.Redirect(w, r, f.records[0].To, code)
-			f.countFallback(f.records[0].Type)
+		if fallbackType == "to" && f.lastRecord.To != "" {
+			http.Redirect(w, r, f.lastRecord.To, code)
+			f.countFallback(f.lastRecord.Type)
 		}
 
 		// Redirect to first record's `website=` field
-		if fallbackType == "website" && f.records[0].Website != "" {
-			http.Redirect(w, r, f.records[0].Website, code)
-			f.countFallback(f.records[0].Type)
+		if fallbackType == "website" && f.lastRecord.Website != "" {
+			http.Redirect(w, r, f.lastRecord.Website, code)
+			f.countFallback(f.lastRecord.Type)
 		}
 
 		// Dockerv2 root fallback
-		if fallbackType == "root" && f.records[0].Root != "" {
-			http.Redirect(w, r, f.records[0].Root, code)
-			f.countFallback(f.records[0].Type)
+		if fallbackType == "root" && f.lastRecord.Root != "" {
+			http.Redirect(w, r, f.lastRecord.Root, code)
+			f.countFallback(f.lastRecord.Type)
 		}
 
 		if fallbackType == "root" && f.pathRecord.Root != "" {
@@ -72,7 +72,7 @@ func fallback(w http.ResponseWriter, r *http.Request, fallbackType string, code 
 		}
 
 		// If non of the above cases applied on the record, jump into global redirects
-		f.globalFallbacks(f.records[len(f.records)-1].Type)
+		f.globalFallbacks(f.lastRecord.Type)
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, w.Header().Get("Location"))
 		return
 	}
@@ -129,4 +129,5 @@ func (f *Fallback) fetchRecords() {
 	if len(f.records) >= 2 {
 		f.pathRecord = f.records[len(f.records)-2]
 	}
+	f.lastRecord = f.records[len(f.records)-1]
 }

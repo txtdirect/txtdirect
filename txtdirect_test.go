@@ -62,8 +62,8 @@ var txts = map[string]string{
 	"_redirect.fallbackhost.test.": "v=txtv0;to=https://{label3};type=host;code=302",
 
 	// type=path
-	"_redirect.fallbackpath.test.":             "v=txtv0;type=path",
-	"_redirect.withoutroot.fallbackpath.test.": "v=txtv0;type=path",
+	"_redirect.fallbackpath.test.":    "v=txtv0;type=path",
+	"_redirect.to.fallbackpath.test.": "v=txtv0;type=path;to=https://to.works.fine.test;code=302",
 
 	// type=dockerv2
 	"_redirect.fallbackdockerv2.test.":         "v=txtv0;type=path",
@@ -202,7 +202,7 @@ func TestRedirectE2e(t *testing.T) {
 		},
 		{
 			"https://path.e2e.test/noversion",
-			"https://fallback.path.test",
+			"https://noversion.fallback.path.test",
 			[]string{"path", "host"},
 		},
 		{
@@ -212,7 +212,7 @@ func TestRedirectE2e(t *testing.T) {
 		},
 		{
 			"https://path.e2e.test/noroot",
-			"https://fallback.path.test",
+			"https://noroot.fallback.path.test",
 			[]string{"path", "host"},
 		},
 		{
@@ -259,10 +259,10 @@ func TestRedirectE2e(t *testing.T) {
 			Enable:   test.enable,
 		}
 		if err := Redirect(resp, req, c); err != nil {
-			t.Fatalf("Unexpected error occured: %s", err.Error())
+			t.Errorf("Unexpected error occured: %s", err.Error())
 		}
 		if !strings.Contains(resp.Body.String(), test.expected) {
-			t.Fatalf("Expected %s to be in \"%s\"", test.expected, resp.Body.String())
+			t.Errorf("Expected %s to be in \"%s\"", test.expected, resp.Body.String())
 		}
 	}
 }

@@ -1,7 +1,10 @@
 package txtdirect
 
 import (
+	"fmt"
+	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -85,5 +88,93 @@ func Test_fallback(t *testing.T) {
 		if !strings.Contains(resp.Body.String(), test.expected) {
 			t.Errorf("Expected response to contain \"%s\".\n\n%s\n\n", test.expected, resp.Body.String())
 		}
+	}
+}
+
+// URLs used are declared in the main zone file in "txtdirect_test.go" file
+func Test_fallbackE2E(t *testing.T) {
+	tests := []struct {
+		url      string
+		enable   []string
+		code     int
+		to       string
+		website  string
+		root     string
+		redirect string
+		headers  http.Header
+	}{
+		{
+			url:     "https://fallbackpath.test/to",
+			enable:  []string{"path"},
+			code:    302,
+			to:      "https://to.works.fine.test",
+			headers: http.Header{},
+		},
+		{
+			url:     "https://fallbackpath.test",
+			enable:  []string{"www"},
+			headers: http.Header{},
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.url, nil)
+		req.Header = test.headers
+		resp := httptest.NewRecorder()
+		c := Config{
+			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Enable:   test.enable,
+			Redirect: test.redirect,
+		}
+		err := Redirect(resp, req, c)
+
+		checkSpecificFallback(t, resp, req, test.to, test.website, test.root)
+
+		// Records status code are defined in the txtdirect_test.go file's dns zone
+		if resp.Code != test.code {
+			checkGlobalFallback(t, resp, req, c)
+		}
+
+		if err != nil {
+			t.Errorf("Unexpected error: %s", err.Error())
+		}
+	}
+}
+
+func checkGlobalFallback(t *testing.T, resp *httptest.ResponseRecorder, r *http.Request, config Config) {
+	if contains(config.Enable, "www") {
+		if resp.Result().Header.Get("Location") != fmt.Sprintf("https://www.%s", r.URL.Host) {
+			t.Errorf("Expected %s got %s", fmt.Sprintf("https://www.%s", r.URL.Host), resp.Result().Header.Get("Location"))
+		}
+		return
+	}
+	if config.Redirect != "" {
+		if resp.Result().Header.Get("Location") != config.Redirect {
+			t.Errorf("Expected %s got %s", config.Redirect, resp.Result().Header.Get("Location"))
+		}
+		return
+	}
+	if resp.Code != 404 {
+		t.Errorf("Expected status code to be 404 but got %d", resp.Code)
+	}
+}
+
+func checkSpecificFallback(t *testing.T, resp *httptest.ResponseRecorder, r *http.Request, to, website, root string) {
+	if to != "" {
+		checkLocationHeader(t, resp, to)
+		return
+	}
+	if website != "" {
+		checkLocationHeader(t, resp, website)
+		return
+	}
+	if root != "" {
+		checkLocationHeader(t, resp, root)
+		return
+	}
+}
+
+func checkLocationHeader(t *testing.T, resp *httptest.ResponseRecorder, item string) {
+	if resp.Header().Get("Location") != item {
+		t.Errorf("Expected %s got %s", item, resp.Header().Get("Location"))
 	}
 }

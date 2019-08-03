@@ -15,6 +15,7 @@ package txtdirect
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -28,60 +29,90 @@ var dockerRegexes = map[string]*regexp.Regexp{
 	"container": regexp.MustCompile("v2\\/(([\\w\\d-]+\\/?)+)\\/(tags|manifests|_catalog|blobs)"),
 }
 
-func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error {
-	path := r.URL.Path
-	if !strings.HasPrefix(path, "/v2") {
-		log.Printf("[txtdirect]: unrecognized path for dockerv2: %s", path)
-		if path == "" || path == "/" {
-			fallback(w, r, rec.Root, rec.Type, "root", http.StatusPermanentRedirect, Config{})
-			return nil
-		}
-		fallback(w, r, rec.Website, rec.Type, "website", http.StatusPermanentRedirect, Config{})
+type DockerV2 struct {
+	Path        string
+	Upstream    string
+	UpstreamURI *url.URL
+}
+
+func (d *DockerV2) Redirect(w http.ResponseWriter, r *http.Request, rec record) error {
+	// Handle the "API Version Check" request
+	if d.isV2Request(w) {
 		return nil
 	}
-	if dockerRegexes["v2"].MatchString(path) {
-		w.Header().Set("Docker-Distribution-Api-Version", "registry/2.0")
-		_, err := w.Write([]byte(http.StatusText(http.StatusOK)))
+
+	// Trigger fallback if the request is not a valid Docker v2 API request
+	if !d.isValidPath(w, r, rec) {
+		log.Printf("[txtdirect]: unrecognized path for dockerv2: %s", d.Path)
+		return nil
+	}
+
+	if err := d.parseUpstream(); err != nil {
 		return err
 	}
-	if path != "/" {
-		uri, err := createDockerv2URI(rec.To, path)
-		if err != nil {
-			return err
-		}
-		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-		w.Header().Add("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
-		http.Redirect(w, r, uri, http.StatusMovedPermanently)
-		return nil
+
+	// Empty the RequestURI to prevent "http: Request.RequestURI can't be set in client requests" error
+	req, _ := http.NewRequest(r.Method, d.UpstreamURI.String(), nil)
+	req.Header = r.Header
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
 	}
+
+	// Read the response body and copy headers to the response writer
+	respBody, _ := ioutil.ReadAll(resp.Body)
+	copyHeader(w.Header(), resp.Header)
+
 	w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 	w.Header().Add("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
-	http.Redirect(w, r, rec.To, http.StatusMovedPermanently)
+	w.Write(respBody)
+
 	return nil
 }
 
-func createDockerv2URI(to string, path string) (string, error) {
-	uri, err := url.Parse(to)
+func (d *DockerV2) parseUpstream() error {
+	container := dockerRegexes["container"].FindAllStringSubmatch(d.Path, -1)
+
+	uri, err := url.Parse(d.Upstream)
 	if err != nil {
-		return "", err
+		return err
+	}
+	d.UpstreamURI = uri
+
+	if d.UpstreamURI.Path == "/" || d.UpstreamURI.Path == "" {
+		d.UpstreamURI.Path = d.Path
+		return nil
 	}
 
-	if uri.Path == "/" || uri.Path == "" {
-		uri.Path = path
-		return uri.String(), nil
+	tag := strings.Split(d.UpstreamURI.Path[1:], ":")
+	d.UpstreamURI.Path = strings.Replace(d.Path, container[0][1], tag[0], -1)
+
+	if len(tag) == 2 {
+		pathSlice := strings.Split(d.Path, "/")
+		pathSlice[len(pathSlice)-1] = tag[1]
+		d.UpstreamURI.Path = strings.Join(pathSlice, "/")
 	}
 
-	// Replace container's path in docker's request with what's inside rec.To
-	containerPath := dockerRegexes["container"].FindAllStringSubmatch(path, -1)[0][1] // [0][1]: The second item in first group is always container path
-	containerAndVersion := strings.Split(uri.Path, ":")                               // First item in slice is container and second item is version
-	uri.Path = strings.Replace(path, containerPath, containerAndVersion[0][1:], -1)
+	return nil
+}
 
-	// Replace the version number in docker's request with what's inside rec.To
-	if len(containerAndVersion) == 2 {
-		pathSlice := strings.Split(uri.Path, "/")
-		pathSlice[len(pathSlice)-1] = containerAndVersion[1]
-		uri.Path = strings.Join(pathSlice, "/")
+func (d *DockerV2) isValidPath(w http.ResponseWriter, r *http.Request, rec record) bool {
+	if !strings.HasPrefix(d.Path, "/v2") {
+		if d.Path == "" || d.Path == "/" {
+			fallback(w, r, rec.Root, rec.Type, "root", http.StatusPermanentRedirect, Config{})
+			return false
+		}
+		fallback(w, r, rec.Website, rec.Type, "website", http.StatusPermanentRedirect, Config{})
+		return false
 	}
+	return true
+}
 
-	return uri.String(), nil
+func (d *DockerV2) isV2Request(w http.ResponseWriter) bool {
+	if dockerRegexes["v2"].MatchString(d.Path) {
+		w.Header().Set("Docker-Distribution-Api-Version", "registry/2.0")
+		w.Write([]byte(http.StatusText(http.StatusOK)))
+		return true
+	}
+	return false
 }

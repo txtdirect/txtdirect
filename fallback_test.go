@@ -115,6 +115,77 @@ func Test_fallbackE2E(t *testing.T) {
 			enable:  []string{"www"},
 			headers: http.Header{},
 		},
+		{
+			url:      "https://127.0.0.1",
+			enable:   []string{},
+			redirect: "https://isip.test",
+			headers:  http.Header{},
+		},
+		{
+			url:     "https://fallbackpath.test/wildcard",
+			enable:  []string{},
+			code:    404,
+			headers: http.Header{},
+		},
+		{
+			url:     "https://fallbackpath.test/refrom",
+			enable:  []string{"path"},
+			code:    302,
+			to:      "https://to.works.fine.test",
+			headers: http.Header{},
+		},
+		{
+			url:     "https://fallbackpath.test/",
+			enable:  []string{"path"},
+			code:    302,
+			to:      "https://to.works.fine.test",
+			headers: http.Header{},
+		},
+		{
+			url:     "https://lenfrom.test/",
+			enable:  []string{"path"},
+			code:    302,
+			to:      "https://lenfrom.fallback.test",
+			headers: http.Header{},
+		},
+		{
+			url:     "https://fallbackdockerv2.test",
+			enable:  []string{"dockerv2"},
+			code:    302,
+			to:      "https://docker.to.test/",
+			headers: http.Header{},
+		},
+		{
+			url:    "https://fallbackdockerv2.test/",
+			enable: []string{"dockerv2"},
+			code:   308,
+			root:   "https://docker.root.test",
+			headers: http.Header{
+				"User-Agent": []string{"Docker-Client"},
+			},
+		},
+		{
+			url:      "https://wrong.fallbackdockerv2.test/v2/test/path",
+			enable:   []string{"dockerv2"},
+			code:     302,
+			redirect: "https://gcr.io/",
+			headers: http.Header{
+				"User-Agent": []string{"Docker-Client"},
+			},
+		},
+		{
+			url:     "https://fallbackhost.test",
+			enable:  []string{"host"},
+			code:    404,
+			headers: http.Header{},
+		},
+		{
+			url:     "https://fallbackgometa.test/pathto",
+			enable:  []string{"path", "gometa"},
+			code:    302,
+			to:      "https://gometa.path.to.test",
+			headers: http.Header{},
+		},
 	}
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)
@@ -127,11 +198,13 @@ func Test_fallbackE2E(t *testing.T) {
 		}
 		err := Redirect(resp, req, c)
 
-		checkSpecificFallback(t, resp, req, test.to, test.website, test.root)
+		location := resp.Header().Get("Location")
+
+		checkSpecificFallback(t, req, location, test.to, test.website, test.root)
 
 		// Records status code are defined in the txtdirect_test.go file's dns zone
 		if resp.Code != test.code {
-			checkGlobalFallback(t, resp, req, c)
+			checkGlobalFallback(t, req, location, c, resp.Code)
 		}
 
 		if err != nil {
@@ -140,37 +213,37 @@ func Test_fallbackE2E(t *testing.T) {
 	}
 }
 
-func checkGlobalFallback(t *testing.T, resp *httptest.ResponseRecorder, r *http.Request, config Config) {
+func checkGlobalFallback(t *testing.T, r *http.Request, location string, config Config, code int) {
 	if contains(config.Enable, "www") {
-		checkLocationHeader(t, resp, fmt.Sprintf("https://www.%s", r.URL.Host))
+		checkLocationHeader(t, location, fmt.Sprintf("https://www.%s", r.URL.Host))
 		return
 	}
 	if config.Redirect != "" {
-		checkLocationHeader(t, resp, config.Redirect)
+		checkLocationHeader(t, location, config.Redirect)
 		return
 	}
-	if resp.Code != 404 {
-		t.Errorf("Expected status code to be 404 but got %d", resp.Code)
+	if code != 404 {
+		t.Errorf("Expected status code to be 404 but got %d", code)
 	}
 }
 
-func checkSpecificFallback(t *testing.T, resp *httptest.ResponseRecorder, r *http.Request, to, website, root string) {
+func checkSpecificFallback(t *testing.T, r *http.Request, location, to, website, root string) {
 	if to != "" {
-		checkLocationHeader(t, resp, to)
+		checkLocationHeader(t, location, to)
 		return
 	}
 	if website != "" {
-		checkLocationHeader(t, resp, website)
+		checkLocationHeader(t, location, website)
 		return
 	}
 	if root != "" {
-		checkLocationHeader(t, resp, root)
+		checkLocationHeader(t, location, root)
 		return
 	}
 }
 
-func checkLocationHeader(t *testing.T, resp *httptest.ResponseRecorder, item string) {
-	if resp.Header().Get("Location") != item {
-		t.Errorf("Expected %s got %s", item, resp.Header().Get("Location"))
+func checkLocationHeader(t *testing.T, location, item string) {
+	if location != item {
+		t.Errorf("Expected %s got %s", item, location)
 	}
 }

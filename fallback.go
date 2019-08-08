@@ -1,7 +1,6 @@
 package txtdirect
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -56,17 +55,25 @@ func fallback(w http.ResponseWriter, r *http.Request, fallbackType string, code 
 			f.countFallback(f.lastRecord.Type)
 		}
 
-		// Dockerv2 root fallback
+		// Redirect to first record's `root=` field
 		if fallbackType == "root" && f.lastRecord.Root != "" {
 			http.Redirect(w, r, f.lastRecord.Root, code)
 			f.countFallback(f.lastRecord.Type)
 		}
 
+		// Redirect to path record's `website=` field
+		if fallbackType == "website" && f.pathRecord.Website != "" {
+			http.Redirect(w, r, f.pathRecord.Website, code)
+			f.countFallback(f.pathRecord.Type)
+		}
+
+		// Redirect to path record's `root=` field
 		if fallbackType == "root" && f.pathRecord.Root != "" {
 			http.Redirect(w, r, f.pathRecord.Root, code)
 			f.countFallback(f.pathRecord.Type)
 		}
 
+		// Redirect to path record's `to=` field
 		if f.pathRecord.To != "" {
 			http.Redirect(w, r, f.pathRecord.To, code)
 			f.countFallback(f.pathRecord.Type)
@@ -81,21 +88,6 @@ func fallback(w http.ResponseWriter, r *http.Request, fallbackType string, code 
 	f.globalFallbacks("")
 
 	log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, w.Header().Get("Location"))
-}
-
-func addRecordToContext(r *http.Request, rec record) *http.Request {
-	// Fetch fallback config from context and add the record to it
-	recordsContext := r.Context().Value("records")
-
-	// Create a new records field in the context if it doesn't exist
-	if recordsContext == nil {
-		return r.WithContext(context.WithValue(r.Context(), "records", []record{rec}))
-	}
-
-	records := append(recordsContext.([]record), rec)
-
-	// Replace the fallback config instance inside the request's context
-	return r.WithContext(context.WithValue(r.Context(), "records", records))
 }
 
 func (f *Fallback) countFallback(recType string) {
@@ -127,6 +119,7 @@ func (f *Fallback) globalFallbacks(recordType string) {
 
 func (f *Fallback) fetchRecords() {
 	f.records = f.request.Context().Value("records").([]record)
+	// Note: This condition should get changed when we support more record aggregations.
 	if len(f.records) >= 2 {
 		f.pathRecord = f.records[len(f.records)-2]
 	}

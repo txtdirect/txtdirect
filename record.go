@@ -158,3 +158,19 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 
 	return nil
 }
+
+// Adds the given record to the request's context with "records" key.
+func addRecordToContext(r *http.Request, rec record) *http.Request {
+	// Fetch fallback config from context and add the record to it
+	recordsContext := r.Context().Value("records")
+
+	// Create a new records field in the context if it doesn't exist
+	if recordsContext == nil {
+		return r.WithContext(context.WithValue(r.Context(), "records", []record{rec}))
+	}
+
+	records := append(recordsContext.([]record), rec)
+
+	// Replace the fallback config instance inside the request's context
+	return r.WithContext(context.WithValue(r.Context(), "records", records))
+}

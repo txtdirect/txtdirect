@@ -108,7 +108,7 @@ func zoneFromPath(host string, path string, rec record) (string, int, []string, 
 
 // getFinalRecord finds the final TXT record for the given zone.
 // It will try wildcards if the first zone return error
-func getFinalRecord(zone string, from int, c Config, r *http.Request, pathSlice []string) (record, error) {
+func getFinalRecord(zone string, from int, c Config, w http.ResponseWriter, r *http.Request, pathSlice []string) (record, error) {
 	txts, err := query(zone, r.Context(), c)
 	if err != nil {
 		// if nothing found, jump into wildcards
@@ -125,7 +125,7 @@ func getFinalRecord(zone string, from int, c Config, r *http.Request, pathSlice 
 
 	txts[0], err = parsePlaceholders(txts[0], r, pathSlice)
 	rec := record{}
-	if err = rec.Parse(txts[0], r, c); err != nil {
+	if err = rec.Parse(txts[0], w, r, c); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 

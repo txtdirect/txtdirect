@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 )
@@ -44,7 +43,7 @@ func fallback(w http.ResponseWriter, r *http.Request, fallbackType string, code 
 		f.fetchRecords()
 
 		// Redirect to first record's `to=` field
-		if (fallbackType == "to" && f.lastRecord.To != "") && f.validateURIs() {
+		if fallbackType == "to" && f.lastRecord.To != "" {
 			http.Redirect(w, r, f.lastRecord.To, code)
 			f.countFallback(f.lastRecord.Type)
 		}
@@ -124,14 +123,4 @@ func (f *Fallback) fetchRecords() {
 		f.pathRecord = f.records[len(f.records)-2]
 	}
 	f.lastRecord = f.records[len(f.records)-1]
-}
-
-func (f *Fallback) validateURIs() bool {
-	if _, err := url.Parse(f.lastRecord.To); err != nil {
-		return false
-	}
-	if _, err := url.Parse(f.pathRecord.To); err != nil {
-		return false
-	}
-	return true
 }

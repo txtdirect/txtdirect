@@ -16,6 +16,7 @@ package txtdirect
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -142,7 +143,8 @@ func TestParse(t *testing.T) {
 			Enable: []string{test.expected.Type},
 		}
 		req, _ := http.NewRequest("GET", "http://example.com?url=https://example.com/testing", nil)
-		err := r.Parse(test.txtRecord, req, c)
+		w := httptest.NewRecorder()
+		err := r.Parse(test.txtRecord, w, req, c)
 
 		if err != nil {
 			if test.err == nil || !strings.HasPrefix(err.Error(), test.err.Error()) {

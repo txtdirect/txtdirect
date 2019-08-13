@@ -14,7 +14,6 @@ limitations under the License.
 package txtdirect
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -109,15 +108,15 @@ func zoneFromPath(host string, path string, rec record) (string, int, []string, 
 
 // getFinalRecord finds the final TXT record for the given zone.
 // It will try wildcards if the first zone return error
-func getFinalRecord(zone string, from int, ctx context.Context, c Config, r *http.Request, pathSlice []string) (record, error) {
-	txts, err := query(zone, ctx, c)
+func getFinalRecord(zone string, from int, c Config, w http.ResponseWriter, r *http.Request, pathSlice []string) (record, error) {
+	txts, err := query(zone, r.Context(), c)
 	if err != nil {
 		// if nothing found, jump into wildcards
 		for i := 1; i <= from && len(txts) == 0; i++ {
 			zoneSlice := strings.Split(zone, ".")
 			zoneSlice[i] = "_"
 			zone = strings.Join(zoneSlice, ".")
-			txts, err = query(zone, ctx, c)
+			txts, err = query(zone, r.Context(), c)
 		}
 	}
 	if err != nil || len(txts) == 0 {
@@ -126,7 +125,7 @@ func getFinalRecord(zone string, from int, ctx context.Context, c Config, r *htt
 
 	txts[0], err = parsePlaceholders(txts[0], r, pathSlice)
 	rec := record{}
-	if err = rec.Parse(txts[0], r, c); err != nil {
+	if err = rec.Parse(txts[0], w, r, c); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 

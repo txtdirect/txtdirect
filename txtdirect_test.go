@@ -62,17 +62,18 @@ var txts = map[string]string{
 	"_redirect.fallbackhost.test.": "v=txtv0;to=https://{label3};type=host;code=302",
 
 	// type=path
-	"_redirect.fallbackpath.test.":             "v=txtv0;type=path",
-	"_redirect.withoutroot.fallbackpath.test.": "v=txtv0;type=path",
+	"_redirect.fallbackpath.test.":        "v=txtv0;type=path;code=302;to=https://to.works.fine.test",
+	"_redirect.to.fallbackpath.test.":     "v=txtv0;type=path;to=https://to.works.fine.test;code=302",
+	"_redirect.refrom.fallbackpath.test.": "v=txtv0;type=path;re=exist;from=$1$2;to=https://to.works.fine.test;code=302",
+	"_redirect.lenfrom.test.":             "v=txtv0;type=path;from=$1$2$3;to=https://lenfrom.fallback.test;code=302",
 
 	// type=dockerv2
-	"_redirect.fallbackdockerv2.test.":         "v=txtv0;type=path",
-	"_redirect.correct.fallbackdockerv2.test.": "v=txtv0;to=https://gcr.io/;type=dockerv2",
-	"_redirect.wrong.fallbackdockerv2.test.":   "v=txtv0;to=://gcr.io/;type=dockerv2",
+	"_redirect.fallbackdockerv2.test.":       "v=txtv0;to=https://docker.to.test/;root=https://docker.root.test;type=dockerv2",
+	"_redirect.wrong.fallbackdockerv2.test.": "v=txtv0;to=:/wrong.uri/;type=dockerv2;website=https://gcr.io/",
 
 	// type=gometa
-	"_redirect.fallbackgometa.test.":          "v=txtv0;type=path",
-	"_redirect.website.fallbackgometa.test.":  "v=txtv0;to=https://github.com/okkur/reposeed-server/;website=https://about.okkur.io/;type=gometa",
+	"_redirect.fallbackgometa.test.":          "v=txtv0;type=path;to=https://gometa.path.to.test",
+	"_redirect.pathto.fallbackgometa.test.":   "v=txtv0;to=wrong:/url.test;type=gometa",
 	"_redirect.redirect.fallbackgometa.test.": "v=txtv0;to=https://github.com/okkur/reposeed-server/;type=gometa",
 }
 
@@ -202,7 +203,7 @@ func TestRedirectE2e(t *testing.T) {
 		},
 		{
 			"https://path.e2e.test/noversion",
-			"https://fallback.path.test",
+			"https://noversion.fallback.path.test",
 			[]string{"path", "host"},
 		},
 		{
@@ -212,7 +213,7 @@ func TestRedirectE2e(t *testing.T) {
 		},
 		{
 			"https://path.e2e.test/noroot",
-			"https://fallback.path.test",
+			"https://noroot.fallback.path.test",
 			[]string{"path", "host"},
 		},
 		{
@@ -259,10 +260,10 @@ func TestRedirectE2e(t *testing.T) {
 			Enable:   test.enable,
 		}
 		if err := Redirect(resp, req, c); err != nil {
-			t.Fatalf("Unexpected error occured: %s", err.Error())
+			t.Errorf("Unexpected error occured: %s", err.Error())
 		}
 		if !strings.Contains(resp.Body.String(), test.expected) {
-			t.Fatalf("Expected %s to be in \"%s\"", test.expected, resp.Body.String())
+			t.Errorf("Expected %s to be in \"%s\"", test.expected, resp.Body.String())
 		}
 	}
 }
@@ -299,147 +300,6 @@ func TestConfigE2e(t *testing.T) {
 		Redirect(resp, req, c)
 		if resp.Header().Get("Location") != c.Redirect {
 			t.Errorf("Request didn't redirect to the specified URI after failure")
-		}
-	}
-}
-
-func Test_fallback(t *testing.T) {
-	tests := []struct {
-		url      string
-		code     int
-		redirect string
-	}{
-		{
-			"https://goto.fallback.test",
-			301,
-			"",
-		},
-		{
-			"",
-			403,
-			"https://goto.redirect.test",
-		},
-		{
-			"https://goto.fallback.test",
-			404,
-			"https://dontgoto.redirect.test",
-		},
-	}
-	for _, test := range tests {
-		req := httptest.NewRequest("GET", "https://testing.test", nil)
-		resp := httptest.NewRecorder()
-		c := Config{
-			Redirect: test.redirect,
-			Enable:   []string{"www"},
-		}
-		fallback(resp, req, test.url, "test", "test", test.code, c)
-		if resp.Code != test.code {
-			t.Errorf("Response's status code (%d) doesn't match with expected status code (%d).", resp.Code, test.code)
-		}
-	}
-}
-
-func TestFallbackE2e(t *testing.T) {
-	tests := []struct {
-		url         string
-		enable      []string
-		fallbackURL string
-		redirect    string
-		headers     http.Header
-	}{
-		{
-			"https://fallbackpath.test/withoutroot/",
-			[]string{"path"},
-			"",
-			"http://fallback.test",
-			http.Header{},
-		},
-		{
-			"https://fallbackpath.test/nosubdomain",
-			[]string{"path"},
-			"",
-			"http://fallback.test",
-			http.Header{},
-		},
-		{
-			"https://fallbackpath.test/",
-			[]string{"path"},
-			"",
-			"http://fallback.test",
-			http.Header{},
-		},
-		{
-			"https://fallbackdockerv2.test/correct",
-			[]string{"dockerv2", "path"},
-			"https://gcr.io/",
-			"",
-			http.Header{"User-Agent": []string{"Docker-Server"}},
-		},
-		{
-			"https://fallbackdockerv2.test/wrong",
-			[]string{"dockerv2", "path"},
-			"https://gcr.io/",
-			"",
-			http.Header{"User-Agent": []string{"Docker-Client"}},
-		},
-		{
-			"https://fallbackdockerv2.test/correct",
-			[]string{"dockerv2", "path"},
-			"https://gcr.io/",
-			"",
-			http.Header{"User-Agent": []string{"Docker-Client"}},
-		},
-		{
-			"https://fallbackgometa.test/website",
-			[]string{"host", "path"},
-			"https://about.okkur.io/",
-			"",
-			http.Header{},
-		},
-		{
-			"https://fallbackgometa.test/redirect",
-			[]string{"host", "path"},
-			"",
-			"https://about.okkur.io/",
-			http.Header{},
-		},
-		{
-			"https://fallbackhost.test",
-			[]string{"www"},
-			"",
-			"https://www.fallbackhost.test",
-			http.Header{},
-		},
-		{
-			"https://test.fallbackhost.test",
-			[]string{"www"},
-			"",
-			"https://www.test.fallbackhost.test",
-			http.Header{},
-		},
-		{
-			"https://fallbackhost.test",
-			[]string{"host"},
-			"",
-			"https://about.okkur.io",
-			http.Header{},
-		},
-	}
-	for _, test := range tests {
-		req := httptest.NewRequest("GET", test.url, nil)
-		req.Header = test.headers
-		resp := httptest.NewRecorder()
-		c := Config{
-			Resolver: "127.0.0.1:" + strconv.Itoa(port),
-			Enable:   test.enable,
-			Redirect: test.redirect,
-		}
-		err := Redirect(resp, req, c)
-		if resp.Result().Header.Get("Location") != test.redirect && resp.Result().Header.Get("Location") != test.fallbackURL {
-			t.Errorf("Expected %s got %s", test.redirect, resp.Result().Header.Get("Location"))
-		}
-		if err != nil {
-			t.Errorf("Unexpected error: %s", err.Error())
 		}
 	}
 }

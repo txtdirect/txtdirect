@@ -68,43 +68,6 @@ func contains(array []string, word string) bool {
 	return false
 }
 
-// fallback redirects the request to the given fallback address
-// and if it's not provided it will check txtdirect config for
-// default fallback address
-func fallback(w http.ResponseWriter, r *http.Request, fallback, recordType, fallbackType string, code int, c Config) {
-	if code == http.StatusMovedPermanently {
-		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-	}
-	w.Header().Add("Status-Code", strconv.Itoa(code))
-
-	if fallback != "" && fallbackType != "global" {
-		http.Redirect(w, r, fallback, code)
-		if c.Prometheus.Enable {
-			FallbacksCount.WithLabelValues(r.Host, recordType, fallbackType).Add(1)
-			RequestsByStatus.WithLabelValues(r.URL.Host, strconv.Itoa(code)).Add(1)
-		}
-	} else if contains(c.Enable, "www") {
-		s := strings.Join([]string{defaultProtocol, "://", defaultSub, ".", r.URL.Host}, "")
-		http.Redirect(w, r, s, code)
-		if c.Prometheus.Enable {
-			FallbacksCount.WithLabelValues(r.Host, recordType, "subdomain").Add(1)
-			RequestsByStatus.WithLabelValues(r.URL.Host, strconv.Itoa(code)).Add(1)
-		}
-	} else if c.Redirect != "" {
-		w.Header().Set("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
-
-		http.Redirect(w, r, c.Redirect, http.StatusMovedPermanently)
-
-		if c.Prometheus.Enable {
-			FallbacksCount.WithLabelValues(r.Host, recordType, "redirect").Add(1)
-			RequestsByStatus.WithLabelValues(r.URL.Host, string(http.StatusMovedPermanently)).Add(1)
-		}
-	} else {
-		http.NotFound(w, r)
-	}
-	log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, w.Header().Get("Location"))
-}
-
 // customResolver returns a net.Resolver instance based
 // on the given txtdirect config to use a custom DNS resolver.
 func customResolver(c Config) net.Resolver {
@@ -186,13 +149,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if isIP(host) {
 		log.Println("[txtdirect]: Trying to access 127.0.0.1, fallback triggered.")
-		fallback(w, r, "", "", "global", 0, c)
+		fallback(w, r, "global", http.StatusMovedPermanently, c)
 		return nil
 	}
 
-	rec, err := getRecord(host, r.Context(), c, r)
+	rec, err := getRecord(host, c, w, r)
+	r = addRecordToContext(r, rec)
 	if err != nil {
-		fallback(w, r, "", "", "global", http.StatusFound, c)
+		fallback(w, r, "global", http.StatusFound, c)
 		return nil
 	}
 
@@ -200,11 +164,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return fmt.Errorf("option disabled")
 	}
 
-	fallbackURL, code := rec.To, rec.Code
-
 	if rec.Re != "" && rec.From != "" {
 		log.Println("[txtdirect]: It's not allowed to use both re= and from= in a record.")
-		fallback(w, r, fallbackURL, rec.Type, "to", code, c)
+		fallback(w, r, "to", rec.Code, c)
 		return nil
 	}
 
@@ -213,7 +175,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		PathRedirectCount.WithLabelValues(host, path).Add(1)
 		if path == "/" {
 			if rec.Root == "" {
-				fallback(w, r, fallbackURL, rec.Type, "to", code, c)
+				fallback(w, r, "to", rec.Code, c)
 				return nil
 			}
 			log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, rec.Root)
@@ -230,10 +192,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 		if path != "" {
 			zone, from, pathSlice, err := zoneFromPath(host, path, rec)
-			rec, err = getFinalRecord(zone, from, r.Context(), c, r, pathSlice)
+			rec, err = getFinalRecord(zone, from, c, w, r, pathSlice)
+			r = addRecordToContext(r, rec)
 			if err != nil {
 				log.Print("Fallback is triggered because an error has occurred: ", err)
-				fallback(w, r, fallbackURL, rec.Type, "to", code, c)
+				fallback(w, r, "to", rec.Code, c)
 				return nil
 			}
 		}
@@ -243,9 +206,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		RequestsCountBasedOnType.WithLabelValues(host, "proxy").Add(1)
 		log.Printf("[txtdirect]: %s > %s", rec.From, rec.To)
 
-		if err = proxyRequest(w, r, rec, c, fallbackURL, code); err != nil {
+		if err = proxyRequest(w, r, rec, c, rec.Code); err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
-			fallback(w, r, fallbackURL, rec.Type, "to", code, c)
+			fallback(w, r, "to", rec.Code, c)
 		}
 
 		return nil
@@ -256,14 +219,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 		if !strings.Contains(r.Header.Get("User-Agent"), "Docker-Client") {
 			log.Println("[txtdirect]: The request is not from docker client, fallback triggered.")
-			fallback(w, r, fallbackURL, rec.Type, "to", code, c)
+			fallback(w, r, "to", rec.Code, c)
 			return nil
 		}
 
 		err := redirectDockerv2(w, r, rec)
 		if err != nil {
 			log.Printf("[txtdirect]: couldn't redirect to the requested container: %s", err.Error())
-			fallback(w, r, fallbackURL, rec.Type, "to", code, c)
+			fallback(w, r, "to", rec.Code, c)
 			return nil
 		}
 		return nil
@@ -274,7 +237,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		to, code, err := getBaseTarget(rec, r)
 		if err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
-			fallback(w, r, fallbackURL, rec.Type, "to", code, c)
+			fallback(w, r, "to", code, c)
 			return nil
 		}
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, to)
@@ -294,7 +257,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 		// Trigger fallback when request isn't from `go get`
 		if r.URL.Query().Get("go-get") != "1" {
-			fallback(w, r, rec.Website, rec.Type, "website", http.StatusFound, c)
+			fallback(w, r, "website", http.StatusFound, c)
 			return nil
 		}
 

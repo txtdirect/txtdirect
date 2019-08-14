@@ -1,5 +1,5 @@
 /*
-Copyright 2017 - The TXTdirect Authors
+Copyright 2017 - The TXTDirect Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package caddy
+package txtdirect
 
 import (
 	"fmt"
@@ -22,16 +22,14 @@ import (
 
 	"github.com/spf13/afero"
 
-	"github.com/txtdirect/txtdirect"
-
-	"github.com/mholt/caddy"
+	"github.com/caddyserver/caddy"
 )
 
-func TestParse(t *testing.T) {
+func TestCaddyParse(t *testing.T) {
 	tests := []struct {
 		input     string
 		shouldErr bool
-		expected  txtdirect.Config
+		expected  Config
 	}{
 		{
 			`
@@ -40,7 +38,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			true,
-			txtdirect.Config{},
+			Config{},
 		},
 		{
 			`
@@ -49,7 +47,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			true,
-			txtdirect.Config{},
+			Config{},
 		},
 		{
 			`
@@ -58,7 +56,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			true,
-			txtdirect.Config{},
+			Config{},
 		},
 		{
 			`
@@ -68,7 +66,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			true,
-			txtdirect.Config{},
+			Config{},
 		},
 		{
 			`
@@ -78,7 +76,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			true,
-			txtdirect.Config{},
+			Config{},
 		},
 		{
 			`
@@ -87,12 +85,12 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			true,
-			txtdirect.Config{},
+			Config{},
 		},
 		{
 			`txtdirect`,
 			false,
-			txtdirect.Config{
+			Config{
 				Enable: allOptions,
 			},
 		},
@@ -103,7 +101,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Enable: []string{"host"},
 			},
 		},
@@ -114,7 +112,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Enable: []string{"path", "gometa", "www"},
 			},
 		},
@@ -125,7 +123,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Redirect: "https://example.com",
 				Enable:   allOptions,
 			},
@@ -138,7 +136,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
 			},
@@ -151,7 +149,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"path"},
 			},
@@ -165,10 +163,10 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
-				Prometheus: txtdirect.Prometheus{
+				Prometheus: Prometheus{
 					Enable:  true,
 					Address: "localhost:9183",
 					Path:    "/metrics",
@@ -187,10 +185,10 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
-				Prometheus: txtdirect.Prometheus{
+				Prometheus: Prometheus{
 					Enable:  true,
 					Address: "localhost:6666",
 					Path:    "/metrics",
@@ -207,10 +205,10 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host", "gomods"},
-				Gomods: txtdirect.Gomods{
+				Gomods: Gomods{
 					Enable:   true,
 					GoBinary: os.Getenv("GOROOT") + "/bin/go",
 					Workers:  1,
@@ -231,15 +229,15 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host", "gomods"},
 				Resolver: "127.0.0.1",
-				Gomods: txtdirect.Gomods{
+				Gomods: Gomods{
 					Enable:   true,
 					GoBinary: "/my/go/binary",
 					Workers:  1,
-					Cache: txtdirect.Cache{
+					Cache: Cache{
 						Enable: true,
 						Type:   "tmp",
 						Path:   "/tmp/txtdirect/gomods",
@@ -263,15 +261,15 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host", "gomods"},
 				Resolver: "127.0.0.1",
-				Gomods: txtdirect.Gomods{
+				Gomods: Gomods{
 					Enable:   true,
 					GoBinary: "/my/go/binary",
 					Workers:  1,
-					Cache: txtdirect.Cache{
+					Cache: Cache{
 						Enable: true,
 						Type:   "local",
 						Path:   "/my/cache/path",
@@ -296,14 +294,14 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host", "gomods"},
 				Resolver: "127.0.0.1",
-				Gomods: txtdirect.Gomods{
+				Gomods: Gomods{
 					Enable:   true,
 					GoBinary: "/my/go/binary",
-					Cache: txtdirect.Cache{
+					Cache: Cache{
 						Enable: true,
 						Type:   "local",
 						Path:   "/my/cache/path",
@@ -321,7 +319,7 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Enable:    []string{"host", "gomods"},
 				Resolver:  "127.0.0.1",
 				LogOutput: "stderr",
@@ -336,52 +334,10 @@ func TestParse(t *testing.T) {
 			}
 			`,
 			false,
-			txtdirect.Config{
+			Config{
 				Enable:    []string{"host", "gomods"},
 				Resolver:  "127.0.0.1",
 				LogOutput: "stdout",
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host tor
-				redirect https://example.com
-				tor
-				resolver 127.0.0.1
-			}
-			`,
-			false,
-			txtdirect.Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host", "tor"},
-				Resolver: "127.0.0.1",
-				Tor: txtdirect.Tor{
-					Enable: true,
-					Port:   4242,
-				},
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host tor
-				redirect https://example.com
-				tor {
-					port 4243
-				}
-				resolver 127.0.0.1
-			}
-			`,
-			false,
-			txtdirect.Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host", "tor"},
-				Resolver: "127.0.0.1",
-				Tor: txtdirect.Tor{
-					Enable: true,
-					Port:   4243,
-				},
 			},
 		},
 	}
@@ -414,10 +370,6 @@ func TestParse(t *testing.T) {
 
 				if conf.Gomods != test.expected.Gomods {
 					t.Errorf("Expected %+v for gomods config got %+v", test.expected.Gomods, conf.Gomods)
-				}
-			case "tor":
-				if conf.Tor.Port != test.expected.Tor.Port {
-					t.Errorf("Expected the onion service port to be %d but got %d", test.expected.Tor.Port, conf.Tor.Port)
 				}
 			}
 		}

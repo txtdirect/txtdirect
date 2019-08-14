@@ -1,7 +1,7 @@
 project:
   name: "TXTDirect"
-  state: "unstable"
-  image: "https://github.com/txtdirect/txtdirect/blob/master/media/logo.svg"
+  state: "beta"
+  image: "https://raw.githubusercontent.com/txtdirect/txtdirect/master/media/logo.svg?sanitize=true"
   website: "https://about.txtdirect.org"
   oneLiner: "Convenient redirects based on DNS TXT-records"
   description: |
@@ -16,29 +16,29 @@ vision:
   aim: "TXTDirect provides the specification for redirection records and a based implementation as caddy plugin."
 
 supportLinks:
-  documentation: "/docs"
-  examples: "/examples"
+  documentation: "https://s.txtdirect.org/docs"
 
 contributionLinks:
   issueTemplate: "/.github/ISSUE_TEMPLATE.md"
   starterIssues: "https://github.com/txtdirect/txtdirect/labels/starter%20issue"
 
-email:
-  commercialSupport: "support@okkur.io"
-  security: "security@okkur.io"
-  coc: "coc@okkur.io"
+emails:
+  commercialSupport: "support@okkur.org"
+  security: "security@okkur.org"
+  coc: "coc@okkur.org"
 
 copyright:
   year: "2017"
 
 cla:
-  copyrightHolder: "Michael Grosser"
+  copyrightHolder: "nzt.ventures GmbH"
+  mail: "legal@nzt.ventures"
 
 maintainers:
-  - name: "Antoine Martin"
-    nick: "alarsyo"
   - name: "Michael Grosser"
     nick: "stp-ip"
+  - name: "Erfan Besharat"
+    nick: "erbesharat"
 
 repo:
   link: "https://github.com/txtdirect/txtdirect/"
@@ -50,7 +50,7 @@ issueTemplate:
   - "Caddy version"
 
 badges:
-  - image: "https://img.shields.io/badge/state-unstable-red.svg"
+  - image: "https://img.shields.io/badge/state-beta-blue.svg"
     alt: "state"
   - image: "https://img.shields.io/github/release/txtdirect/txtdirect.svg"
     link: "https://github.com/txtdirect/txtdirect/releases"
@@ -61,6 +61,6 @@ badges:
   - image: "https://travis-ci.org/txtdirect/txtdirect.svg?branch=master"
     alt: "Build Status"
     link: "https://travis-ci.org/txtdirect/txtdirect"
-  - image: "https://goreportcard.com/badge/github.com/txtdirect/txtdirect"
-    alt: "Go Report Card"
-    link: "https://goreportcard.com/report/github.com/txtdirect/txtdirect"
+
+reposeed:
+  configVersion: "v1"

@@ -1,3 +1,16 @@
+/*
+Copyright 2019 - The TXTDirect Authors
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package txtdirect
 
 import (
@@ -5,6 +18,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -25,8 +39,8 @@ type record struct {
 // and then parses the txt record and returns a TXTDirect record
 // struct instance. It returns an error when it can't find any txt
 // records or if the TXT record is not standard.
-func getRecord(host string, ctx context.Context, c Config, r *http.Request) (record, error) {
-	txts, err := query(host, ctx, c)
+func getRecord(host string, c Config, w http.ResponseWriter, r *http.Request) (record, error) {
+	txts, err := query(host, r.Context(), c)
 	if err != nil {
 		log.Printf("Initial DNS query failed: %s", err)
 	}
@@ -35,7 +49,7 @@ func getRecord(host string, ctx context.Context, c Config, r *http.Request) (rec
 		hostSlice := strings.Split(host, ".")
 		hostSlice[0] = "_"
 		host = strings.Join(hostSlice, ".")
-		txts, err = query(host, ctx, c)
+		txts, err = query(host, r.Context(), c)
 		if err != nil {
 			log.Printf("Wildcard DNS query failed: %s", err.Error())
 			return record{}, err
@@ -47,9 +61,11 @@ func getRecord(host string, ctx context.Context, c Config, r *http.Request) (rec
 	}
 
 	rec := record{}
-	if err = rec.Parse(txts[0], r, c); err != nil {
+	if err = rec.Parse(txts[0], w, r, c); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
+
+	r = addRecordToContext(r, rec)
 
 	return rec, nil
 }
@@ -58,7 +74,7 @@ func getRecord(host string, ctx context.Context, c Config, r *http.Request) (rec
 // a TXTDirect record struct instance.
 // It will return an error if the DNS TXT record is not standard or
 // if the record type is not enabled in the TXTDirect's config.
-func (r *record) Parse(str string, req *http.Request, c Config) error {
+func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c Config) error {
 	s := strings.Split(str, ";")
 	for _, l := range s {
 		switch {
@@ -84,6 +100,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 
 		case strings.HasPrefix(l, "root="):
 			l = strings.TrimPrefix(l, "root=")
+			l = ParseURI(l, w, req, c)
 			r.Root = l
 
 		case strings.HasPrefix(l, "to="):
@@ -92,6 +109,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 			if err != nil {
 				return err
 			}
+			l = ParseURI(l, w, req, c)
 			r.To = l
 
 		case strings.HasPrefix(l, "type="):
@@ -112,6 +130,7 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 
 		case strings.HasPrefix(l, "website="):
 			l = strings.TrimPrefix(l, "website=")
+			l = ParseURI(l, w, req, c)
 			r.Website = l
 
 		default:
@@ -142,4 +161,30 @@ func (r *record) Parse(str string, req *http.Request, c Config) error {
 	}
 
 	return nil
+}
+
+// Adds the given record to the request's context with "records" key.
+func addRecordToContext(r *http.Request, rec record) *http.Request {
+	// Fetch fallback config from context and add the record to it
+	recordsContext := r.Context().Value("records")
+
+	// Create a new records field in the context if it doesn't exist
+	if recordsContext == nil {
+		return r.WithContext(context.WithValue(r.Context(), "records", []record{rec}))
+	}
+
+	records := append(recordsContext.([]record), rec)
+
+	// Replace the fallback config instance inside the request's context
+	return r.WithContext(context.WithValue(r.Context(), "records", records))
+}
+
+// ParseURI parses the given URI and triggers fallback if the URI isn't valid
+func ParseURI(uri string, w http.ResponseWriter, r *http.Request, c Config) string {
+	url, err := url.Parse(uri)
+	if err != nil {
+		fallback(w, r, "global", http.StatusMovedPermanently, c)
+		return uri
+	}
+	return url.String()
 }

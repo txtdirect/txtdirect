@@ -1,5 +1,5 @@
 /*
-Copyright 2017 - The TXTdirect Authors
+Copyright 2017 - The TXTDirect Authors
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -11,41 +11,45 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package caddy
+package txtdirect
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"sync"
 
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/mholt/caddy"
-	"github.com/mholt/caddy/caddyhttp/httpserver"
-	"github.com/txtdirect/txtdirect"
+	"github.com/caddyserver/caddy"
+	"github.com/caddyserver/caddy/caddy/caddymain"
+	"github.com/caddyserver/caddy/caddyhttp/httpserver"
 )
 
-var torOnce sync.Once
+func main() {
+	caddymain.EnableTelemetry = false
+	caddymain.Run()
+}
 
 func init() {
 	caddy.RegisterPlugin("txtdirect", caddy.Plugin{
 		ServerType: "http",
 		Action:     setup,
 	})
+	// TODO: hardcode directive after stable release into Caddy
+	httpserver.RegisterDevDirective("txtdirect", "")
 }
 
 var allOptions = []string{"host", "path", "gometa", "www"}
 
-func parse(c *caddy.Controller) (txtdirect.Config, error) {
+func parse(c *caddy.Controller) (Config, error) {
 	var enable []string
 	var redirect string
 	var resolver string
-	var gomods txtdirect.Gomods
-	var prometheus txtdirect.Prometheus
+	var gomods Gomods
+	var prometheus Prometheus
 	var logfile string
-	var tor txtdirect.Tor
 
 	c.Next() // skip directive name
 	for c.NextBlock() {
@@ -53,34 +57,34 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 		switch option {
 		case "disable":
 			if enable != nil {
-				return txtdirect.Config{}, c.ArgErr()
+				return Config{}, c.ArgErr()
 			}
 			toDisable := c.RemainingArgs()
 			if len(toDisable) == 0 {
-				return txtdirect.Config{}, c.ArgErr()
+				return Config{}, c.ArgErr()
 			}
 			enable = removeArrayFromArray(allOptions, toDisable)
 
 		case "enable":
 			if enable != nil {
-				return txtdirect.Config{}, c.ArgErr()
+				return Config{}, c.ArgErr()
 			}
 			enable = c.RemainingArgs()
 			if len(enable) == 0 {
-				return txtdirect.Config{}, c.ArgErr()
+				return Config{}, c.ArgErr()
 			}
 
 		case "redirect":
 			toRedirect := c.RemainingArgs()
 			if len(toRedirect) != 1 {
-				return txtdirect.Config{}, c.ArgErr()
+				return Config{}, c.ArgErr()
 			}
 			redirect = toRedirect[0]
 
 		case "resolver":
 			resolverAddr := c.RemainingArgs()
 			if len(resolverAddr) != 1 {
-				return txtdirect.Config{}, c.ArgErr()
+				return Config{}, c.ArgErr()
 			}
 			resolver = resolverAddr[0]
 
@@ -102,7 +106,7 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				}
 				err := gomods.ParseGomods(c)
 				if err != nil {
-					return txtdirect.Config{}, err
+					return Config{}, err
 				}
 			}
 
@@ -118,27 +122,12 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 				}
 				err := prometheus.ParsePrometheus(c, c.Val(), c.RemainingArgs()[0])
 				if err != nil {
-					return txtdirect.Config{}, err
-				}
-			}
-
-		case "tor":
-			tor.Enable = true
-			c.NextArg()
-			if c.Val() != "{" {
-				continue
-			}
-			for c.Next() {
-				if c.Val() == "}" {
-					break
-				}
-				if err := tor.ParseTor(c); err != nil {
-					return txtdirect.Config{}, err
+					return Config{}, err
 				}
 			}
 
 		default:
-			return txtdirect.Config{}, c.ArgErr() // unhandled option
+			return Config{}, c.ArgErr() // unhandled option
 		}
 	}
 
@@ -153,18 +142,14 @@ func parse(c *caddy.Controller) (txtdirect.Config, error) {
 	if prometheus.Enable {
 		prometheus.SetDefaults()
 	}
-	if tor.Enable {
-		tor.SetDefaults()
-	}
 
-	config := txtdirect.Config{
+	config := Config{
 		Enable:     enable,
 		Redirect:   redirect,
 		Resolver:   resolver,
 		LogOutput:  logfile,
 		Gomods:     gomods,
 		Prometheus: prometheus,
-		Tor:        tor,
 	}
 
 	parseLogfile(logfile)
@@ -187,22 +172,12 @@ func setup(c *caddy.Controller) error {
 	// Add handler to Caddy
 	cfg := httpserver.GetConfig(c)
 	mid := func(next httpserver.Handler) httpserver.Handler {
-		return Redirect{
+		return TXTDirect{
 			Next:   next,
 			Config: config,
 		}
 	}
 	cfg.AddMiddleware(mid)
-
-	if config.Tor.Enable {
-		torOnce.Do(func() {
-			go config.Tor.Start(c)
-		})
-	}
-
-	c.OnShutdown(func() error {
-		return config.Tor.Stop()
-	})
 
 	return nil
 }
@@ -223,23 +198,27 @@ func removeArrayFromArray(array, toBeRemoved []string) []string {
 }
 
 // Redirect is middleware to redirect requests based on TXT records
-type Redirect struct {
+type TXTDirect struct {
 	Next   httpserver.Handler
-	Config txtdirect.Config
+	Config Config
 }
 
-func (rd Redirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	if err := txtdirect.Redirect(w, r, rd.Config); err != nil {
+func (rd TXTDirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
+	if err := Redirect(w, r, rd.Config); err != nil {
 		if err.Error() == "option disabled" {
 			return rd.Next.ServeHTTP(w, r)
 		}
 		return http.StatusInternalServerError, err
 	}
 
-	// Count total redirects if prometheus is enabled
+	// Count total redirects if prometheus is enabled and set cache header
 	if w.Header().Get("Status-Code") == "301" || w.Header().Get("Status-Code") == "302" {
 		if rd.Config.Prometheus.Enable {
-			txtdirect.RequestsCount.WithLabelValues(r.Host).Add(1)
+			RequestsCount.WithLabelValues(r.Host).Add(1)
+		}
+		// Set Cache-Control header on permanent redirects
+		if w.Header().Get("Status-Code") == "301" {
+			w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 		}
 	}
 

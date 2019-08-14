@@ -14,6 +14,7 @@ limitations under the License.
 package txtdirect
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -29,7 +30,7 @@ var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
 var GroupRegex = regexp.MustCompile("P<[a-zA-Z]+[a-zA-Z0-9]*>")
 var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+[a-zA-Z0-9]*)>")
 
-// zoneFromPath generates a DNS zone with the given host and path
+// zoneFromPath generates a DNS zone with the given request's path and host
 // It will use custom regex to parse the path if it's provided in
 // the given record.
 func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {

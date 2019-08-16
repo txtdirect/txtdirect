@@ -22,7 +22,7 @@ import (
 
 	"github.com/spf13/afero"
 
-	"github.com/mholt/caddy"
+	"github.com/caddyserver/caddy"
 )
 
 func TestCaddyParse(t *testing.T) {
@@ -343,48 +343,6 @@ func TestCaddyParse(t *testing.T) {
 		{
 			`
 			txtdirect {
-				enable host tor
-				redirect https://example.com
-				tor
-				resolver 127.0.0.1
-			}
-			`,
-			false,
-			Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host", "tor"},
-				Resolver: "127.0.0.1",
-				Tor: Tor{
-					Enable: true,
-					Port:   4242,
-				},
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host tor
-				redirect https://example.com
-				tor {
-					port 4243
-				}
-				resolver 127.0.0.1
-			}
-			`,
-			false,
-			Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host", "tor"},
-				Resolver: "127.0.0.1",
-				Tor: Tor{
-					Enable: true,
-					Port:   4243,
-				},
-			},
-		},
-		{
-			`
-			txtdirect {
 				enable host
 				redirect https://example.com
 				qr {
@@ -458,10 +416,6 @@ func TestCaddyParse(t *testing.T) {
 
 				if conf.Gomods != test.expected.Gomods {
 					t.Errorf("Expected %+v for gomods config got %+v", test.expected.Gomods, conf.Gomods)
-				}
-			case "tor":
-				if conf.Tor.Port != test.expected.Tor.Port {
-					t.Errorf("Expected the onion service port to be %d but got %d", test.expected.Tor.Port, conf.Tor.Port)
 				}
 			case "qr":
 				if conf.Qr != test.expected.Qr {

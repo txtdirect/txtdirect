@@ -30,7 +30,7 @@ import (
 	"github.com/gomods/athens/pkg/stash"
 	"github.com/gomods/athens/pkg/storage"
 	"github.com/gomods/athens/pkg/storage/fs"
-	"github.com/mholt/caddy"
+	"github.com/caddyserver/caddy"
 	"github.com/spf13/afero"
 )
 

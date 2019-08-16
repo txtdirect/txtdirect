@@ -14,25 +14,23 @@ limitations under the License.
 package txtdirect
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"sync"
 
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/mholt/caddy"
-	"github.com/mholt/caddy/caddy/caddymain"
-	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"github.com/caddyserver/caddy"
+	"github.com/caddyserver/caddy/caddy/caddymain"
+	"github.com/caddyserver/caddy/caddyhttp/httpserver"
 )
 
 func main() {
 	caddymain.EnableTelemetry = false
 	caddymain.Run()
 }
-
-var torOnce sync.Once
 
 func init() {
 	caddy.RegisterPlugin("txtdirect", caddy.Plugin{
@@ -52,7 +50,6 @@ func parse(c *caddy.Controller) (Config, error) {
 	var gomods Gomods
 	var prometheus Prometheus
 	var logfile string
-	var tor Tor
 	var qr Qr
 
 	c.Next() // skip directive name
@@ -130,21 +127,6 @@ func parse(c *caddy.Controller) (Config, error) {
 				}
 			}
 
-		case "tor":
-			tor.Enable = true
-			c.NextArg()
-			if c.Val() != "{" {
-				continue
-			}
-			for c.Next() {
-				if c.Val() == "}" {
-					break
-				}
-				if err := tor.ParseTor(c); err != nil {
-					return Config{}, err
-				}
-			}
-
 		case "qr":
 			qr.Enable = true
 			c.NextArg()
@@ -177,9 +159,6 @@ func parse(c *caddy.Controller) (Config, error) {
 	if prometheus.Enable {
 		prometheus.SetDefaults()
 	}
-	if tor.Enable {
-		tor.SetDefaults()
-	}
 	if qr.Enable {
 		qr.SetDefaults()
 	}
@@ -191,7 +170,6 @@ func parse(c *caddy.Controller) (Config, error) {
 		LogOutput:  logfile,
 		Gomods:     gomods,
 		Prometheus: prometheus,
-		Tor:        tor,
 		Qr:         qr,
 	}
 
@@ -221,16 +199,6 @@ func setup(c *caddy.Controller) error {
 		}
 	}
 	cfg.AddMiddleware(mid)
-
-	if config.Tor.Enable {
-		torOnce.Do(func() {
-			go config.Tor.Start(c)
-		})
-	}
-
-	c.OnShutdown(func() error {
-		return config.Tor.Stop()
-	})
 
 	return nil
 }
@@ -264,10 +232,14 @@ func (rd TXTDirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, erro
 		return http.StatusInternalServerError, err
 	}
 
-	// Count total redirects if prometheus is enabled
+	// Count total redirects if prometheus is enabled and set cache header
 	if w.Header().Get("Status-Code") == "301" || w.Header().Get("Status-Code") == "302" {
 		if rd.Config.Prometheus.Enable {
 			RequestsCount.WithLabelValues(r.Host).Add(1)
+		}
+		// Set Cache-Control header on permanent redirects
+		if w.Header().Get("Status-Code") == "301" {
+			w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 		}
 	}
 

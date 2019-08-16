@@ -14,7 +14,7 @@ limitations under the License.
 package main
 
 import (
-	"github.com/mholt/caddy/caddy/caddymain"
+	"github.com/caddyserver/caddy/caddy/caddymain"
 
 	_ "github.com/SchumacherFM/mailout"
 	_ "github.com/captncraig/caddy-realip"

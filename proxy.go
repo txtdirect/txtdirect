@@ -20,8 +20,9 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync"
 
-	"github.com/mholt/caddy/caddyhttp/proxy"
+	"github.com/caddyserver/caddy/caddyhttp/proxy"
 )
 
 type ProxyResponse struct {
@@ -32,7 +33,7 @@ type ProxyResponse struct {
 	status     int
 }
 
-func proxyRequest(w http.ResponseWriter, r *http.Request, rec record, c Config, fallbackURL string, code int) error {
+func proxyRequest(w http.ResponseWriter, r *http.Request, rec record, c Config, code int) error {
 	to, _, err := getBaseTarget(rec, r)
 	if err != nil {
 		return err
@@ -119,4 +120,43 @@ func (p *ProxyResponse) WriteBody() error {
 		}
 	}
 	return nil
+}
+
+var bufferPool = sync.Pool{New: createBuffer}
+
+func createBuffer() interface{} {
+	return make([]byte, 0, 32*1024)
+}
+
+var skipHeaders = map[string]struct{}{
+	"Content-Type":        {},
+	"Content-Disposition": {},
+	"Accept-Ranges":       {},
+	"Set-Cookie":          {},
+	"Cache-Control":       {},
+	"Expires":             {},
+}
+
+func copyHeader(dst, src http.Header) {
+	for k, vv := range src {
+		if _, ok := dst[k]; ok {
+			if _, shouldSkip := skipHeaders[k]; shouldSkip {
+				continue
+			}
+			if k != "Server" {
+				dst.Del(k)
+			}
+		}
+		for _, v := range vv {
+			dst.Add(k, v)
+		}
+	}
+}
+
+func pooledIoCopy(dst io.Writer, src io.Reader) {
+	buf := bufferPool.Get().([]byte)
+	defer bufferPool.Put(buf)
+
+	bufCap := cap(buf)
+	io.CopyBuffer(dst, src, buf[0:bufCap:bufCap])
 }

@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -112,6 +113,31 @@ func parsePlaceholders(input string, r *http.Request, pathSlice []string) (strin
 			query := r.URL.Query()
 			name := placeholder[0][2 : len(placeholder[0])-1]
 			input = strings.Replace(input, placeholder[0], query.Get(name), -1)
+		}
+
+		// Numbered Regex matches
+		if regexp.MustCompile("(\\d+)").MatchString(string(placeholder[0][1])) {
+			matches := r.Context().Value("regexMatches")
+			index, err := strconv.Atoi(string(placeholder[0][1]))
+			if err != nil {
+				return "", fmt.Errorf("couldn't get index of regex match")
+			}
+			input = strings.Replace(input, placeholder[0],
+				reflect.ValueOf(matches).Index(index-1).String(), -1)
+		}
+
+		// Named regex matches
+		if regexp.MustCompile("([a-zA-Z]+[0-9]*)").MatchString(string(placeholder[0][1 : len(placeholder[0])-1])) {
+			matches := r.Context().Value("regexMatches")
+			mapReflect := reflect.ValueOf(matches)
+			if mapReflect.Kind() == reflect.Map {
+				iterator := reflect.ValueOf(matches).MapRange()
+				for iterator.Next() {
+					if iterator.Key().String() == string(placeholder[0][1:len(placeholder[0])-1]) {
+						input = strings.Replace(input, placeholder[0], iterator.Value().String(), -1)
+					}
+				}
+			}
 		}
 	}
 

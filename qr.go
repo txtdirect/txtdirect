@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/mholt/caddy"
+	"github.com/caddyserver/caddy"
 	qrcode "github.com/skip2/go-qrcode"
 )
 

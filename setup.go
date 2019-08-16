@@ -146,6 +146,7 @@ func parse(c *caddy.Controller) (Config, error) {
 			}
 
 		case "qr":
+			qr.Enable = true
 			c.NextArg()
 			if c.Val() != "{" {
 				continue
@@ -179,7 +180,7 @@ func parse(c *caddy.Controller) (Config, error) {
 	if tor.Enable {
 		tor.SetDefaults()
 	}
-	if contains(enable, "qr") {
+	if qr.Enable {
 		qr.SetDefaults()
 	}
 

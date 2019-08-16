@@ -13,6 +13,7 @@ import (
 
 // Qr contains Qr code generator's configuration
 type Qr struct {
+	Enable          bool
 	Size            int
 	BackgroundColor string
 	ForegroundColor string
@@ -54,7 +55,7 @@ func (qr *Qr) ParseQr(c *caddy.Controller) error {
 	case "size":
 		value, err := strconv.Atoi(c.RemainingArgs()[0])
 		if err != nil {
-			return c.ArgErr()
+			return fmt.Errorf("<QR>: Couldn't parse the size")
 		}
 		qr.Size = value
 	case "background":

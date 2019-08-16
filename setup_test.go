@@ -385,7 +385,7 @@ func TestCaddyParse(t *testing.T) {
 		{
 			`
 			txtdirect {
-				enable host qr
+				enable host
 				redirect https://example.com
 				qr {
 					size 256
@@ -398,7 +398,7 @@ func TestCaddyParse(t *testing.T) {
 			false,
 			Config{
 				Redirect: "https://example.com",
-				Enable:   []string{"host", "qr"},
+				Enable:   []string{"host"},
 				Resolver: "127.0.0.1",
 				Qr: Qr{
 					Size:            256,
@@ -410,15 +410,16 @@ func TestCaddyParse(t *testing.T) {
 		{
 			`
 			txtdirect {
-				enable host qr
+				enable host
 				redirect https://example.com
 				resolver 127.0.0.1
+				qr
 			}
 			`,
 			false,
 			Config{
 				Redirect: "https://example.com",
-				Enable:   []string{"host", "qr"},
+				Enable:   []string{"host"},
 				Resolver: "127.0.0.1",
 				Qr: Qr{
 					Size:            256,

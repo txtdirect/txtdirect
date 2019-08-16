@@ -170,9 +170,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
 	path := r.URL.Path
 
-	// Return the Qr code for the URI if "qr" query is available
-	if _, ok := r.URL.Query()["qr"]; ok {
-		return c.Qr.Redirect(w, r)
+	if c.Qr.Enable {
+		// Return the Qr code for the URI if "qr" query is available
+		if _, ok := r.URL.Query()["qr"]; ok {
+			return c.Qr.Redirect(w, r)
+		}
 	}
 
 	bl := make(map[string]bool)

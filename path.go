@@ -14,6 +14,7 @@ limitations under the License.
 package txtdirect
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -29,10 +30,12 @@ var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
 var GroupRegex = regexp.MustCompile("P<[a-zA-Z]+[a-zA-Z0-9]*>")
 var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+[a-zA-Z0-9]*)>")
 
-// zoneFromPath generates a DNS zone with the given host and path
+// zoneFromPath generates a DNS zone with the given request's path and host
 // It will use custom regex to parse the path if it's provided in
 // the given record.
-func zoneFromPath(host string, path string, rec record) (string, int, []string, error) {
+func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
+	path := fmt.Sprintf("%s?%s", r.URL.Path, r.URL.RawQuery)
+
 	if strings.ContainsAny(path, ".") {
 		path = strings.Replace(path, ".", "-", -1)
 	}
@@ -54,9 +57,10 @@ func zoneFromPath(host string, path string, rec record) (string, int, []string, 
 				unordered[group[1]] = pathSlice[i+1]
 			}
 			url := sortMap(unordered)
+			*r = *r.WithContext(context.WithValue(r.Context(), "regexMatches", unordered))
 			reverse(url)
 			from := len(pathSlice)
-			url = append(url, host)
+			url = append(url, r.Host)
 			url = append([]string{basezone}, url...)
 			return strings.Join(url, "."), from, pathSlice, nil
 		}
@@ -65,6 +69,7 @@ func zoneFromPath(host string, path string, rec record) (string, int, []string, 
 	for _, v := range pathSubmatchs {
 		pathSlice = append(pathSlice, v[1])
 	}
+	*r = *r.WithContext(context.WithValue(r.Context(), "regexMatches", pathSlice))
 	if len(pathSlice) < 1 && rec.Re != "" {
 		log.Printf("<%s> [txtdirect]: custom regex doesn't work on %s", time.Now().String(), path)
 	}
@@ -95,13 +100,13 @@ func zoneFromPath(host string, path string, rec record) (string, int, []string, 
 			generatedPath = append(generatedPath, fromSlice[k])
 		}
 
-		url := append(generatedPath, host)
+		url := append(generatedPath, r.Host)
 		url = append([]string{basezone}, url...)
 		return strings.Join(url, "."), from, pathSlice, nil
 	}
 	ps := pathSlice
 	reverse(pathSlice)
-	url := append(pathSlice, host)
+	url := append(pathSlice, r.Host)
 	url = append([]string{basezone}, url...)
 	return strings.Join(url, "."), from, ps, nil
 }

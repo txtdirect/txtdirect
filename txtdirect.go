@@ -216,8 +216,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 		docker := NewDockerv2(w, r, rec, c)
 
+		// Fallback gets triggered if the User-Agent isn't valid
 		if !docker.ValidAgent() {
-			// Fallback gets triggered if the User-Agent isn't valid
 			return nil
 		}
 
@@ -243,13 +243,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "gometa" {
 		RequestsCountBasedOnType.WithLabelValues(host, "gometa").Add(1)
 
-		// Trigger fallback when request isn't from `go get`
-		if r.URL.Query().Get("go-get") != "1" {
-			fallback(w, r, "website", http.StatusFound, c)
+		gometa := NewGometa(w, r, rec, c)
+
+		// Triggers fallback when request isn't from `go get`
+		if !gometa.ValidQuery() {
 			return nil
 		}
 
-		return gometa(w, rec, host, path)
+		return gometa.Serve()
 	}
 
 	if rec.Type == "gomods" {

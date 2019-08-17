@@ -20,6 +20,22 @@ import (
 	"strings"
 )
 
+type Gometa struct {
+	rw  http.ResponseWriter
+	req *http.Request
+	c   Config
+	rec record
+}
+
+func NewGometa(w http.ResponseWriter, r *http.Request, rec record, c Config) *Gometa {
+	return &Gometa{
+		rw:  w,
+		req: r,
+		rec: rec,
+		c:   c,
+	}
+}
+
 var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 <html>
 <head>
@@ -30,28 +46,36 @@ var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 
 // gometa executes a template on the given ResponseWriter
 // that contains go-import meta tag
-func gometa(w http.ResponseWriter, r record, host, path string) error {
-	if r.Vcs == "" {
-		r.Vcs = "git"
+func (g *Gometa) Serve() error {
+	if g.rec.Vcs == "" {
+		g.rec.Vcs = "git"
 	}
-	if path == "/" {
-		path = ""
+	if g.req.URL.Path == "/" {
+		g.req.URL.Path = ""
 	}
 
-	gosource := strings.Contains(r.To, "github.com")
+	gosource := strings.Contains(g.rec.To, "github.com")
 
-	RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusFound)).Add(1)
-	return tmpl.Execute(w, struct {
+	RequestsByStatus.WithLabelValues(g.req.Host, strconv.Itoa(http.StatusFound)).Add(1)
+	return tmpl.Execute(g.rw, struct {
 		Host        string
 		Path        string
 		Vcs         string
 		NewURL      string
 		HasGoSource bool
 	}{
-		host,
-		path,
-		r.Vcs,
-		r.To,
+		g.req.Host,
+		g.req.URL.Path,
+		g.rec.Vcs,
+		g.rec.To,
 		gosource,
 	})
+}
+
+func (g *Gometa) ValidQuery() bool {
+	if g.req.URL.Query().Get("go-get") != "1" {
+		fallback(g.rw, g.req, "website", http.StatusFound, g.c)
+		return false
+	}
+	return true
 }

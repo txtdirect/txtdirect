@@ -170,86 +170,93 @@ func TestRedirectE2e(t *testing.T) {
 		url      string
 		expected string
 		enable   []string
+		referer  bool
 	}{
 		{
-			"https://host.e2e.test",
-			"https://plain.host.test",
-			[]string{"host"},
+			url:      "https://host.e2e.test",
+			expected: "https://plain.host.test",
+			enable:   []string{"host"},
 		},
 		{
-			"https://nocode.host.e2e.test",
-			"https://nocode.host.test",
-			[]string{"host"},
+			url:      "https://nocode.host.e2e.test",
+			expected: "https://nocode.host.test",
+			enable:   []string{"host"},
 		},
 		{
-			"https://noversion.host.e2e.test",
-			"https://noversion.host.test",
-			[]string{"host"},
+			url:      "https://noversion.host.e2e.test",
+			expected: "https://noversion.host.test",
+			enable:   []string{"host"},
 		},
 		{
-			"https://noto.host.e2e.test",
-			"",
-			[]string{"host"},
+			url:      "https://noto.host.e2e.test",
+			expected: "",
+			enable:   []string{"host"},
 		},
 		{
-			"https://path.e2e.test/",
-			"https://root.fallback.test",
-			[]string{"path", "host"},
+			url:      "https://path.e2e.test/",
+			expected: "https://root.fallback.test",
+			enable:   []string{"path", "host"},
 		},
 		{
-			"https://path.e2e.test/nocode",
-			"https://nocode.fallback.path.test",
-			[]string{"path", "host"},
+			url:      "https://path.e2e.test/nocode",
+			expected: "https://nocode.fallback.path.test",
+			enable:   []string{"path", "host"},
 		},
 		{
-			"https://path.e2e.test/noversion",
-			"https://noversion.fallback.path.test",
-			[]string{"path", "host"},
+			url:      "https://path.e2e.test/noversion",
+			expected: "https://noversion.fallback.path.test",
+			enable:   []string{"path", "host"},
 		},
 		{
-			"https://path.e2e.test/noto",
-			"",
-			[]string{"path", "host"},
+			url:      "https://path.e2e.test/noto",
+			expected: "",
+			enable:   []string{"path", "host"},
 		},
 		{
-			"https://path.e2e.test/noroot",
-			"https://noroot.fallback.path.test",
-			[]string{"path", "host"},
+			url:      "https://path.e2e.test/noroot",
+			expected: "https://noroot.fallback.path.test",
+			enable:   []string{"path", "host"},
 		},
 		{
-			"https://pkg.txtdirect.test?go-get=1",
-			"https://github.com/txtdirect/txtdirect",
-			[]string{"gometa"},
+			url:      "https://pkg.txtdirect.test?go-get=1",
+			expected: "https://github.com/txtdirect/txtdirect",
+			enable:   []string{"gometa"},
 		},
 		{
-			"https://metapath.e2e.test/pkg?go-get=1",
-			"https://github.com/okkur/reposeed-server",
-			[]string{"gometa", "path"},
+			url:      "https://metapath.e2e.test/pkg?go-get=1",
+			expected: "https://github.com/okkur/reposeed-server",
+			enable:   []string{"gometa", "path"},
 		},
 		{
-			"https://metapath.e2e.test/pkg/second?go-get=1",
-			"https://github.com/okkur/reposeed",
-			[]string{"gometa", "path"},
+			url:      "https://metapath.e2e.test/pkg/second?go-get=1",
+			expected: "https://github.com/okkur/reposeed",
+			enable:   []string{"gometa", "path"},
 		},
 		{
-			"https://127.0.0.1/test",
-			"404",
-			[]string{"host"},
+			url:      "https://127.0.0.1/test",
+			expected: "404",
+			enable:   []string{"host"},
 		},
 		{
-			"https://192.168.1.2",
-			"404",
-			[]string{"host"},
+			url:      "https://192.168.1.2",
+			expected: "404",
+			enable:   []string{"host"},
 		},
 		{
-			"https://2001:db8:1234:0000:0000:0000:0000:0000",
-			"404",
-			[]string{"host"},
+			url:      "https://2001:db8:1234:0000:0000:0000:0000:0000",
+			expected: "404",
+			enable:   []string{"host"},
 		},
 		{
-			"https://2001:db8:1234::/48",
-			"404",
-			[]string{"host"},
+			url:      "https://2001:db8:1234::/48",
+			expected: "404",
+			enable:   []string{"host"},
+		},
+		{
+			url:      "https://host.e2e.test",
+			expected: "https://plain.host.test",
+			enable:   []string{"host"},
+			referer:  true,
 		},
 	}
 	for _, test := range tests {
@@ -264,6 +271,9 @@ func TestRedirectE2e(t *testing.T) {
 		}
 		if !strings.Contains(resp.Body.String(), test.expected) {
 			t.Errorf("Expected %s to be in \"%s\"", test.expected, resp.Body.String())
+		}
+		if test.referer && resp.Header().Get("Referer") != req.Host {
+			t.Errorf("Expected %s referer but got \"%s\"", req.Host, resp.Header().Get("Referer"))
 		}
 	}
 }

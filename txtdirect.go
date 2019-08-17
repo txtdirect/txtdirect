@@ -181,32 +181,20 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "path" {
 		RequestsCountBasedOnType.WithLabelValues(host, "path").Add(1)
 		PathRedirectCount.WithLabelValues(host, path).Add(1)
-		if path == "/" {
-			if rec.Root == "" {
-				fallback(w, r, "to", rec.Code, c)
-				return nil
-			}
-			log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, rec.Root)
-			if rec.Code == http.StatusMovedPermanently {
-				w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-			}
-			w.Header().Add("Status-Code", strconv.Itoa(rec.Code))
-			http.Redirect(w, r, rec.Root, rec.Code)
-			if c.Prometheus.Enable {
-				RequestsByStatus.WithLabelValues(host, strconv.Itoa(rec.Code)).Add(1)
-			}
-			return nil
+
+		path := NewPath(w, r, path, rec, c)
+
+		if path.path == "/" {
+			return path.RedirectRoot()
 		}
 
-		if path != "" {
-			zone, from, pathSlice, err := zoneFromPath(r, rec)
-			rec, err = getFinalRecord(zone, from, c, w, r, pathSlice)
-			r = rec.addToContext(r)
-			if err != nil {
-				log.Print("Fallback is triggered because an error has occurred: ", err)
-				fallback(w, r, "to", rec.Code, c)
+		if path.path != "" {
+			record := path.Redirect()
+			// It means fallback got triggered, If record is nil
+			if record == nil {
 				return nil
 			}
+			rec = *record
 		}
 	}
 

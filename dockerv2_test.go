@@ -114,8 +114,9 @@ func Test_generateDockerv2URI(t *testing.T) {
 		req := httptest.NewRequest("GET", fmt.Sprintf("https://example.com%s", test.path), nil)
 		resp := httptest.NewRecorder()
 		req = test.rec.addToContext(req)
-		err := redirectDockerv2(resp, req, test.rec)
-		if err != nil {
+		docker := NewDockerv2(resp, req, test.rec, Config{})
+
+		if err := docker.Redirect(); err != nil {
 			t.Errorf("Unexpected error happened: %s", err)
 		}
 		if !strings.Contains(resp.Body.String(), test.expected) {

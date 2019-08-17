@@ -23,41 +23,67 @@ import (
 	"strings"
 )
 
+type Dockerv2 struct {
+	rw  http.ResponseWriter
+	req *http.Request
+	c   Config
+	rec record
+}
+
+func NewDockerv2(w http.ResponseWriter, r *http.Request, rec record, c Config) *Dockerv2 {
+	return &Dockerv2{
+		rw:  w,
+		req: r,
+		rec: rec,
+		c:   c,
+	}
+}
+
 var dockerRegexes = map[string]*regexp.Regexp{
 	"v2":        regexp.MustCompile("^\\/?v2\\/?$"),
 	"container": regexp.MustCompile("v2\\/(([\\w\\d-]+\\/?)+)\\/(tags|manifests|_catalog|blobs)"),
 }
 
-func redirectDockerv2(w http.ResponseWriter, r *http.Request, rec record) error {
-	path := r.URL.Path
+func (d *Dockerv2) Redirect() error {
+	path := d.req.URL.Path
 	if !strings.HasPrefix(path, "/v2") {
 		log.Printf("[txtdirect]: unrecognized path for dockerv2: %s", path)
 		if path == "" || path == "/" {
-			fallback(w, r, "root", http.StatusPermanentRedirect, Config{})
+			fallback(d.rw, d.req, "root", http.StatusPermanentRedirect, Config{})
 			return nil
 		}
-		fallback(w, r, "website", http.StatusPermanentRedirect, Config{})
+		fallback(d.rw, d.req, "website", http.StatusPermanentRedirect, Config{})
 		return nil
 	}
 	if dockerRegexes["v2"].MatchString(path) {
-		w.Header().Set("Docker-Distribution-Api-Version", "registry/2.0")
-		_, err := w.Write([]byte(http.StatusText(http.StatusOK)))
+		d.rw.Header().Set("Docker-Distribution-Api-Version", "registry/2.0")
+		_, err := d.rw.Write([]byte(http.StatusText(http.StatusOK)))
 		return err
 	}
 	if path != "/" {
-		uri, err := createDockerv2URI(rec.To, path)
+		uri, err := createDockerv2URI(d.rec.To, path)
 		if err != nil {
 			return err
 		}
-		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-		w.Header().Add("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
-		http.Redirect(w, r, uri, http.StatusMovedPermanently)
+		d.rw.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+		d.rw.Header().Add("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
+		http.Redirect(d.rw, d.req, uri, http.StatusMovedPermanently)
 		return nil
 	}
-	w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-	w.Header().Add("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
-	http.Redirect(w, r, rec.To, http.StatusMovedPermanently)
+	d.rw.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+	d.rw.Header().Add("Status-Code", strconv.Itoa(http.StatusMovedPermanently))
+	http.Redirect(d.rw, d.req, d.rec.To, http.StatusMovedPermanently)
 	return nil
+}
+
+// ValidAgent checks the User-Agent header to be sure it's Docker-Client
+func (d *Dockerv2) ValidAgent() bool {
+	if !strings.Contains(d.req.Header.Get("User-Agent"), "Docker-Client") {
+		log.Println("[txtdirect]: The request is not from docker client, fallback triggered.")
+		fallback(d.rw, d.req, "to", d.rec.Code, d.c)
+		return false
+	}
+	return true
 }
 
 func createDockerv2URI(to string, path string) (string, error) {

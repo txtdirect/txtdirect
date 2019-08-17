@@ -65,7 +65,7 @@ func getRecord(host string, c Config, w http.ResponseWriter, r *http.Request) (r
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
-	r = addRecordToContext(r, rec)
+	r = rec.addToContext(r)
 
 	return rec, nil
 }
@@ -164,7 +164,7 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 }
 
 // Adds the given record to the request's context with "records" key.
-func addRecordToContext(r *http.Request, rec record) *http.Request {
+func (rec record) addToContext(r *http.Request) *http.Request {
 	// Fetch fallback config from context and add the record to it
 	recordsContext := r.Context().Value("records")
 

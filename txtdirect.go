@@ -34,6 +34,10 @@ const (
 	status301CacheAge = 604800
 )
 
+var bl = map[string]bool{
+	"/favicon.ico": true,
+}
+
 // Config contains the middleware's configuration
 type Config struct {
 	Enable     []string
@@ -124,6 +128,21 @@ func isIP(host string) bool {
 	return err == nil
 }
 
+func blacklist(w http.ResponseWriter, r *http.Request, c Config) error {
+	if bl[r.URL.Path] {
+		redirect := strings.Join([]string{r.Host, r.URL.Path}, "")
+		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, redirect)
+		// Empty Content-Type to prevent http.Redirect from writing an html response body
+		w.Header().Set("Content-Type", "")
+		w.Header().Add("Status-Code", strconv.Itoa(http.StatusNotFound))
+		http.Redirect(w, r, redirect, http.StatusNotFound)
+		if c.Prometheus.Enable {
+			RequestsByStatus.WithLabelValues(r.Host, strconv.Itoa(http.StatusNotFound)).Add(1)
+		}
+	}
+	return nil
+}
+
 // Redirect the request depending on the redirect record found
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	w.Header().Set("Server", "TXTDirect")
@@ -131,20 +150,9 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	host := r.Host
 	path := r.URL.Path
 
-	bl := make(map[string]bool)
-	bl["/favicon.ico"] = true
-
-	if bl[path] {
-		redirect := strings.Join([]string{host, path}, "")
-		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, redirect)
-		// Empty Content-Type to prevent http.Redirect from writing an html response body
-		w.Header().Set("Content-Type", "")
-		w.Header().Add("Status-Code", strconv.Itoa(http.StatusNotFound))
-		http.Redirect(w, r, redirect, http.StatusNotFound)
-		if c.Prometheus.Enable {
-			RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusNotFound)).Add(1)
-		}
-		return nil
+	// Check the blacklist and redirect to the request's host and path
+	if err := blacklist(w, r, c); err != nil {
+		return err
 	}
 
 	if isIP(host) {
@@ -154,14 +162,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	rec, err := getRecord(host, c, w, r)
-	r = addRecordToContext(r, rec)
+	r = rec.addToContext(r)
 	if err != nil {
 		fallback(w, r, "global", http.StatusFound, c)
 		return nil
 	}
 
 	if !contains(c.Enable, rec.Type) {
-		return fmt.Errorf("option disabled")
+		return fmt.Errorf("type \"%s\" is not enabled. Enabled types are: %v", rec.Type, c.Enable)
 	}
 
 	if rec.Re != "" && rec.From != "" {
@@ -193,7 +201,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		if path != "" {
 			zone, from, pathSlice, err := zoneFromPath(r, rec)
 			rec, err = getFinalRecord(zone, from, c, w, r, pathSlice)
-			r = addRecordToContext(r, rec)
+			r = rec.addToContext(r)
 			if err != nil {
 				log.Print("Fallback is triggered because an error has occurred: ", err)
 				fallback(w, r, "to", rec.Code, c)

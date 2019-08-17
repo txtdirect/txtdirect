@@ -75,7 +75,7 @@ func Test_fallback(t *testing.T) {
 			url = test.url
 		}
 		req := httptest.NewRequest("GET", url, nil)
-		req = addRecordToContext(req, test.record)
+		req = test.record.addToContext(req)
 		resp := httptest.NewRecorder()
 		c := Config{
 			Redirect: test.redirect,

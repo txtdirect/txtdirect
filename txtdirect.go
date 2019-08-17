@@ -214,14 +214,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "dockerv2" {
 		RequestsCountBasedOnType.WithLabelValues(host, "dockerv2").Add(1)
 
-		if !strings.Contains(r.Header.Get("User-Agent"), "Docker-Client") {
-			log.Println("[txtdirect]: The request is not from docker client, fallback triggered.")
-			fallback(w, r, "to", rec.Code, c)
+		docker := NewDockerv2(w, r, rec, c)
+
+		if !docker.ValidAgent() {
+			// Fallback gets triggered if the User-Agent isn't valid
 			return nil
 		}
 
-		err := redirectDockerv2(w, r, rec)
-		if err != nil {
+		if err := docker.Redirect(); err != nil {
 			log.Printf("[txtdirect]: couldn't redirect to the requested container: %s", err.Error())
 			fallback(w, r, "to", rec.Code, c)
 			return nil
@@ -231,20 +231,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "host" {
 		RequestsCountBasedOnType.WithLabelValues(host, "host").Add(1)
-		to, code, err := getBaseTarget(rec, r)
-		if err != nil {
-			log.Print("Fallback is triggered because an error has occurred: ", err)
-			fallback(w, r, "to", code, c)
-			return nil
-		}
-		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, to)
-		if code == http.StatusMovedPermanently {
-			w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-		}
-		w.Header().Add("Status-Code", strconv.Itoa(code))
-		http.Redirect(w, r, to, code)
-		if c.Prometheus.Enable {
-			RequestsByStatus.WithLabelValues(host, strconv.Itoa(code)).Add(1)
+
+		host := NewHost(w, r, rec, c)
+
+		if err := host.Redirect(); err != nil {
+			return err
 		}
 		return nil
 	}

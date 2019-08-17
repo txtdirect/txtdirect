@@ -128,16 +128,6 @@ func isIP(host string) bool {
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	w.Header().Set("Server", "TXTDirect")
 
-	// Add referer header
-	if r.Header.Get("Referer") == "" {
-		host := r.Host
-		if strings.Contains(host, ":") {
-			hostSlice := strings.Split(host, ":")
-			host = hostSlice[0]
-		}
-		w.Header().Set("Referer", host)
-	}
-
 	host := r.Host
 	path := r.URL.Path
 
@@ -168,6 +158,16 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if err != nil {
 		fallback(w, r, "global", http.StatusFound, c)
 		return nil
+	}
+
+	// Add referer header
+	if rec.Ref && r.Header.Get("Referer") == "" {
+		host := r.Host
+		if strings.Contains(host, ":") {
+			hostSlice := strings.Split(host, ":")
+			host = hostSlice[0]
+		}
+		w.Header().Set("Referer", host)
 	}
 
 	if !contains(c.Enable, rec.Type) {

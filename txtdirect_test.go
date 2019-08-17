@@ -34,7 +34,7 @@ import (
 // Testing TXT records
 var txts = map[string]string{
 	// type=host
-	"_redirect.host.e2e.test.":           "v=txtv0;to=https://plain.host.test;type=host;code=302",
+	"_redirect.host.e2e.test.":           "v=txtv0;to=https://plain.host.test;type=host;ref=true;code=302",
 	"_redirect.nocode.host.e2e.test.":    "v=txtv0;to=https://nocode.host.test;type=host",
 	"_redirect.noversion.host.e2e.test.": "to=https://noversion.host.test;type=host",
 	"_redirect.noto.host.e2e.test.":      "v=txtv0;type=host",

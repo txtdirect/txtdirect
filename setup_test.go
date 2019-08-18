@@ -370,6 +370,33 @@ func TestCaddyParse(t *testing.T) {
 			txtdirect {
 				enable host
 				redirect https://example.com
+				qr {
+					size 256
+					background "#ffffff"
+					foreground "#000000"
+					recovery_level 1
+				}
+				resolver 127.0.0.1
+			}
+			`,
+			false,
+			Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host"},
+				Resolver: "127.0.0.1",
+				Qr: Qr{
+					Size:            256,
+					BackgroundColor: "ffffffff",
+					ForegroundColor: "000000ff",
+					RecoveryLevel:   1,
+				},
+			},
+		},
+		{
+			`
+			txtdirect {
+				enable host
+				redirect https://example.com
 				resolver 127.0.0.1
 				qr
 			}

@@ -17,13 +17,14 @@ type Qr struct {
 	Size            int
 	BackgroundColor string
 	ForegroundColor string
+	RecoveryLevel   qrcode.RecoveryLevel
 
 	backgroundColor color.Color
 	foregroundColor color.Color
 }
 
 func (qr *Qr) Redirect(w http.ResponseWriter, r *http.Request) error {
-	Qr, err := qrcode.New(r.Host+r.URL.String(), qrcode.High)
+	Qr, err := qrcode.New(r.Host+r.URL.String(), qr.RecoveryLevel)
 	if err != nil {
 		return fmt.Errorf("Couldn't generate the Qr instance: %s", err.Error())
 	}
@@ -62,6 +63,12 @@ func (qr *Qr) ParseQr(c *caddy.Controller) error {
 		qr.BackgroundColor = c.RemainingArgs()[0]
 	case "foreground":
 		qr.ForegroundColor = c.RemainingArgs()[0]
+	case "recovery_level":
+		value, err := strconv.Atoi(c.RemainingArgs()[0])
+		if err != nil {
+			return fmt.Errorf("<QR>: Couldn't parse the recovery_level. It should be from 0 to 3")
+		}
+		qr.RecoveryLevel = qrcode.RecoveryLevel(value)
 	default:
 		return c.ArgErr() // unhandled option for QR config
 	}
@@ -76,7 +83,7 @@ func (qr *Qr) SetDefaults() {
 		qr.BackgroundColor = "ffffffff"
 	}
 	if qr.ForegroundColor == "" {
-		qr.ForegroundColor = "00000000"
+		qr.ForegroundColor = "000000ff"
 	}
 
 	if len(qr.BackgroundColor) == 7 {

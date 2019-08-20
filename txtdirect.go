@@ -168,6 +168,16 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
+	// Add referer header
+	if rec.Ref && r.Header.Get("Referer") == "" {
+		host := r.Host
+		if strings.Contains(host, ":") {
+			hostSlice := strings.Split(host, ":")
+			host = hostSlice[0]
+		}
+		w.Header().Set("Referer", host)
+	}
+
 	if !contains(c.Enable, rec.Type) {
 		return fmt.Errorf("option disabled")
 	}

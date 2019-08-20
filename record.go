@@ -33,6 +33,7 @@ type record struct {
 	From    string
 	Root    string
 	Re      string
+	Ref     bool
 }
 
 // getRecord uses the given host to find a TXT record
@@ -97,6 +98,14 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 		case strings.HasPrefix(l, "re="):
 			l = strings.TrimPrefix(l, "re=")
 			r.Re = l
+
+		case strings.HasPrefix(l, "ref="):
+			l, err := strconv.ParseBool(strings.TrimPrefix(l, "ref="))
+			if err != nil {
+				fallback(w, req, "global", http.StatusMovedPermanently, c)
+				return err
+			}
+			r.Ref = l
 
 		case strings.HasPrefix(l, "root="):
 			l = strings.TrimPrefix(l, "root=")

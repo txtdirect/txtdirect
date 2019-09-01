@@ -27,10 +27,9 @@ import (
 
 // Path contains the data that are needed to redirect path requests
 type Path struct {
-	rw  http.ResponseWriter
-	req *http.Request
-	c   Config
-
+	rw   http.ResponseWriter
+	req  *http.Request
+	c    Config
 	path string
 	rec  record
 }

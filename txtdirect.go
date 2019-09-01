@@ -128,7 +128,7 @@ func isIP(host string) bool {
 	return err == nil
 }
 
-func blacklist(w http.ResponseWriter, r *http.Request, c Config) error {
+func blacklistRedirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if bl[r.URL.Path] {
 		redirect := strings.Join([]string{r.Host, r.URL.Path}, "")
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, redirect)
@@ -151,7 +151,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	path := r.URL.Path
 
 	// Check the blacklist and redirect to the request's host and path
-	if err := blacklist(w, r, c); err != nil {
+	if err := blacklistRedirect(w, r, c); err != nil {
 		return err
 	}
 

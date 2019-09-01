@@ -33,8 +33,26 @@ type ProxyResponse struct {
 	status     int
 }
 
-func proxyRequest(w http.ResponseWriter, r *http.Request, rec record, c Config, code int) error {
-	to, _, err := getBaseTarget(rec, r)
+// Proxy contains the data that are needed to proxy the request
+type Proxy struct {
+	rw  http.ResponseWriter
+	req *http.Request
+	c   Config
+	rec record
+}
+
+func NewProxy(w http.ResponseWriter, r *http.Request, rec record, c Config) *Proxy {
+	return &Proxy{
+		rw:  w,
+		req: r,
+		rec: rec,
+		c:   c,
+	}
+}
+
+// Proxy proxies the request to the endpoint defined in the record
+func (p *Proxy) Proxy() error {
+	to, _, err := getBaseTarget(p.rec, p.req)
 	if err != nil {
 		return err
 	}
@@ -45,7 +63,7 @@ func proxyRequest(w http.ResponseWriter, r *http.Request, rec record, c Config, 
 	reverseProxy := proxy.NewSingleHostReverseProxy(u, "", proxyKeepalive, proxyTimeout, fallbackDelay)
 
 	tmpResponse := ProxyResponse{headers: make(http.Header)}
-	reverseProxy.ServeHTTP(&tmpResponse, r, nil)
+	reverseProxy.ServeHTTP(&tmpResponse, p.req, nil)
 
 	// Decompress the body based on "Content-Encoding" header and write to a writer buffer
 	if err := tmpResponse.WriteBody(); err != nil {
@@ -53,17 +71,17 @@ func proxyRequest(w http.ResponseWriter, r *http.Request, rec record, c Config, 
 	}
 
 	// Replace the URL hosts with the request's host
-	if err := tmpResponse.ReplaceBody(u.Scheme, u.Host, r.Host); err != nil {
+	if err := tmpResponse.ReplaceBody(u.Scheme, u.Host, p.req.Host); err != nil {
 		return fmt.Errorf("[txtdirect]: Couldn't replace urls inside the response body: %s", err.Error())
 	}
 
-	copyHeader(w.Header(), tmpResponse.Header())
+	copyHeader(p.rw.Header(), tmpResponse.Header())
 
 	// Write the status from the temporary ResponseWriter to the main ResponseWriter
-	w.WriteHeader(tmpResponse.status)
+	p.rw.WriteHeader(tmpResponse.status)
 
 	// Write the final response from the temporary ResponseWriter to the main ResponseWriter
-	if _, err := w.Write(tmpResponse.Body()); err != nil {
+	if _, err := p.rw.Write(tmpResponse.Body()); err != nil {
 		return fmt.Errorf("[txtdirect]: Couldn't write the temporary response to main response body: %s", err.Error())
 	}
 	return nil

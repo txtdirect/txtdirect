@@ -14,6 +14,7 @@ limitations under the License.
 package txtdirect
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
 	"testing"
@@ -86,13 +87,15 @@ func TestGometa(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		rec := httptest.NewRecorder()
-		err := gometa(rec, test.record, test.host, test.path)
-		if err != nil {
+		req := httptest.NewRequest("GET", fmt.Sprintf("https://%s%s", test.host, test.path), nil)
+		resp := httptest.NewRecorder()
+		gometa := NewGometa(resp, req, test.record, Config{})
+
+		if err := gometa.Serve(); err != nil {
 			t.Errorf("Test %d: Unexpected error: %s", i, err)
 			continue
 		}
-		txt, err := ioutil.ReadAll(rec.Body)
+		txt, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			t.Errorf("Test %d: Unexpected error: %s", i, err)
 			continue

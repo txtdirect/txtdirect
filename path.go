@@ -25,10 +25,63 @@ import (
 	"time"
 )
 
+// Path contains the data that are needed to redirect path requests
+type Path struct {
+	rw   http.ResponseWriter
+	req  *http.Request
+	c    Config
+	path string
+	rec  record
+}
+
 var PathRegex = regexp.MustCompile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
 var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
 var GroupRegex = regexp.MustCompile("P<[a-zA-Z]+[a-zA-Z0-9]*>")
 var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+[a-zA-Z0-9]*)>")
+
+// NewPath returns an instance of Path struct using the given data
+func NewPath(w http.ResponseWriter, r *http.Request, path string, rec record, c Config) *Path {
+	return &Path{
+		rw:   w,
+		req:  r,
+		path: path,
+		rec:  rec,
+		c:    c,
+	}
+}
+
+// Redirect finds and returns the final record
+func (p *Path) Redirect() *record {
+	zone, from, pathSlice, err := zoneFromPath(p.req, p.rec)
+	rec, err := getFinalRecord(zone, from, p.c, p.rw, p.req, pathSlice)
+	*p.req = *rec.addToContext(p.req)
+	if err != nil {
+		log.Print("Fallback is triggered because an error has occurred: ", err)
+		fallback(p.rw, p.req, "to", p.rec.Code, p.c)
+		return nil
+	}
+	return &rec
+}
+
+// RedirectRoot redirects the request to record's root= field
+// if the path is empty or "/". If the root= field is empty too
+// fallback will be triggered.
+func (p *Path) RedirectRoot() error {
+	if p.rec.Root == "" {
+		fallback(p.rw, p.req, "to", p.rec.Code, p.c)
+		return nil
+	}
+	log.Printf("[txtdirect]: %s > %s", p.req.Host+p.req.URL.Path, p.rec.Root)
+	if p.rec.Code == http.StatusMovedPermanently {
+		p.rw.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+	}
+	p.rw.Header().Add("Status-Code", strconv.Itoa(p.rec.Code))
+	http.Redirect(p.rw, p.req, p.rec.Root, p.rec.Code)
+	if p.c.Prometheus.Enable {
+		RequestsByStatus.WithLabelValues(p.req.Host, strconv.Itoa(p.rec.Code)).Add(1)
+	}
+	return nil
+}
 
 // zoneFromPath generates a DNS zone with the given request's path and host
 // It will use custom regex to parse the path if it's provided in

@@ -34,6 +34,10 @@ const (
 	status301CacheAge = 604800
 )
 
+var bl = map[string]bool{
+	"/favicon.ico": true,
+}
+
 // Config contains the middleware's configuration
 type Config struct {
 	Enable     []string
@@ -125,34 +129,39 @@ func isIP(host string) bool {
 	return err == nil
 }
 
-// Redirect the request depending on the redirect record found
-func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
-	w.Header().Set("Server", "TXTDirect")
+func blacklistRedirect(w http.ResponseWriter, r *http.Request, c Config) error {
+	if bl[r.URL.Path] {
+		redirect := strings.Join([]string{r.Host, r.URL.Path}, "")
 
-	host := r.Host
-	path := r.URL.Path
-
-	if c.Qr.Enable {
-		// Return the Qr code for the URI if "qr" query is available
-		if _, ok := r.URL.Query()["qr"]; ok {
-			return c.Qr.Redirect(w, r)
-		}
-	}
-
-	bl := make(map[string]bool)
-	bl["/favicon.ico"] = true
-
-	if bl[path] {
-		redirect := strings.Join([]string{host, path}, "")
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, redirect)
 		// Empty Content-Type to prevent http.Redirect from writing an html response body
 		w.Header().Set("Content-Type", "")
 		w.Header().Add("Status-Code", strconv.Itoa(http.StatusNotFound))
 		http.Redirect(w, r, redirect, http.StatusNotFound)
 		if c.Prometheus.Enable {
-			RequestsByStatus.WithLabelValues(host, strconv.Itoa(http.StatusNotFound)).Add(1)
+			RequestsByStatus.WithLabelValues(r.Host, strconv.Itoa(http.StatusNotFound)).Add(1)
 		}
-		return nil
+	}
+	return nil
+}
+
+// Redirect the request depending on the redirect record found
+func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
+	w.Header().Set("Server", "TXTDirect")
+
+	host := r.Host
+	path := r.URL.Path
+  
+  if c.Qr.Enable {
+		// Return the Qr code for the URI if "qr" query is available
+		if _, ok := r.URL.Query()["qr"]; ok {
+			return c.Qr.Redirect(w, r)
+		}
+	}
+
+	// Check the blacklist and redirect to the request's host and path
+	if err := blacklistRedirect(w, r, c); err != nil {
+		return err
 	}
 
 	if isIP(host) {
@@ -162,7 +171,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	rec, err := getRecord(host, c, w, r)
-	r = addRecordToContext(r, rec)
+	r = rec.addToContext(r)
 	if err != nil {
 		fallback(w, r, "global", http.StatusFound, c)
 		return nil
@@ -179,7 +188,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if !contains(c.Enable, rec.Type) {
-		return fmt.Errorf("option disabled")
+		return fmt.Errorf("type \"%s\" is not enabled. Enabled types are: %v", rec.Type, c.Enable)
 	}
 
 	if rec.Re != "" && rec.From != "" {
@@ -191,32 +200,20 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "path" {
 		RequestsCountBasedOnType.WithLabelValues(host, "path").Add(1)
 		PathRedirectCount.WithLabelValues(host, path).Add(1)
-		if path == "/" {
-			if rec.Root == "" {
-				fallback(w, r, "to", rec.Code, c)
-				return nil
-			}
-			log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, rec.Root)
-			if rec.Code == http.StatusMovedPermanently {
-				w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-			}
-			w.Header().Add("Status-Code", strconv.Itoa(rec.Code))
-			http.Redirect(w, r, rec.Root, rec.Code)
-			if c.Prometheus.Enable {
-				RequestsByStatus.WithLabelValues(host, strconv.Itoa(rec.Code)).Add(1)
-			}
-			return nil
+
+		path := NewPath(w, r, path, rec, c)
+
+		if path.path == "/" {
+			return path.RedirectRoot()
 		}
 
-		if path != "" {
-			zone, from, pathSlice, err := zoneFromPath(r, rec)
-			rec, err = getFinalRecord(zone, from, c, w, r, pathSlice)
-			r = addRecordToContext(r, rec)
-			if err != nil {
-				log.Print("Fallback is triggered because an error has occurred: ", err)
-				fallback(w, r, "to", rec.Code, c)
+		if path.path != "" {
+			record := path.Redirect()
+			// It means fallback got triggered, If record is nil
+			if record == nil {
 				return nil
 			}
+			rec = *record
 		}
 	}
 
@@ -224,7 +221,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		RequestsCountBasedOnType.WithLabelValues(host, "proxy").Add(1)
 		log.Printf("[txtdirect]: %s > %s", rec.From, rec.To)
 
-		if err = proxyRequest(w, r, rec, c, rec.Code); err != nil {
+		proxy := NewProxy(w, r, rec, c)
+		if err = proxy.Proxy(); err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
 			fallback(w, r, "to", rec.Code, c)
 		}
@@ -235,14 +233,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "dockerv2" {
 		RequestsCountBasedOnType.WithLabelValues(host, "dockerv2").Add(1)
 
-		if !strings.Contains(r.Header.Get("User-Agent"), "Docker-Client") {
-			log.Println("[txtdirect]: The request is not from docker client, fallback triggered.")
-			fallback(w, r, "to", rec.Code, c)
+		docker := NewDockerv2(w, r, rec, c)
+
+		// Fallback gets triggered if the User-Agent isn't valid
+		if !docker.ValidAgent() {
 			return nil
 		}
 
-		err := redirectDockerv2(w, r, rec)
-		if err != nil {
+		if err := docker.Redirect(); err != nil {
 			log.Printf("[txtdirect]: couldn't redirect to the requested container: %s", err.Error())
 			fallback(w, r, "to", rec.Code, c)
 			return nil
@@ -252,20 +250,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	if rec.Type == "host" {
 		RequestsCountBasedOnType.WithLabelValues(host, "host").Add(1)
-		to, code, err := getBaseTarget(rec, r)
-		if err != nil {
-			log.Print("Fallback is triggered because an error has occurred: ", err)
-			fallback(w, r, "to", code, c)
-			return nil
-		}
-		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, to)
-		if code == http.StatusMovedPermanently {
-			w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
-		}
-		w.Header().Add("Status-Code", strconv.Itoa(code))
-		http.Redirect(w, r, to, code)
-		if c.Prometheus.Enable {
-			RequestsByStatus.WithLabelValues(host, strconv.Itoa(code)).Add(1)
+
+		host := NewHost(w, r, rec, c)
+
+		if err := host.Redirect(); err != nil {
+			return err
 		}
 		return nil
 	}
@@ -273,13 +262,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "gometa" {
 		RequestsCountBasedOnType.WithLabelValues(host, "gometa").Add(1)
 
-		// Trigger fallback when request isn't from `go get`
-		if r.URL.Query().Get("go-get") != "1" {
-			fallback(w, r, "website", http.StatusFound, c)
+		gometa := NewGometa(w, r, rec, c)
+
+		// Triggers fallback when request isn't from `go get`
+		if !gometa.ValidQuery() {
 			return nil
 		}
 
-		return gometa(w, rec, host, path)
+		return gometa.Serve()
 	}
 
 	if rec.Type == "gomods" {

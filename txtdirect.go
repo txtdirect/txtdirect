@@ -46,6 +46,7 @@ type Config struct {
 	LogOutput  string
 	Gomods     Gomods
 	Prometheus Prometheus
+	Qr         Qr
 }
 
 // getBaseTarget parses the placeholder in the given record's To= field
@@ -131,6 +132,7 @@ func isIP(host string) bool {
 func blacklistRedirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if bl[r.URL.Path] {
 		redirect := strings.Join([]string{r.Host, r.URL.Path}, "")
+
 		log.Printf("[txtdirect]: %s > %s", r.Host+r.URL.Path, redirect)
 		// Empty Content-Type to prevent http.Redirect from writing an html response body
 		w.Header().Set("Content-Type", "")
@@ -149,6 +151,13 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	host := r.Host
 	path := r.URL.Path
+  
+  if c.Qr.Enable {
+		// Return the Qr code for the URI if "qr" query is available
+		if _, ok := r.URL.Query()["qr"]; ok {
+			return c.Qr.Redirect(w, r)
+		}
+	}
 
 	// Check the blacklist and redirect to the request's host and path
 	if err := blacklistRedirect(w, r, c); err != nil {
@@ -166,6 +175,16 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if err != nil {
 		fallback(w, r, "global", http.StatusFound, c)
 		return nil
+	}
+
+	// Add referer header
+	if rec.Ref && r.Header.Get("Referer") == "" {
+		host := r.Host
+		if strings.Contains(host, ":") {
+			hostSlice := strings.Split(host, ":")
+			host = hostSlice[0]
+		}
+		w.Header().Set("Referer", host)
 	}
 
 	if !contains(c.Enable, rec.Type) {

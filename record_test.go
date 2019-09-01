@@ -135,6 +135,26 @@ func TestParse(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"v=txtv0;ref=true;code=302",
+			record{
+				Version: "txtv0",
+				Type:    "host",
+				Code:    302,
+				Ref:     true,
+			},
+			nil,
+		},
+		{
+			"v=txtv0;ref=false;code=302",
+			record{
+				Version: "txtv0",
+				Type:    "host",
+				Code:    302,
+				Ref:     false,
+			},
+			nil,
+		},
 	}
 
 	for i, test := range tests {

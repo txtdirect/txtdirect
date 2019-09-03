@@ -14,8 +14,10 @@ limitations under the License.
 package txtdirect
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -39,8 +41,9 @@ func NewGometa(w http.ResponseWriter, r *http.Request, rec record, c Config) *Go
 var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 <html>
 <head>
-<meta name="go-import" content="{{.Host}}{{.Path}} {{.Vcs}} {{.NewURL}}">
-{{if .HasGoSource}}<meta name="go-source" content="{{.Host}}{{.Path}} _ {{.NewURL}}/tree/master{/dir} {{.NewURL}}/blob/master{/dir}/{file}#L{line}">{{end}}
+<meta name="go-import" content="{{.Host}}{{.Path}} {{.Vcs}} {{.PackageURI}}">
+<meta name="go-import" content="{{.Host}}{{.Path}} mod https://{{.PackageURI}}">
+{{if .HasGoSource}}<meta name="go-source" content="{{.Host}}{{.Path}} _ {{.PackageURI}}/tree/master{/dir} {{.PackageURI}}/blob/master{/dir}/{file}#L{line}">{{end}}
 </head>
 </html>`))
 
@@ -56,18 +59,25 @@ func (g *Gometa) Serve() error {
 
 	gosource := strings.Contains(g.rec.To, "github.com")
 
+	url, err := url.Parse(g.rec.To)
+	if err != nil {
+		return fmt.Errorf("Unable to parse package's URL: %s", err.Error())
+	}
+
 	RequestsByStatus.WithLabelValues(g.req.Host, strconv.Itoa(http.StatusFound)).Add(1)
 	return tmpl.Execute(g.rw, struct {
 		Host        string
 		Path        string
 		Vcs         string
-		NewURL      string
+		PackageURI  string
+		ImportPath  string
 		HasGoSource bool
 	}{
 		g.req.Host,
 		g.req.URL.Path,
 		g.rec.Vcs,
-		g.rec.To,
+		url.String(),
+		url.Host + url.Path,
 		gosource,
 	})
 }

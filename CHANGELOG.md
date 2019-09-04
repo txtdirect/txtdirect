@@ -1,8 +1,24 @@
 <!--
-# v0.3.0
+# v0.4.0
 _2018_
+  - [Downloads for v0.4.0](https://github.com/txtdirect/txtdirect/releases/tag/v0.4.0)
+  - [Container build for v0.4.0](https://console.cloud.google.com/gcr/images/txtdirect-223710/GLOBAL/txtdirect)
+  - [Changelog since v0.3.0](#changes-since-v030)
+  - [Documentation for v0.4.0](#documentation-for-v040)
+
+## Documentation for v0.3.0
+[Documentation](/tree/v0.4.0/docs)
+
+[Examples](/tree/v0.4.0/examples)
+
+## Changes since v0.3.0
+
+-->
+
+# v0.3.0-beta
+_2019-09-04_
   - [Downloads for v0.3.0](https://github.com/txtdirect/txtdirect/releases/tag/v0.3.0)
-  - [Container build for v0.3.0](https://hub.docker.com/r/seetheprogress/txtdirect/tags/)
+  - [Container build for v0.3.0](https://console.cloud.google.com/gcr/images/txtdirect-223710/GLOBAL/txtdirect)
   - [Changelog since v0.2.0](#changes-since-v020)
   - [Documentation for v0.3.0](#documentation-for-v030)
 
@@ -18,7 +34,7 @@ _2018_
 # v0.2.0
 _2018-08-07_
   - [Downloads for v0.2.0](https://github.com/txtdirect/txtdirect/releases/tag/v0.2.0)
-  - [Container build for v0.2.0](https://hub.docker.com/r/seetheprogress/txtdirect/tags/)
+  - [Container build for v0.2.0](https://console.cloud.google.com/gcr/images/txtdirect-223710/GLOBAL/txtdirect)
   - [Changelog since v0.1.0](#changes-since-v010)
   - [Documentation for v0.2.0](#documentation-for-v020)
 
@@ -41,7 +57,7 @@ _2018-08-07_
 # v0.1.0
 _2017-10-12_
   - [Downloads for v0.1.0](https://github.com/txtdirect/txtdirect/releases/tag/v0.1.0)
-  - [Container build for v0.1.0](https://hub.docker.com/r/seetheprogress/txtdirect/tags/)
+  - [Container build for v0.1.0](https://console.cloud.google.com/gcr/images/txtdirect-223710/GLOBAL/txtdirect)
   - [Changelog since v0.0.0](#changes-since-v000)
   - [Documentation for v0.1.0](#documentation-for-v010)
 

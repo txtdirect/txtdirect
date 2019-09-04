@@ -12,11 +12,11 @@ CONTAINER ?= $(BIN)
 
 build:
 	cd cmd/txtdirect && \
-	GOPROXY=https://proxy.golang.org,direct GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w"
+	GOPROXY=https://proxy.golang.org GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w"
 	mv cmd/txtdirect/txtdirect ./$(BIN)
 
 test:
-	GOPROXY=https://proxy.golang.org,direct GO111MODULE=on go test -v `go list ./... | grep -v .`
+	GOPROXY=https://proxy.golang.org GO111MODULE=on go test -v `go list ./... | grep -v .`
 
 image-build: docker-build
 	docker build -t $(IMAGE) .

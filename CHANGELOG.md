@@ -11,11 +11,11 @@ _2018_
 
 [Examples](/tree/v0.4.0/examples)
 
-## Changes since v0.3.0
+## Changes since v0.2.0
 
 -->
 
-# v0.3.0-beta
+# v0.3.0
 _2019-09-04_
   - [Downloads for v0.3.0](https://github.com/txtdirect/txtdirect/releases/tag/v0.3.0)
   - [Container build for v0.3.0](https://console.cloud.google.com/gcr/images/txtdirect-223710/GLOBAL/txtdirect)
@@ -28,6 +28,7 @@ _2019-09-04_
 [Examples](/tree/v0.3.0/examples)
 
 ## Changes since v0.2.0
+Intermediate release. All changes will be listed in v0.4.0
 
 -->
 

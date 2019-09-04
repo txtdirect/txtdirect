@@ -1,6 +1,6 @@
-module github.com/txtdirect/txtdirect
+module go.txtdirect.org/txtdirect
 
-go 1.12
+go 1.13
 
 require (
 	github.com/SchumacherFM/mailout v1.3.0

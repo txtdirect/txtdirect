@@ -12,7 +12,7 @@ CONTAINER ?= $(BIN)
 
 build:
 	cd cmd/txtdirect && \
-	GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w"
+	GOPROXY=https://proxy.golang.org,direct GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w"
 	mv cmd/txtdirect/txtdirect ./$(BIN)
 
 test:

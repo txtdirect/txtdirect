@@ -16,7 +16,7 @@ build:
 	mv cmd/txtdirect/txtdirect ./$(BIN)
 
 test:
-	GO111MODULE=on go test -v `go list ./... | grep -v .`
+	GOPROXY=https://proxy.golang.org,direct GO111MODULE=on go test -v `go list ./... | grep -v .`
 
 image-build: docker-build
 	docker build -t $(IMAGE) .

@@ -16,7 +16,7 @@ build:
 	mv cmd/txtdirect/txtdirect ./$(BIN)
 
 test:
-	GO111MODULE=on go test -v `go list ./... | grep -v .`
+	GO111MODULE=on go test -v `go list ./...`
 
 image-build: docker-build
 	docker build -t $(IMAGE) .

@@ -47,7 +47,6 @@ func parse(c *caddy.Controller) (Config, error) {
 	var enable []string
 	var redirect string
 	var resolver string
-	var gomods Gomods
 	var prometheus Prometheus
 	var logfile string
 	var qr Qr
@@ -95,21 +94,6 @@ func parse(c *caddy.Controller) (Config, error) {
 			if c.NextArg() {
 				logfile = c.Val()
 			}
-		case "gomods":
-			gomods.Enable = true
-			c.NextArg()
-			if c.Val() != "{" {
-				continue
-			}
-			for c.Next() {
-				if c.Val() == "}" {
-					break
-				}
-				err := gomods.ParseGomods(c)
-				if err != nil {
-					return Config{}, err
-				}
-			}
 
 		case "prometheus":
 			prometheus.Enable = true
@@ -153,9 +137,6 @@ func parse(c *caddy.Controller) (Config, error) {
 	}
 
 	// Set the default values
-	if gomods.Enable {
-		gomods.SetDefaults()
-	}
 	if prometheus.Enable {
 		prometheus.SetDefaults()
 	}
@@ -168,7 +149,6 @@ func parse(c *caddy.Controller) (Config, error) {
 		Redirect:   redirect,
 		Resolver:   resolver,
 		LogOutput:  logfile,
-		Gomods:     gomods,
 		Prometheus: prometheus,
 		Qr:         qr,
 	}

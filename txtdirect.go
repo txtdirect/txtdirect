@@ -44,7 +44,6 @@ type Config struct {
 	Redirect   string
 	Resolver   string
 	LogOutput  string
-	Gomods     Gomods
 	Prometheus Prometheus
 	Qr         Qr
 }
@@ -151,8 +150,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 	host := r.Host
 	path := r.URL.Path
-  
-  if c.Qr.Enable {
+
+	if c.Qr.Enable {
 		// Return the Qr code for the URI if "qr" query is available
 		if _, ok := r.URL.Query()["qr"]; ok {
 			return c.Qr.Redirect(w, r)
@@ -270,10 +269,6 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		}
 
 		return gometa.Serve()
-	}
-
-	if rec.Type == "gomods" {
-		return gomods(w, r, path, c)
 	}
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)

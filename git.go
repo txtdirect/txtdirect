@@ -68,10 +68,11 @@ func (g *Git) Proxy() error {
 	return nil
 }
 
-func (g *Git) VerifyGitQuery() error {
+func (g *Git) ValidGitQuery() bool {
 	if !strings.HasPrefix(g.req.Header.Get("User-Agent"), "git") {
-		log.Errorf("[txtdirect]: The incoming request is not from a Git client.")
 		fallback(g.rw, g.req, "website", g.rec.Code, g.c)
+		log.Errorf("[txtdirect]: The incoming request is not from a Git client.")
+		return false
 	}
-	return nil
+	return true
 }

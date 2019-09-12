@@ -274,7 +274,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	if rec.Type == "git" {
 		git := NewGit(w, r, c, rec)
 
-		if err := git.VerifyGitQuery(); err != nil {
+		// Triggers fallback when request isn't from a Git client
+		if !git.ValidGitQuery() {
 			return nil
 		}
 

@@ -75,6 +75,11 @@ var txts = map[string]string{
 	"_redirect.fallbackgometa.test.":          "v=txtv0;type=path;to=https://gometa.path.to.test",
 	"_redirect.pathto.fallbackgometa.test.":   "v=txtv0;to=wrong:/url.test;type=gometa",
 	"_redirect.redirect.fallbackgometa.test.": "v=txtv0;to=https://github.com/okkur/reposeed-server/;type=gometa",
+
+	// type=git
+	"_redirect.fallbackgit.test.":               "v=txtv0;to=https://github.com/okkur/torproxy.git;website=https://torporxy.okkur.org;type=git",
+	"_redirect.path.fallbackgit.test.":          "v=txtv0;to=https://about.okkur.org/;type=path",
+	"_redirect.torproxy.path.fallbackgit.test.": "v=txtv0;to=https://github.com/okkur/torproxy.git;website=https://torporxy.okkur.org;type=git",
 }
 
 // Testing DNS server port

@@ -14,13 +14,13 @@ func TestGit_Proxy(t *testing.T) {
 		{
 			url: "http://git.example.test/info/refs?service=git-upload-pack",
 			rec: record{
-				To: "https://github.com/okkur/torproxy.git",
+				To: "https://example.com/example/example.git",
 			},
 		},
 		{
 			url: "http://git.example.test/info/refs?service=git-upload-pack",
 			rec: record{
-				To: "https://github.com/txtdirect/txtdirect.git",
+				To: "https://example.com/example/example.git",
 			},
 		},
 	}

@@ -190,14 +190,14 @@ func Test_fallbackE2E(t *testing.T) {
 			url:     "https://fallbackgit.test",
 			enable:  []string{"git"},
 			code:    302,
-			website: "https://torporxy.okkur.org",
+			website: "https://website.example.com",
 			headers: http.Header{},
 		},
 		{
-			url:     "https://path.fallbackgit.test/torproxy",
+			url:     "https://path.fallbackgit.test/example",
 			enable:  []string{"path", "git"},
 			code:    302,
-			website: "https://torporxy.okkur.org",
+			website: "https://website.example.com",
 			headers: http.Header{},
 		},
 	}

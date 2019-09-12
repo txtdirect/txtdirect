@@ -46,10 +46,10 @@ var txts = map[string]string{
 	"_redirect.noroot.path.e2e.test.":    "v=txtv0;to=https://noroot.fallback.path.test;type=path;code=302",
 	"_redirect.metapath.e2e.test.":       "v=txtv0;type=path",
 	// type=gometa
-	"_redirect.pkg.txtdirect.test.":           "v=txtv0;to=https://github.com/txtdirect/txtdirect;type=gometa;vcs=git",
-	"_redirect.pkgweb.metapath.e2e.test.":     "v=txtv0;to=https://github.com/txtdirect/txtdirect;type=gometa;website=https://godoc.org/go.txtdirect.org/txtdirect",
-	"_redirect.pkg.metapath.e2e.test.":        "v=txtv0;to=https://github.com/okkur/reposeed-server;type=gometa",
-	"_redirect.second.pkg.metapath.e2e.test.": "v=txtv0;to=https://github.com/okkur/reposeed;type=gometa",
+	"_redirect.pkg.txtdirect.test.":           "v=txtv0;to=https://example.com/example/example;type=gometa;vcs=git",
+	"_redirect.pkgweb.metapath.e2e.test.":     "v=txtv0;to=https://example.com/example/example;type=gometa;website=https://godoc.org/go.txtdirect.org/txtdirect",
+	"_redirect.pkg.metapath.e2e.test.":        "v=txtv0;to=https://example.com/example/example;type=gometa",
+	"_redirect.second.pkg.metapath.e2e.test.": "v=txtv0;to=https://example.com/example/example;type=gometa",
 	// type=""
 	"_redirect.about.test.": "v=txtv0;to=https://about.txtdirect.org",
 	"_redirect.pkg.test.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
@@ -74,12 +74,12 @@ var txts = map[string]string{
 	// type=gometa
 	"_redirect.fallbackgometa.test.":          "v=txtv0;type=path;to=https://gometa.path.to.test",
 	"_redirect.pathto.fallbackgometa.test.":   "v=txtv0;to=wrong:/url.test;type=gometa",
-	"_redirect.redirect.fallbackgometa.test.": "v=txtv0;to=https://github.com/okkur/reposeed-server/;type=gometa",
+	"_redirect.redirect.fallbackgometa.test.": "v=txtv0;to=https://example.com/example/example/;type=gometa",
 
 	// type=git
-	"_redirect.fallbackgit.test.":               "v=txtv0;to=https://github.com/okkur/torproxy.git;website=https://torporxy.okkur.org;type=git",
-	"_redirect.path.fallbackgit.test.":          "v=txtv0;to=https://about.okkur.org/;type=path",
-	"_redirect.torproxy.path.fallbackgit.test.": "v=txtv0;to=https://github.com/okkur/torproxy.git;website=https://torporxy.okkur.org;type=git",
+	"_redirect.fallbackgit.test.":              "v=txtv0;to=https://example.com/example/example.git;website=https://website.example.com;type=git",
+	"_redirect.path.fallbackgit.test.":         "v=txtv0;to=https://about.okkur.org/;type=path",
+	"_redirect.example.path.fallbackgit.test.": "v=txtv0;to=https://example.com/example/example.git;website=https://website.example.com;type=git",
 }
 
 // Testing DNS server port
@@ -224,17 +224,17 @@ func TestRedirectE2e(t *testing.T) {
 		},
 		{
 			url:      "https://pkg.txtdirect.test?go-get=1",
-			expected: "https://github.com/txtdirect/txtdirect",
+			expected: "https://example.com/example/example",
 			enable:   []string{"gometa"},
 		},
 		{
 			url:      "https://metapath.e2e.test/pkg?go-get=1",
-			expected: "https://github.com/okkur/reposeed-server",
+			expected: "https://example.com/example/example",
 			enable:   []string{"gometa", "path"},
 		},
 		{
 			url:      "https://metapath.e2e.test/pkg/second?go-get=1",
-			expected: "https://github.com/okkur/reposeed",
+			expected: "https://example.com/example/example",
 			enable:   []string{"gometa", "path"},
 		},
 		{

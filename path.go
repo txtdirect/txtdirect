@@ -87,7 +87,14 @@ func (p *Path) RedirectRoot() error {
 // It will use custom regex to parse the path if it's provided in
 // the given record.
 func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
-	path := fmt.Sprintf("%s?%s", r.URL.Path, r.URL.RawQuery)
+	path := r.URL.Path
+
+	// Check if request is from a Git client
+	if strings.HasPrefix(r.Header.Get("User-Agent"), "git") {
+		path = "/" + strings.Split(r.URL.Path, "/")[1]
+	}
+
+	path = fmt.Sprintf("%s?%s", path, r.URL.RawQuery)
 
 	if strings.ContainsAny(path, ".") {
 		path = strings.Replace(path, ".", "-", -1)

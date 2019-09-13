@@ -34,6 +34,9 @@ type record struct {
 	Root    string
 	Re      string
 	Ref     bool
+
+	// Part indicator of TXT record
+	p int
 }
 
 // getRecord uses the given host to find a TXT record
@@ -76,85 +79,29 @@ func getRecord(host string, c Config, w http.ResponseWriter, r *http.Request) (r
 // It will return an error if the DNS TXT record is not standard or
 // if the record type is not enabled in the TXTDirect's config.
 func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c Config) error {
+
+	// Parse multipart records
+	if strings.Contains(str, "p=") {
+		_, err := parseMultipart(str, w, req, c)
+		if err != nil {
+			return err
+		}
+
+		// TODO: Merge records
+
+		return nil
+	}
+
 	s := strings.Split(str, ";")
+
 	for _, l := range s {
-		switch {
-		case strings.HasPrefix(l, "code="):
-			l = strings.TrimPrefix(l, "code=")
-			i, err := strconv.Atoi(l)
-			if err != nil {
-				return fmt.Errorf("could not parse status code: %s", err)
-			}
-			r.Code = i
-
-		case strings.HasPrefix(l, "from="):
-			l = strings.TrimPrefix(l, "from=")
-			l, err := parsePlaceholders(l, req, []string{})
-			if err != nil {
-				return err
-			}
-			r.From = l
-
-		case strings.HasPrefix(l, "re="):
-			l = strings.TrimPrefix(l, "re=")
-			r.Re = l
-
-		case strings.HasPrefix(l, "ref="):
-			l, err := strconv.ParseBool(strings.TrimPrefix(l, "ref="))
-			if err != nil {
-				fallback(w, req, "global", http.StatusMovedPermanently, c)
-				return err
-			}
-			r.Ref = l
-
-		case strings.HasPrefix(l, "root="):
-			l = strings.TrimPrefix(l, "root=")
-			l = ParseURI(l, w, req, c)
-			r.Root = l
-
-		case strings.HasPrefix(l, "to="):
-			l = strings.TrimPrefix(l, "to=")
-			l, err := parsePlaceholders(l, req, []string{})
-			if err != nil {
-				return err
-			}
-			l = ParseURI(l, w, req, c)
-			r.To = l
-
-		case strings.HasPrefix(l, "type="):
-			l = strings.TrimPrefix(l, "type=")
-			r.Type = l
-
-		case strings.HasPrefix(l, "v="):
-			l = strings.TrimPrefix(l, "v=")
-			r.Version = l
-			if r.Version != "txtv0" {
-				return fmt.Errorf("unhandled version '%s'", r.Version)
-			}
-			log.Print("WARN: txtv0 is not suitable for production")
-
-		case strings.HasPrefix(l, "vcs="):
-			l = strings.TrimPrefix(l, "vcs=")
-			r.Vcs = l
-
-		case strings.HasPrefix(l, "website="):
-			l = strings.TrimPrefix(l, "website=")
-			l = ParseURI(l, w, req, c)
-			r.Website = l
-
-		default:
-			tuple := strings.Split(l, "=")
-			if len(tuple) != 2 {
-				return fmt.Errorf("arbitrary data not allowed")
-			}
-			continue
+		if err := r.parseFields(w, req, c, l); err != nil {
+			return err
 		}
-		if len(l) > 255 {
-			return fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
-		}
-		if r.Type == "dockerv2" && r.To == "" {
-			return fmt.Errorf("[txtdirect]: to= field is required in dockerv2 type")
-		}
+	}
+
+	if r.Type == "dockerv2" && r.To == "" {
+		return fmt.Errorf("[txtdirect]: to= field is required in dockerv2 type")
 	}
 
 	if r.Code == 0 {
@@ -170,6 +117,131 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 	}
 
 	return nil
+}
+
+func (r *record) parseFields(w http.ResponseWriter, req *http.Request, c Config, l string) error {
+	switch {
+	case strings.HasPrefix(l, "code="):
+		l = strings.TrimPrefix(l, "code=")
+		i, err := strconv.Atoi(l)
+		if err != nil {
+			return fmt.Errorf("could not parse status code: %s", err)
+		}
+		r.Code = i
+
+	case strings.HasPrefix(l, "from="):
+		l = strings.TrimPrefix(l, "from=")
+		l, err := parsePlaceholders(l, req, []string{})
+		if err != nil {
+			return err
+		}
+		r.From = l
+
+	case strings.HasPrefix(l, "p="):
+		l = strings.TrimPrefix(l, "p=")
+		i, err := strconv.Atoi(l)
+		if err != nil {
+			return fmt.Errorf("could not parse status code: %s", err)
+		}
+		r.p = i
+
+	case strings.HasPrefix(l, "re="):
+		l = strings.TrimPrefix(l, "re=")
+		r.Re = l
+
+	case strings.HasPrefix(l, "ref="):
+		l, err := strconv.ParseBool(strings.TrimPrefix(l, "ref="))
+		if err != nil {
+			fallback(w, req, "global", http.StatusMovedPermanently, c)
+			return err
+		}
+		r.Ref = l
+
+	case strings.HasPrefix(l, "root="):
+		l = strings.TrimPrefix(l, "root=")
+		l = ParseURI(l, w, req, c)
+		r.Root = l
+
+	case strings.HasPrefix(l, "to="):
+		l = strings.TrimPrefix(l, "to=")
+		l, err := parsePlaceholders(l, req, []string{})
+		if err != nil {
+			return err
+		}
+		l = ParseURI(l, w, req, c)
+		r.To = l
+
+	case strings.HasPrefix(l, "type="):
+		l = strings.TrimPrefix(l, "type=")
+		r.Type = l
+
+	case strings.HasPrefix(l, "v="):
+		l = strings.TrimPrefix(l, "v=")
+		r.Version = l
+		if r.Version != "txtv0" {
+			return fmt.Errorf("unhandled version '%s'", r.Version)
+		}
+		log.Print("WARN: txtv0 is not suitable for production")
+
+	case strings.HasPrefix(l, "vcs="):
+		l = strings.TrimPrefix(l, "vcs=")
+		r.Vcs = l
+
+	case strings.HasPrefix(l, "website="):
+		l = strings.TrimPrefix(l, "website=")
+		l = ParseURI(l, w, req, c)
+		r.Website = l
+
+	default:
+		tuple := strings.Split(l, "=")
+		if len(tuple) != 2 {
+			return fmt.Errorf("arbitrary data not allowed")
+		}
+	}
+	return nil
+}
+
+// parseMultipart splits the given record string based on the `p=` fields
+func parseMultipart(str string, w http.ResponseWriter, req *http.Request, c Config) ([]record, error) {
+	var records []record
+	// Find the first part
+	s := strings.Split(str[:strings.Index(str, "p=")], ";")
+	// Parse the first part's fields
+	var r record
+	for _, l := range s {
+		if err := r.parseFields(w, req, c, l); err != nil {
+			return nil, err
+		}
+		if r.p == 0 {
+			r.p = 1
+		}
+	}
+	records = append(records, r)
+
+	// Look for the other parts
+	for i := 1; i <= strings.Count(str, "p="); i++ {
+		// Find the current and next parts index
+		currentPart := strings.Index(str, "p=")
+		nextPart := strings.Index(str[currentPart+4:], "p=")
+
+		str = str[currentPart:]
+
+		if currentPart != nextPart && nextPart != -1 {
+			str = str[currentPart:nextPart]
+		}
+
+		s := strings.Split(str, ";")
+
+		var r record
+		for _, l := range s {
+			if err := r.parseFields(w, req, c, l); err != nil {
+				return nil, err
+			}
+		}
+		records = append(records, r)
+	}
+
+	return records, nil
 }
 
 // Adds the given record to the request's context with "records" key.

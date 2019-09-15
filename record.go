@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -87,6 +88,11 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 		if err != nil {
 			return err
 		}
+
+		// Sort records based on their `p=` field
+		sort.Slice(&records, func(i, j int) bool {
+			return records[i].p < records[j].p
+		})
 
 		r.MergeRecords(records)
 

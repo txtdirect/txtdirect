@@ -19,6 +19,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -82,12 +83,12 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 
 	// Parse multipart records
 	if strings.Contains(str, "p=") {
-		_, err := parseMultipart(str, w, req, c)
+		records, err := parseMultipart(str, w, req, c)
 		if err != nil {
 			return err
 		}
 
-		// TODO: Merge records
+		r.MergeRecords(records)
 
 		return nil
 	}
@@ -242,6 +243,28 @@ func parseMultipart(str string, w http.ResponseWriter, req *http.Request, c Conf
 	}
 
 	return records, nil
+}
+
+func (r *record) MergeRecords(records []record) {
+	var result record
+	resultVal := reflect.ValueOf(&result).Elem()
+
+	for _, rec := range records {
+		// Get reflection record
+		recval := reflect.ValueOf(&rec).Elem()
+		// Iterate each field and merge it with the result record's value
+		for i := 0; i < recval.NumField(); i++ {
+			field := recval.Field(i)
+			if !field.CanInterface() {
+				continue
+			}
+			resultField := resultVal.Field(i)
+
+			if resultField.Kind() == reflect.String {
+				resultField.SetString(resultField.String() + field.String())
+			}
+		}
+	}
 }
 
 // Adds the given record to the request's context with "records" key.

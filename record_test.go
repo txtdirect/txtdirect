@@ -155,6 +155,24 @@ func TestParse(t *testing.T) {
 			},
 			nil,
 		},
+		{
+			"v=txtv0;type=host;to=https://example.comp=2;to=/multipart",
+			record{
+				Version: "txtv0",
+				Type:    "host",
+				To:      "https://example.com/multipart",
+			},
+			nil,
+		},
+		{
+			"v=txtv0;type=host;to=https://example.comp=3;to=/multip=2;to=/part/sorted",
+			record{
+				Version: "txtv0",
+				Type:    "host",
+				To:      "https://example.com/part/sorted/multi",
+			},
+			nil,
+		},
 	}
 
 	for i, test := range tests {

@@ -90,7 +90,7 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 		}
 
 		// Sort records based on their `p=` field
-		sort.Slice(&records, func(i, j int) bool {
+		sort.Slice(records, func(i, j int) bool {
 			return records[i].p < records[j].p
 		})
 
@@ -226,19 +226,23 @@ func parseMultipart(str string, w http.ResponseWriter, req *http.Request, c Conf
 	records = append(records, r)
 
 	// Look for the other parts
-	for i := 1; i <= strings.Count(str, "p="); i++ {
+	parts := strings.Count(str, "p=")
+	for i := 1; i <= parts; i++ {
 		// Find the current and next parts index
 		currentPart := strings.Index(str, "p=")
 		nextPart := strings.Index(str[currentPart+4:], "p=")
 
 		str = str[currentPart:]
-
-		if currentPart != nextPart && nextPart != -1 {
-			str = str[currentPart:nextPart]
-		}
-
 		s := strings.Split(str, ";")
 
+		// If the record has more than 2 parts, split the part between
+		if currentPart != nextPart && nextPart != -1 {
+			nextPart = strings.Index(str[4:], "p=")
+			s = strings.Split(str[:nextPart+4], ";")
+			str = str[nextPart+4:]
+		}
+
+		// Parse the record fields
 		var r record
 		for _, l := range s {
 			if err := r.parseFields(w, req, c, l); err != nil {
@@ -252,8 +256,7 @@ func parseMultipart(str string, w http.ResponseWriter, req *http.Request, c Conf
 }
 
 func (r *record) MergeRecords(records []record) {
-	var result record
-	resultVal := reflect.ValueOf(&result).Elem()
+	resultVal := reflect.ValueOf(r).Elem()
 
 	for _, rec := range records {
 		// Get reflection record

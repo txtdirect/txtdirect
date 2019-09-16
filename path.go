@@ -60,6 +60,12 @@ func (p *Path) Redirect() *record {
 		fallback(p.rw, p.req, "to", p.rec.Code, p.c)
 		return nil
 	}
+
+	if rec.Type == "path" {
+		p.rec = rec
+		return p.Redirect()
+	}
+
 	return &rec
 }
 
@@ -188,7 +194,15 @@ func getFinalRecord(zone string, from int, c Config, w http.ResponseWriter, r *h
 	}
 
 	if rec.Type == "path" {
-		return rec, fmt.Errorf("chaining path is not currently supported")
+		records := r.Context().Value("records").([]record)
+		parent := records[len(records)-1]
+
+		// Use the parent's custom regex if available
+		if rec.Re == "" && parent.Re != "" {
+			rec.Re = parent.Re
+		}
+
+		return rec, nil
 	}
 
 	return rec, nil

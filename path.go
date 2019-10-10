@@ -91,7 +91,7 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 
 	// Check if request is from a Git client
 	if strings.HasPrefix(r.Header.Get("User-Agent"), "git") {
-		path = "/" + strings.Split(r.URL.Path, "/")[1]
+		path = path[:strings.Index(path, "/info/refs")]
 	}
 
 	path = fmt.Sprintf("%s?%s", path, r.URL.RawQuery)

@@ -186,6 +186,20 @@ func Test_fallbackE2E(t *testing.T) {
 			to:      "https://gometa.path.to.test",
 			headers: http.Header{},
 		},
+		{
+			url:     "https://fallbackgit.test",
+			enable:  []string{"git"},
+			code:    302,
+			website: "https://website.example.com",
+			headers: http.Header{},
+		},
+		{
+			url:     "https://path.fallbackgit.test/example",
+			enable:  []string{"path", "git"},
+			code:    302,
+			website: "https://website.example.com",
+			headers: http.Header{},
+		},
 	}
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)

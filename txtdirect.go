@@ -84,9 +84,7 @@ func customResolver(c Config) net.Resolver {
 	}
 }
 
-// query checks the given zone using net.LookupTXT to
-// find TXT records in that zone
-func query(zone string, ctx context.Context, c Config) ([]string, error) {
+func absoluteZone(zone string) string {
 	// Removes port from zone
 	if strings.Contains(zone, ":") {
 		zoneSlice := strings.Split(zone, ":")
@@ -97,21 +95,23 @@ func query(zone string, ctx context.Context, c Config) ([]string, error) {
 		zone = strings.Join([]string{basezone, zone}, ".")
 	}
 
-	// Use absolute zone
-	var absoluteZone string
 	if strings.HasSuffix(zone, ".") {
-		absoluteZone = zone
-	} else {
-		absoluteZone = strings.Join([]string{zone, "."}, "")
+		return zone
 	}
 
+	return strings.Join([]string{zone, "."}, "")
+}
+
+// query checks the given zone using net.LookupTXT to
+// find TXT records in that zone
+func query(zone string, ctx context.Context, c Config) ([]string, error) {
 	var txts []string
 	var err error
 	if c.Resolver != "" {
 		net := customResolver(c)
-		txts, err = net.LookupTXT(ctx, absoluteZone)
+		txts, err = net.LookupTXT(ctx, absoluteZone(zone))
 	} else {
-		txts, err = net.LookupTXT(absoluteZone)
+		txts, err = net.LookupTXT(absoluteZone(zone))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("could not get TXT record: %s", err)

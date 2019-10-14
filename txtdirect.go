@@ -206,10 +206,21 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 			return path.RedirectRoot()
 		}
 
-		if path.path != "" {
+		if path.path != "" && rec.Re != "record" {
 			record := path.Redirect()
 			// It means fallback got triggered, If record is nil
 			if record == nil {
+				return nil
+			}
+			rec = *record
+		}
+
+		// Use predefined regexes if custom regex is set to "record"
+		if path.rec.Re == "record" {
+			record, err := path.SpecificRecord()
+			if err != nil {
+				log.Printf("[txtdirect]: Fallback is triggered because redirect to the most specific match failed: %s", err.Error())
+				fallback(path.rw, path.req, "to", path.rec.Code, path.c)
 				return nil
 			}
 			rec = *record

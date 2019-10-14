@@ -52,18 +52,6 @@ func NewPath(w http.ResponseWriter, r *http.Request, path string, rec record, c 
 
 // Redirect finds and returns the final record
 func (p *Path) Redirect() *record {
-	// Use predefined regexes if custom regex is set to "record"
-	if p.rec.Re == "record" {
-		record, err := p.SpecificRecord()
-		if err != nil {
-			log.Print("[txtdirect]: Fallback is triggered because redirect to the most specific match failed: %s", err.Error())
-			fallback(p.rw, p.req, "to", p.rec.Code, p.c)
-			return nil
-		}
-		fmt.Println(record)
-		return nil
-	}
-
 	zone, from, pathSlice, err := zoneFromPath(p.req, p.rec)
 	rec, err := getFinalRecord(zone, from, p.c, p.rw, p.req, pathSlice)
 	*p.req = *rec.addToContext(p.req)
@@ -105,7 +93,33 @@ func (p *Path) SpecificRecord() (*record, error) {
 		return nil, err
 	}
 
-	return &records[0], nil
+	record, err := p.specificMatch(records)
+	if err != nil {
+		return nil, err
+	}
+
+	return record, nil
+}
+
+func (p *Path) specificMatch(records []record) (*record, error) {
+	recordMatch := make(map[int]*record)
+
+	for _, record := range records {
+		regex, err := regexp.Compile(record.Re)
+		if err != nil {
+			return nil, fmt.Errorf("Couldn't compile the regex: %s", err.Error())
+		}
+		submatches := regex.FindAllStringSubmatch(p.path, -1)[0]
+		recordMatch[len(submatches)] = &record
+	}
+
+	var keys []int
+	for k := range recordMatch {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+
+	return recordMatch[keys[len(keys)-1]], nil
 }
 
 func (p *Path) fetchRegexRecords() ([]record, error) {

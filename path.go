@@ -52,6 +52,18 @@ func NewPath(w http.ResponseWriter, r *http.Request, path string, rec record, c 
 
 // Redirect finds and returns the final record
 func (p *Path) Redirect() *record {
+	// Use predefined regexes if custom regex is set to "record"
+	if p.rec.Re == "record" {
+		record, err := p.SpecificRecord()
+		if err != nil {
+			log.Print("[txtdirect]: Fallback is triggered because redirect to the most specific match failed: %s", err.Error())
+			fallback(p.rw, p.req, "to", p.rec.Code, p.c)
+			return nil
+		}
+		fmt.Println(record)
+		return nil
+	}
+
 	zone, from, pathSlice, err := zoneFromPath(p.req, p.rec)
 	rec, err := getFinalRecord(zone, from, p.c, p.rw, p.req, pathSlice)
 	*p.req = *rec.addToContext(p.req)
@@ -83,6 +95,41 @@ func (p *Path) RedirectRoot() error {
 	return nil
 }
 
+// SpecificRecord finds the most specific match using the custom regexes from subzones
+// It goes through all the custom regexes specified in each subzone and uses the
+// most specific match to return the final record.
+func (p *Path) SpecificRecord() (*record, error) {
+	// Iterate subzones and parse the records
+	records, err := p.fetchRegexRecords()
+	if err != nil {
+		return nil, err
+	}
+
+	return &records[0], nil
+}
+
+func (p *Path) fetchRegexRecords() ([]record, error) {
+	var records []record
+	for i, loop := 1, true; loop != false; i++ {
+		txts, err := query(fmt.Sprintf("%d.%s", i, p.req.Host), p.req.Context(), p.c)
+		if err != nil && len(records) >= 1 {
+			break
+		}
+		if err != nil || txts[0] == "" {
+			return nil, fmt.Errorf("Couldn't fetch the subzones for predefined regex: %s", err.Error())
+		}
+
+		rec := record{}
+		if err := rec.Parse(txts[0], p.rw, p.req, p.c); err != nil {
+			return nil, fmt.Errorf("Couldn't parse the record: %s", err.Error())
+		}
+
+		records = append(records, rec)
+	}
+
+	return records, nil
+}
+
 // zoneFromPath generates a DNS zone with the given request's path and host
 // It will use custom regex to parse the path if it's provided in
 // the given record.
@@ -96,26 +143,35 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 
 	path = fmt.Sprintf("%s?%s", path, r.URL.RawQuery)
 
+	// Normalize the path to follow RFC1034 rules
 	if strings.ContainsAny(path, ".") {
 		path = strings.Replace(path, ".", "-", -1)
 	}
+
 	pathSubmatchs := PathRegex.FindAllStringSubmatch(path, -1)
 	if rec.Re != "" {
+		// Compile the record regex and find path submatches
 		CustomRegex, err := regexp.Compile(rec.Re)
 		if err != nil {
 			log.Printf("<%s> [txtdirect]: the given regex doesn't work as expected: %s", time.Now().String(), rec.Re)
 		}
 		pathSubmatchs = CustomRegex.FindAllStringSubmatch(path, -1)
+
+		// Only generate the zone if the custom regex contains a group
 		if GroupRegex.MatchString(rec.Re) {
+			//
 			pathSlice := []string{}
 			unordered := make(map[string]string)
 			for _, item := range pathSubmatchs[0] {
 				pathSlice = append(pathSlice, item)
 			}
+
+			// Order the path slice using groups order in custom regex
 			order := GroupOrderRegex.FindAllStringSubmatch(rec.Re, -1)
 			for i, group := range order {
 				unordered[group[1]] = pathSlice[i+1]
 			}
+
 			url := sortMap(unordered)
 			*r = *r.WithContext(context.WithValue(r.Context(), "regexMatches", unordered))
 			reverse(url)

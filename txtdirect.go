@@ -116,6 +116,9 @@ func query(zone string, ctx context.Context, c Config) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not get TXT record: %s", err)
 	}
+	if txts[0] == "" {
+		return nil, fmt.Errorf("TXT record doesn't exist or is empty")
+	}
 	return txts, nil
 }
 

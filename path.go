@@ -121,7 +121,10 @@ func (p *Path) specificMatch(regexes RegexRecords) (*record, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Couldn't compile the regex: %s", err.Error())
 		}
-		zone.Submatches = regex.FindAllStringSubmatch(p.path, -1)[0]
+		matches := regex.FindAllStringSubmatch(p.path, -1)
+		if len(matches) > 0 {
+			zone.Submatches = matches[0]
+		}
 		recordMatch[len(zone.Submatches)] = zone
 	}
 
@@ -150,7 +153,7 @@ func (p *Path) fetchRegexes() (RegexRecords, error) {
 		if err != nil && len(regexes) >= 1 {
 			break
 		}
-		if err != nil || txts[0] == "" {
+		if err != nil {
 			return nil, fmt.Errorf("Couldn't fetch the subzones for predefined regex: %s", err.Error())
 		}
 

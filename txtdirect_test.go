@@ -45,6 +45,10 @@ var txts = map[string]string{
 	"_redirect.noto.path.e2e.test.":      "v=txtv0;type=path",
 	"_redirect.noroot.path.e2e.test.":    "v=txtv0;to=https://noroot.fallback.path.test;type=path;code=302",
 	"_redirect.metapath.e2e.test.":       "v=txtv0;type=path",
+	"_redirect.regex.path.e2e.test.":     "v=txtv0;re=record;to=https://example.com;type=path",
+	"_redirect.1.regex.path.e2e.test.":   "v=txtv0;re=\\/test1;to=https://example.com/first/predefined{1};type=host",
+	"_redirect.2.regex.path.e2e.test.":   "v=txtv0;re=\\/test1\\/test2;to=https://example.com/second/predefined{1};type=host",
+
 	// type=gometa
 	"_redirect.pkg.txtdirect.test.":           "v=txtv0;to=https://example.com/example/example;type=gometa;vcs=git",
 	"_redirect.pkgweb.metapath.e2e.test.":     "v=txtv0;to=https://example.com/example/example;type=gometa;website=https://godoc.org/go.txtdirect.org/txtdirect",
@@ -262,6 +266,16 @@ func TestRedirectE2e(t *testing.T) {
 			expected: "https://plain.host.test",
 			enable:   []string{"host"},
 			referer:  true,
+		},
+		{
+			url:      "https://regex.path.e2e.test/test1",
+			expected: "https://example.com/first/predefined/test1",
+			enable:   []string{"host", "path"},
+		},
+		{
+			url:      "https://regex.path.e2e.test/test1/test2",
+			expected: "https://example.com/second/predefined/test1/test2",
+			enable:   []string{"host", "path"},
 		},
 	}
 	for _, test := range tests {

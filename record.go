@@ -193,7 +193,7 @@ func ParseURI(uri string, w http.ResponseWriter, r *http.Request, c Config) stri
 	url, err := url.Parse(uri)
 	if err != nil {
 		fallback(w, r, "global", http.StatusMovedPermanently, c)
-		return uri
+		return ""
 	}
 	return url.String()
 }

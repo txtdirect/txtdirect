@@ -104,13 +104,6 @@ func Test_fallbackE2E(t *testing.T) {
 		headers  http.Header
 	}{
 		{
-			url:     "https://fallbackpath.test/to",
-			enable:  []string{"path"},
-			code:    302,
-			to:      "https://to.works.fine.test",
-			headers: http.Header{},
-		},
-		{
 			url:     "https://fallbackpath.test",
 			enable:  []string{"www"},
 			headers: http.Header{},

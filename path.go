@@ -234,7 +234,7 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 	}
 	*r = *r.WithContext(context.WithValue(r.Context(), "regexMatches", pathSlice))
 	if len(pathSlice) < 1 && rec.Re != "" {
-		log.Printf("<%s> [txtdirect]: custom regex doesn't work on %s", time.Now().String(), path)
+		return "", 0, []string{}, fmt.Errorf("custom regex doesn't work on %s", path)
 	}
 	from := len(pathSlice)
 	if rec.From != "" {

@@ -67,7 +67,6 @@ var txts = map[string]string{
 
 	// type=path
 	"_redirect.fallbackpath.test.":        "v=txtv0;type=path;code=302;to=https://to.works.fine.test",
-	"_redirect.to.fallbackpath.test.":     "v=txtv0;type=path;to=https://to.works.fine.test;code=302",
 	"_redirect.refrom.fallbackpath.test.": "v=txtv0;type=path;re=exist;from=$1$2;to=https://to.works.fine.test;code=302",
 	"_redirect.lenfrom.test.":             "v=txtv0;type=path;from=$1$2$3;to=https://lenfrom.fallback.test;code=302",
 

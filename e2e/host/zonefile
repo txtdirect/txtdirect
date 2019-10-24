@@ -1,0 +1,14 @@
+@                   3600 IN SOA     ns.example.com. domains.example.com. (
+                                      2017101003   ; serial
+                                      5m           ; refresh
+                                      5m           ; retry
+                                      1w           ; expire
+                                      12h    )     ; minimum
+
+@                  86400 IN NS      ns.example.net.
+@                  86400 IN NS      ns.example.nl.
+
+$TTL 1H
+
+example.com.                IN A 127.0.0.1
+_redirect.to.host.host.example.com.      IN TXT "v=txtv0;to=http://to-redirect.host.host.example.test;type=host;code=302"

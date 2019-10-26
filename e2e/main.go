@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"go.txtdirect.org/txtdirect/e2e/host"
@@ -24,6 +25,10 @@ type dockerManager struct {
 	ctx context.Context
 	cli *client.Client
 	dir string
+
+	network       types.NetworkCreateResponse
+	txtdContainer container.ContainerCreateCreatedBody
+	cdContainer   container.ContainerCreateCreatedBody
 }
 
 func main() {
@@ -43,13 +48,17 @@ func main() {
 		// Start the CoreDNS and TXTDirect containers for test-case
 		d.dir = directory
 		if err := d.StartContainers(); err != nil {
-			log.Fatal("[txtdirect_e2e]: Couldn't start containers: %s", err.Error())
+			log.Fatalf("[txtdirect_e2e]: Couldn't start containers: %s", err.Error())
 		}
 
 		// Run the tests
 		suiteName := strings.Split(directory, "/")[0]
 		if err := tests[suiteName](); err != nil {
-			log.Fatalf("[txtdirect_e2e]: <%s>: %s", suiteName, err)
+			log.Printf("[txtdirect_e2e]: <%s>: %s", suiteName, err)
+		}
+
+		if err := d.StopContainers(); err != nil {
+			log.Fatalf("[txtdirect_e2e]: Couldn't stop containers: %s", err.Error())
 		}
 	}
 }
@@ -88,8 +97,19 @@ func (d *dockerManager) StartContainers() error {
 		return err
 	}
 
+	d.network, err = d.cli.NetworkCreate(d.ctx, "coretxtd", types.NetworkCreate{
+		IPAM: &network.IPAM{
+			Config: []network.IPAMConfig{
+				{
+					IPRange: "172.20.10.0/24",
+					Subnet:  "172.20.0.0/16",
+				},
+			},
+		},
+	})
+
 	// Create the CoreDNS container
-	cdContainer, err := d.cli.ContainerCreate(d.ctx, &container.Config{
+	d.cdContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
 		Image: "coredns/coredns",
 		Cmd:   []string{"-conf", "/root/Corefile"},
 		ExposedPorts: nat.PortSet{
@@ -118,15 +138,75 @@ func (d *dockerManager) StartContainers() error {
 				},
 			},
 		},
-	}, nil, "")
+	}, &network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{
+			"coretxtd": &network.EndpointSettings{NetworkID: d.network.ID},
+		},
+	}, "")
 	if err != nil {
 		return fmt.Errorf("Couldn't create the CoreDNS container: %s", err.Error())
 	}
 
+	d.txtdContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
+		Image: "okkur/txtdirect:0.4.0",
+		Cmd:   []string{"-conf", "/root/TXTD.config"},
+		ExposedPorts: nat.PortSet{
+			"80/tcp": struct{}{},
+			"80/udp": struct{}{},
+		},
+	}, &container.HostConfig{
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeBind,
+				Source: cdir + "/" + d.dir,
+				Target: "/root",
+			},
+		},
+		PortBindings: nat.PortMap{
+			"80/tcp": []nat.PortBinding{
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "80",
+				},
+			},
+			"80/udp": []nat.PortBinding{
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "80",
+				},
+			},
+		},
+	}, &network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{
+			"coretxtd": &network.EndpointSettings{NetworkID: d.network.ID},
+		},
+	}, "")
+	if err != nil {
+		return fmt.Errorf("Couldn't create the TXTDirect container: %s", err.Error())
+	}
+
 	// Start the CoreDNS container
-	if err := d.cli.ContainerStart(d.ctx, cdContainer.ID, types.ContainerStartOptions{}); err != nil {
+	if err := d.cli.ContainerStart(d.ctx, d.cdContainer.ID, types.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("Couldn't start the CoreDNS container: %s", err.Error())
 	}
 
+	// Start the TXTDirect container
+	if err := d.cli.ContainerStart(d.ctx, d.txtdContainer.ID, types.ContainerStartOptions{}); err != nil {
+		return fmt.Errorf("Couldn't start the TXTDirect container: %s", err.Error())
+	}
+
+	return nil
+}
+
+func (d *dockerManager) StopContainers() error {
+	if err := d.cli.ContainerStop(d.ctx, d.cdContainer.ID, nil); err != nil {
+		return fmt.Errorf("Couldn't remove the CoreDNS container: %s", err.Error())
+	}
+	if err := d.cli.ContainerStop(d.ctx, d.txtdContainer.ID, nil); err != nil {
+		return fmt.Errorf("Couldn't remove the TXTDirect container: %s", err.Error())
+	}
+	if err := d.cli.NetworkRemove(d.ctx, d.network.ID); err != nil {
+		return fmt.Errorf("Couldn't remove the network adaptor: %s", err.Error())
+	}
 	return nil
 }

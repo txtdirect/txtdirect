@@ -36,7 +36,6 @@ func Run() error {
 
 		location, err := resp.Location()
 
-		fmt.Println(resp.Request.Header)
 		if err == http.ErrNoLocation {
 			return fmt.Errorf("[%s]: Location header is empty", test.name)
 		}

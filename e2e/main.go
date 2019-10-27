@@ -94,7 +94,7 @@ func (d *dockerManager) StartContainers() error {
 	// Get current working directory to create mount test-case's data to containers
 	cdir, err := os.Getwd()
 	if err != nil {
-		return err
+		return fmt.Errorf("Couldn't get the current working directory: %s", err.Error())
 	}
 
 	d.network, err = d.cli.NetworkCreate(d.ctx, "coretxtd", types.NetworkCreate{
@@ -107,6 +107,9 @@ func (d *dockerManager) StartContainers() error {
 			},
 		},
 	})
+	if err != nil {
+		return fmt.Errorf("Couldn't create the network adaptor: %s", err.Error())
+	}
 
 	// Create the CoreDNS container
 	d.cdContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{

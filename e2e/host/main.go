@@ -29,7 +29,14 @@ var tests = []test{
 
 func Run() error {
 	for _, test := range tests {
-		resp, err := http.Get(fmt.Sprintf("http://%s%s", test.args.host, test.args.path))
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		}
+
+		req, err := http.NewRequest("GET", fmt.Sprintf("http://%s%s", test.args.host, test.args.path), nil)
+		resp, err := client.Do(req)
 		if err != nil {
 			return fmt.Errorf("Couldn't send the request: %s", err.Error())
 		}

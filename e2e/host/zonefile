@@ -11,4 +11,4 @@
 $TTL 1H
 
 example.com.                IN A 127.0.0.1
-_redirect.to.host.host.example.com.      IN TXT "v=txtv0;to=http://to-redirect.host.host.example.test;type=host;code=302"
+_redirect.to.host.host.example.com.      IN TXT "v=txtv0;to=http://to-redirect.host.host.example.com;type=host;code=302"

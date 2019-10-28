@@ -1,0 +1,29 @@
+@                   3600 IN SOA     ns.example.com. domains.example.com. (
+                                      2017101003   ; serial
+                                      5m           ; refresh
+                                      5m           ; retry
+                                      1w           ; expire
+                                      12h    )     ; minimum
+
+@                  86400 IN NS      ns.example.net.
+@                  86400 IN NS      ns.example.nl.
+
+$TTL 1H
+
+example.com.                                           IN A 127.0.0.1
+
+
+noversion.path.path.example.com.                       IN A 127.0.0.1
+_redirect.noversion.path.path.example.com.             IN TXT "to=https://noversion-redirect.path.path.example.com;type=path"
+
+noroot.path.path.example.com.                          IN A 127.0.0.1
+_redirect.noroot.path.path.example.com.                IN TXT "v=txtv0;to=https://noroot-redicte.path.path.example.com;type=path;code=302"
+
+predefined-regex.path.path.example.com.                IN A 127.0.0.1
+_redirect.predefined-regex.path.path.example.com.      IN TXT "v=txtv0;re=record;to=https://regex-redirect.path.path.example.com;type=path"
+
+1.predefined-regex.path.path.example.com.              IN A 127.0.0.1
+_redirect.1.predefined-regex.path.path.example.com.    IN TXT "v=txtv0;re=\\/test1;to=https://predefined-redirect.host.path.example.com/first{1};type=host"
+
+2.predefined-regex.path.path.example.com.              IN A 127.0.0.1
+_redirect.2.predefined-regex.path.path.example.com.    IN TXT "v=txtv0;re=\\/test1\\/test2;to=https://predefined-redirect.host.path.example.com/second{1};type=host"

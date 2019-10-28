@@ -15,10 +15,12 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"go.txtdirect.org/txtdirect/e2e/host"
+	"go.txtdirect.org/txtdirect/e2e/path"
 )
 
 var tests = map[string]func() error{
 	"host": host.Run,
+	"path": path.Run,
 }
 
 type dockerManager struct {

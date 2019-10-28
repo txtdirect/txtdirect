@@ -11,4 +11,17 @@
 $TTL 1H
 
 example.com.                IN A 127.0.0.1
-_redirect.to.host.host.example.com.      IN TXT "v=txtv0;to=http://to-redirect.host.host.example.com;type=host;code=302"
+
+; Host records
+
+to.host.host.example.com         IN A 127.0.0.1
+_redirect.to.host.host.example.com.          IN TXT "v=txtv0;to=https://to-redirect.host.host.example.com;type=host;code=302" 
+
+nocode.host.host.example.com.    IN A 127.0.0.1
+_redirect.nocode.host.host.example.com.      IN TXT "v=txtv0;to=https://nocode.host.host.example.com;type=host"
+
+noversion.host.host.example.com. IN A 127.0.0.1
+_redirect.noversion.host.host.example.com.   IN TXT "to=https://noversion.host.host.example.com;type=host"
+
+noto.host.host.example.com.      IN A 127.0.0.1
+_redirect.noto.host.host.example.com.        IN TXT "v=txtv0;type=host"

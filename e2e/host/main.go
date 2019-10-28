@@ -23,7 +23,31 @@ var tests = []test{
 			host: "to.host.host.example.com",
 			path: "/",
 		},
-		expected: "http://to-redirect.host.host.example.com",
+		expected: "https://to-redirect.host.host.example.com",
+	},
+	{
+		name: "Redirect to a host record's to= field without specified code=",
+		args: data{
+			host: "nocode.host.host.example.com",
+			path: "/",
+		},
+		expected: "https://nocode.host.host.example.com",
+	},
+	{
+		name: "Redirect to a host record's to= field without specified v=",
+		args: data{
+			host: "noversion.host.host.example.com",
+			path: "/",
+		},
+		expected: "https://noversion.host.host.example.com",
+	},
+	{
+		name: "Redirect to a host record's unspecified to=",
+		args: data{
+			host: "noto.host.host.example.com",
+			path: "/",
+		},
+		expected: "http://noto.host.host.example.com/",
 	},
 }
 

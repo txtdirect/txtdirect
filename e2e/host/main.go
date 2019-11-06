@@ -1,7 +1,8 @@
-package host
+package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -51,7 +52,8 @@ var tests = []test{
 	},
 }
 
-func Run() error {
+func main() {
+	result := make(map[bool][]test)
 	for _, test := range tests {
 		client := &http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -60,20 +62,33 @@ func Run() error {
 		}
 
 		req, err := http.NewRequest("GET", fmt.Sprintf("http://%s%s", test.args.host, test.args.path), nil)
+		if err != nil {
+			result[false] = append(result[false], test)
+			log.Printf("[%s]: Couldn't create the request: %s", test.name, err.Error())
+			continue
+		}
+
 		resp, err := client.Do(req)
 		if err != nil {
-			return fmt.Errorf("Couldn't send the request: %s", err.Error())
+			result[false] = append(result[false], test)
+			log.Printf("[%s]: Couldn't send the request: %s", test.name, err.Error())
+			continue
 		}
 
 		location, err := resp.Location()
 
 		if err == http.ErrNoLocation {
-			return fmt.Errorf("[%s]: Location header is empty", test.name)
+			result[false] = append(result[false], test)
+			log.Printf("[%s]: Location header is empty", test.name)
+			continue
 		}
 
 		if location.String() != test.expected {
-			return fmt.Errorf("[%s]: Expected %s, got %s", test.name, test.expected, location)
+			result[false] = append(result[false], test)
+			log.Printf("[%s]: Expected %s, got %s", test.name, test.expected, location)
+			continue
 		}
+		result[true] = append(result[true], test)
 	}
-	return nil
+	log.Printf("TestCase: \"host\", Total: %d, Passed: %d, Failed: %d", len(tests), len(result[true]), len(result[false]))
 }

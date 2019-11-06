@@ -46,7 +46,6 @@ var txts = map[string]string{
 
 	// type=path
 	"_redirect.fallbackpath.test.":        "v=txtv0;type=path;code=302;to=https://to.works.fine.test",
-	"_redirect.to.fallbackpath.test.":     "v=txtv0;type=path;to=https://to.works.fine.test;code=302",
 	"_redirect.refrom.fallbackpath.test.": "v=txtv0;type=path;re=exist;from=$1$2;to=https://to.works.fine.test;code=302",
 	"_redirect.lenfrom.test.":             "v=txtv0;type=path;from=$1$2$3;to=https://lenfrom.fallback.test;code=302",
 
@@ -191,21 +190,6 @@ func TestRedirectE2e(t *testing.T) {
 			enable:   []string{"path", "host"},
 		},
 		{
-			url:      "https://path.e2e.test/noversion",
-			expected: "https://noversion.fallback.path.test",
-			enable:   []string{"path", "host"},
-		},
-		{
-			url:      "https://path.e2e.test/noto",
-			expected: "",
-			enable:   []string{"path", "host"},
-		},
-		{
-			url:      "https://path.e2e.test/noroot",
-			expected: "https://noroot.fallback.path.test",
-			enable:   []string{"path", "host"},
-		},
-		{
 			url:      "https://pkg.txtdirect.test?go-get=1",
 			expected: "https://example.com/example/example",
 			enable:   []string{"gometa"},
@@ -247,6 +231,10 @@ func TestRedirectE2e(t *testing.T) {
 			referer:  true,
 		},
 		{
+			url:      "https://chained.e2e.test/x/y",
+			expected: "https://chaining.example.com",
+			enable:   []string{"path"},
+		}, {
 			url:      "https://regex.path.e2e.test/test1",
 			expected: "https://example.com/first/predefined/test1",
 			enable:   []string{"host", "path"},

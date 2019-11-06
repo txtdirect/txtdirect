@@ -15,6 +15,7 @@ type test struct {
 	name     string
 	args     data
 	expected string
+	referer  bool
 }
 
 var tests = []test{
@@ -49,6 +50,15 @@ var tests = []test{
 			path: "/",
 		},
 		expected: "http://noto.host.host.example.com/",
+	},
+	{
+		name: "Redirect to a host record's to= field and check referer header",
+		args: data{
+			host: "referer.host.host.example.com",
+			path: "/",
+		},
+		expected: "https://referer-redirect.host.host.example.com",
+		referer:  true,
 	},
 }
 
@@ -88,6 +98,13 @@ func main() {
 			log.Printf("[%s]: Expected %s, got %s", test.name, test.expected, location)
 			continue
 		}
+
+		if test.referer && resp.Header.Get("Referer") != req.Host {
+			result[false] = append(result[false], test)
+			log.Printf("Expected %s referer but got \"%s\"", req.Host, resp.Header.Get("Referer"))
+			continue
+		}
+
 		result[true] = append(result[true], test)
 	}
 	log.Printf("TestCase: \"host\", Total: %d, Passed: %d, Failed: %d", len(tests), len(result[true]), len(result[false]))

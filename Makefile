@@ -34,6 +34,7 @@ docker-build:
 
 endtoend-test:
 	cd e2e && \
+	docker build -t c.txtdirect.org/tester:0.0.1 . && \
 	GO111MODULE=on go run main.go
 
 version:

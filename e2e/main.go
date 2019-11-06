@@ -302,12 +302,9 @@ func (d *dockerManager) ExamineLogs() error {
 }
 
 func (d *dockerManager) WaitForLogs() error {
-	status, err := d.cli.ContainerWait(d.ctx, d.testerContainer.ID)
+	_, err := d.cli.ContainerWait(d.ctx, d.testerContainer.ID)
 	if err != nil {
 		return fmt.Errorf("Couldn't wait for the tester container: %s", err.Error())
-	}
-	if status != 0 {
-		return fmt.Errorf("Wait response's status code is wrong: %#+v", status)
 	}
 	return nil
 }

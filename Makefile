@@ -32,5 +32,9 @@ docker-build:
 	docker run --network=host -v $(shell pwd):/source -v $(GOPATH)/pkg/mod:/go/pkg/mod golang:1.13-alpine /bin/sh \
 	-c "cd /source && apk add git gcc musl-dev make && make build"
 
+endtoend-test:
+	cd e2e && \
+	GO111MODULE=on go run main.go
+
 version:
 	@echo $(VERSION)

@@ -33,28 +33,7 @@ import (
 
 // Testing TXT records
 var txts = map[string]string{
-	// type=host
-	"_redirect.host.e2e.test.":           "v=txtv0;to=https://plain.host.test;type=host;ref=true;code=302",
-	"_redirect.nocode.host.e2e.test.":    "v=txtv0;to=https://nocode.host.test;type=host",
-	"_redirect.noversion.host.e2e.test.": "to=https://noversion.host.test;type=host",
-	"_redirect.noto.host.e2e.test.":      "v=txtv0;type=host",
-	// type=path
-	"_redirect.path.e2e.test.":           "v=txtv0;to=https://fallback.path.test;root=https://root.fallback.test;type=path",
-	"_redirect.nocode.path.e2e.test.":    "v=txtv0;to=https://nocode.fallback.path.test;type=host",
-	"_redirect.noversion.path.e2e.test.": "to=https://noversion.fallback.path.test;type=path",
-	"_redirect.noto.path.e2e.test.":      "v=txtv0;type=path",
-	"_redirect.noroot.path.e2e.test.":    "v=txtv0;to=https://noroot.fallback.path.test;type=path;code=302",
-	"_redirect.metapath.e2e.test.":       "v=txtv0;type=path",
-	"_redirect.regex.path.e2e.test.":     "v=txtv0;re=record;to=https://example.com;type=path",
-	"_redirect.1.regex.path.e2e.test.":   "v=txtv0;re=\\/test1;to=https://example.com/first/predefined{1};type=host",
-	"_redirect.2.regex.path.e2e.test.":   "v=txtv0;re=\\/test1\\/test2;to=https://example.com/second/predefined{1};type=host",
-
-	// type=gometa
-	"_redirect.pkg.txtdirect.test.":           "v=txtv0;to=https://example.com/example/example;type=gometa;vcs=git",
-	"_redirect.pkgweb.metapath.e2e.test.":     "v=txtv0;to=https://example.com/example/example;type=gometa;website=https://godoc.org/go.txtdirect.org/txtdirect",
-	"_redirect.pkg.metapath.e2e.test.":        "v=txtv0;to=https://example.com/example/example;type=gometa",
-	"_redirect.second.pkg.metapath.e2e.test.": "v=txtv0;to=https://example.com/example/example;type=gometa",
-	// type=""
+	// query() function test records
 	"_redirect.about.test.": "v=txtv0;to=https://about.txtdirect.org",
 	"_redirect.pkg.test.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
 

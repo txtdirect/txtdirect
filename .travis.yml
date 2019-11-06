@@ -5,3 +5,4 @@ services:
 
 script:
   - make docker-test
+  - make endtoend-test

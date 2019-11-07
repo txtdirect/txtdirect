@@ -1,5 +1,5 @@
 FROM golang:1.13-alpine
 
-WORKDIR /root
+WORKDIR /e2e
 
 CMD [ "go" ]

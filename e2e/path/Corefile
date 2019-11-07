@@ -1,5 +1,5 @@
 .:53 {
-  file /root/zonefile example.com
+  file /e2e/zonefile example.com
   forward . 8.8.8.8
   errors stdout
   log

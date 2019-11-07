@@ -138,7 +138,7 @@ func (d *dockerManager) StartContainers() error {
 	// Create the CoreDNS container
 	d.cdContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
 		Image: "coredns/coredns",
-		Cmd:   []string{"-conf", "/root/Corefile"},
+		Cmd:   []string{"-conf", "/e2e/Corefile"},
 		ExposedPorts: nat.PortSet{
 			"53/tcp": struct{}{},
 			"53/udp": struct{}{},
@@ -148,7 +148,7 @@ func (d *dockerManager) StartContainers() error {
 			{
 				Type:   mount.TypeBind,
 				Source: d.cdir + "/" + d.dir,
-				Target: "/root",
+				Target: "/e2e",
 			},
 		},
 		PortBindings: nat.PortMap{
@@ -176,7 +176,7 @@ func (d *dockerManager) StartContainers() error {
 
 	d.txtdContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
 		Image: "okkur/txtdirect:0.4.0",
-		Cmd:   []string{"-conf", "/root/TXTD.config"},
+		Cmd:   []string{"-conf", "/e2e/TXTD.config"},
 		ExposedPorts: nat.PortSet{
 			"80/tcp": struct{}{},
 			"80/udp": struct{}{},
@@ -186,7 +186,7 @@ func (d *dockerManager) StartContainers() error {
 			{
 				Type:   mount.TypeBind,
 				Source: d.cdir + "/" + d.dir,
-				Target: "/root",
+				Target: "/e2e",
 			},
 		},
 		PortBindings: nat.PortMap{
@@ -252,7 +252,7 @@ func (d *dockerManager) RunTesterContainer() error {
 			{
 				Type:   mount.TypeBind,
 				Source: d.cdir + "/" + d.dir,
-				Target: "/root",
+				Target: "/e2e",
 			},
 		},
 	}, &network.NetworkingConfig{

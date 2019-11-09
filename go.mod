@@ -7,6 +7,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/caddyserver/caddy v1.0.3
 	github.com/captncraig/caddy-realip v0.0.0-20190710144553-6df827e22ab8
+	github.com/docker/docker v1.4.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/gorilla/sessions v1.1.3 // indirect

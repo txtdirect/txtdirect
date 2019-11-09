@@ -137,7 +137,7 @@ func (d *dockerManager) StartContainers() error {
 
 	// Create the CoreDNS container
 	d.cdContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
-		Image: "coredns/coredns",
+		Image: "k8s.gcr.io/coredns:1.6.2",
 		Cmd:   []string{"-conf", "/e2e/Corefile"},
 		ExposedPorts: nat.PortSet{
 			"53/tcp": struct{}{},
@@ -149,6 +149,11 @@ func (d *dockerManager) StartContainers() error {
 				Type:   mount.TypeBind,
 				Source: d.cdir + "/" + d.dir,
 				Target: "/e2e",
+			},
+			{
+				Type:   mount.TypeBind,
+				Source: "/home/stp-ip/go/pkg/mod",
+				Target: "/go/pkg/mod",
 			},
 		},
 		PortBindings: nat.PortMap{
@@ -187,6 +192,11 @@ func (d *dockerManager) StartContainers() error {
 				Type:   mount.TypeBind,
 				Source: d.cdir + "/" + d.dir,
 				Target: "/e2e",
+			},
+			{
+				Type:   mount.TypeBind,
+				Source: "/home/stp-ip/go/pkg/mod",
+				Target: "/go/pkg/mod",
 			},
 		},
 		PortBindings: nat.PortMap{
@@ -253,6 +263,11 @@ func (d *dockerManager) RunTesterContainer() error {
 				Type:   mount.TypeBind,
 				Source: d.cdir + "/" + d.dir,
 				Target: "/e2e",
+			},
+			{
+				Type:   mount.TypeBind,
+				Source: "/home/stp-ip/go/pkg/mod",
+				Target: "/go/pkg/mod",
 			},
 		},
 	}, &network.NetworkingConfig{

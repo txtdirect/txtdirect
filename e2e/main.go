@@ -104,7 +104,7 @@ func listDirectories(directories *[]string) error {
 // dockerManager instance
 func (d *dockerManager) CreateClient() error {
 	d.ctx = context.Background()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.WithVersion("1.39"))
 	if err != nil {
 		return fmt.Errorf("Couldn't start the Docker client: %s", err.Error())
 	}
@@ -302,9 +302,16 @@ func (d *dockerManager) ExamineLogs() error {
 }
 
 func (d *dockerManager) WaitForLogs() error {
-	_, err := d.cli.ContainerWait(d.ctx, d.testerContainer.ID)
-	if err != nil {
-		return fmt.Errorf("Couldn't wait for the tester container: %s", err.Error())
+	statusCh, errCh := d.cli.ContainerWait(d.ctx, d.testerContainer.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return fmt.Errorf("Couldn't wait for the tester container: %s", err.Error())
+		}
+	case status := <-statusCh:
+		if status.StatusCode != 0 {
+			return fmt.Errorf("Wait response's status code is wrong: %#+v", status.StatusCode)
+		}
 	}
 	return nil
 }

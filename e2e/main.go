@@ -27,8 +27,8 @@ type dockerManager struct {
 	cdir string
 
 	network             types.NetworkCreateResponse
-	txtdContainer       container.ContainerCreateCreatedBody
-	cdContainer         container.ContainerCreateCreatedBody
+	txtdirectContainer  container.ContainerCreateCreatedBody
+	dnsContainer        container.ContainerCreateCreatedBody
 	testerContainer     container.ContainerCreateCreatedBody
 	testerContainerLogs map[string][]byte
 
@@ -112,9 +112,9 @@ func (d *dockerManager) CreateClient() error {
 	return nil
 }
 
-// StartContainers starts a CoreDNS and a TXTDirect containers for each test-case
+// StartContainers starts a CoreDNS and a TXTDirect container for each test-case
 func (d *dockerManager) StartContainers() error {
-	// Get current working directory to create mount test-case's data to containers
+	// Get current working directory to create mountpoint to containers for test-case data
 	var err error
 	d.cdir, err = os.Getwd()
 	if err != nil {
@@ -136,7 +136,7 @@ func (d *dockerManager) StartContainers() error {
 	}
 
 	// Create the CoreDNS container
-	d.cdContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
+	d.dnsContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
 		Image: "coredns/coredns",
 		Cmd:   []string{"-conf", "/e2e/Corefile"},
 		ExposedPorts: nat.PortSet{
@@ -174,9 +174,9 @@ func (d *dockerManager) StartContainers() error {
 		return fmt.Errorf("Couldn't create the CoreDNS container: %s", err.Error())
 	}
 
-	d.txtdContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
+	d.txtdirectContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
 		Image: "okkur/txtdirect:0.4.0",
-		Cmd:   []string{"-conf", "/e2e/TXTD.config"},
+		Cmd:   []string{"-conf", "/e2e/txtdirect.config"},
 		ExposedPorts: nat.PortSet{
 			"80/tcp": struct{}{},
 			"80/udp": struct{}{},
@@ -213,12 +213,12 @@ func (d *dockerManager) StartContainers() error {
 	}
 
 	// Start the CoreDNS container
-	if err := d.cli.ContainerStart(d.ctx, d.cdContainer.ID, types.ContainerStartOptions{}); err != nil {
+	if err := d.cli.ContainerStart(d.ctx, d.dnsContainer.ID, types.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("Couldn't start the CoreDNS container: %s", err.Error())
 	}
 
 	// Start the TXTDirect container
-	if err := d.cli.ContainerStart(d.ctx, d.txtdContainer.ID, types.ContainerStartOptions{}); err != nil {
+	if err := d.cli.ContainerStart(d.ctx, d.txtdirectContainer.ID, types.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("Couldn't start the TXTDirect container: %s", err.Error())
 	}
 
@@ -226,10 +226,10 @@ func (d *dockerManager) StartContainers() error {
 }
 
 func (d *dockerManager) StopContainers() error {
-	if err := d.cli.ContainerStop(d.ctx, d.cdContainer.ID, nil); err != nil {
+	if err := d.cli.ContainerStop(d.ctx, d.dnsContainer.ID, nil); err != nil {
 		return fmt.Errorf("Couldn't remove the CoreDNS container: %s", err.Error())
 	}
-	if err := d.cli.ContainerStop(d.ctx, d.txtdContainer.ID, nil); err != nil {
+	if err := d.cli.ContainerStop(d.ctx, d.txtdirectContainer.ID, nil); err != nil {
 		return fmt.Errorf("Couldn't remove the TXTDirect container: %s", err.Error())
 	}
 	if err := d.cli.ContainerStop(d.ctx, d.testerContainer.ID, nil); err != nil {

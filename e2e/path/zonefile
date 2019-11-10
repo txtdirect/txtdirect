@@ -8,7 +8,7 @@
 @                  86400 IN NS      ns.example.net.
 @                  86400 IN NS      ns.example.nl.
 
-$TTL 1H
+$TTL 1h
 
 example.com.                                           IN A 172.20.10.2
 
@@ -17,7 +17,7 @@ noversion.path.path.example.com.                       IN A 172.20.10.2
 _redirect.noversion.path.path.example.com.             IN TXT "to=https://noversion-redirect.path.path.example.com;type=path"
 
 noroot.path.path.example.com.                          IN A 172.20.10.2
-_redirect.noroot.path.path.example.com.                IN TXT "v=txtv0;to=https://noroot-redicte.path.path.example.com;type=path;code=302"
+_redirect.noroot.path.path.example.com.                IN TXT "v=txtv0;to=https://noroot-redirect.path.path.example.com;type=path;code=302"
 
 predefined-regex.path.path.example.com.                IN A 172.20.10.2
 _redirect.predefined-regex.path.path.example.com.      IN TXT "v=txtv0;re=record;to=https://regex-redirect.path.path.example.com;type=path"

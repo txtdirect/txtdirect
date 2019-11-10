@@ -21,10 +21,11 @@ import (
 var resultRegex = regexp.MustCompile("Total:+\\s(\\d+),\\sPassed:+\\s(\\d+),\\sFailed:+\\s(\\d+)")
 
 type dockerManager struct {
-	ctx  context.Context
-	cli  *client.Client
-	dir  string
-	cdir string
+	ctx       context.Context
+	cli       *client.Client
+	dir       string
+	cdir      string
+	gomodpath string
 
 	network             types.NetworkCreateResponse
 	txtdirectContainer  container.ContainerCreateCreatedBody
@@ -104,7 +105,7 @@ func listDirectories(directories *[]string) error {
 // dockerManager instance
 func (d *dockerManager) CreateClient() error {
 	d.ctx = context.Background()
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.39"))
+	cli, err := client.NewEnvClient()
 	if err != nil {
 		return fmt.Errorf("Couldn't start the Docker client: %s", err.Error())
 	}
@@ -120,6 +121,11 @@ func (d *dockerManager) StartContainers() error {
 	if err != nil {
 		return fmt.Errorf("Couldn't get the current working directory: %s", err.Error())
 	}
+
+	if os.Getenv("GOPATH") == "" {
+		return fmt.Errorf("$GOPATH is empty")
+	}
+	d.gomodpath = fmt.Sprintf("%s/pkg/mod", os.Getenv("GOPATH"))
 
 	d.network, err = d.cli.NetworkCreate(d.ctx, "coretxtd", types.NetworkCreate{
 		IPAM: &network.IPAM{
@@ -137,7 +143,7 @@ func (d *dockerManager) StartContainers() error {
 
 	// Create the CoreDNS container
 	d.dnsContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
-		Image: "coredns/coredns",
+		Image: "k8s.gcr.io/coredns:1.6.2",
 		Cmd:   []string{"-conf", "/e2e/Corefile"},
 		ExposedPorts: nat.PortSet{
 			"53/tcp": struct{}{},
@@ -149,6 +155,11 @@ func (d *dockerManager) StartContainers() error {
 				Type:   mount.TypeBind,
 				Source: d.cdir + "/" + d.dir,
 				Target: "/e2e",
+			},
+			{
+				Type:   mount.TypeBind,
+				Source: d.gomodpath,
+				Target: "/go/pkg/mod",
 			},
 		},
 		PortBindings: nat.PortMap{
@@ -187,6 +198,11 @@ func (d *dockerManager) StartContainers() error {
 				Type:   mount.TypeBind,
 				Source: d.cdir + "/" + d.dir,
 				Target: "/e2e",
+			},
+			{
+				Type:   mount.TypeBind,
+				Source: d.gomodpath,
+				Target: "/go/pkg/mod",
 			},
 		},
 		PortBindings: nat.PortMap{
@@ -254,6 +270,11 @@ func (d *dockerManager) RunTesterContainer() error {
 				Source: d.cdir + "/" + d.dir,
 				Target: "/e2e",
 			},
+			{
+				Type:   mount.TypeBind,
+				Source: d.gomodpath,
+				Target: "/go/pkg/mod",
+			},
 		},
 	}, &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
@@ -302,16 +323,9 @@ func (d *dockerManager) ExamineLogs() error {
 }
 
 func (d *dockerManager) WaitForLogs() error {
-	statusCh, errCh := d.cli.ContainerWait(d.ctx, d.testerContainer.ID, container.WaitConditionNotRunning)
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return fmt.Errorf("Couldn't wait for the tester container: %s", err.Error())
-		}
-	case status := <-statusCh:
-		if status.StatusCode != 0 {
-			return fmt.Errorf("Wait response's status code is wrong: %#+v", status.StatusCode)
-		}
+	_, err := d.cli.ContainerWait(d.ctx, d.testerContainer.ID)
+	if err != nil {
+		return fmt.Errorf("Couldn't wait for the tester container: %s", err.Error())
 	}
 	return nil
 }

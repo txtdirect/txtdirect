@@ -18,6 +18,13 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
+const (
+	corednsImage = "k8s.gcr.io/coredns:1.6.2"
+	testerImage  = "c.txtdirect.org/tester:dirty"
+)
+
+var txtdirectImage = fmt.Sprintf("c.txtdirect.org/txtdirect:%s-dirty", os.Getenv("VERSION"))
+
 var resultRegex = regexp.MustCompile("Total:+\\s(\\d+),\\sPassed:+\\s(\\d+),\\sFailed:+\\s(\\d+)")
 
 type dockerManager struct {
@@ -47,6 +54,10 @@ func main() {
 
 	if err := d.CreateClient(); err != nil {
 		log.Fatalf("[txtdirect_e2e]: Docker daemon didn't respond to client: %s", err)
+	}
+
+	if err := d.PullImages(); err != nil {
+		log.Fatalf("[txtdirect_e2e]: Couldn't pull images: %s", err)
 	}
 
 	var directories []string
@@ -105,7 +116,7 @@ func listDirectories(directories *[]string) error {
 // dockerManager instance
 func (d *dockerManager) CreateClient() error {
 	d.ctx = context.Background()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.WithVersion("1.39"))
 	if err != nil {
 		return fmt.Errorf("Couldn't start the Docker client: %s", err.Error())
 	}
@@ -143,7 +154,7 @@ func (d *dockerManager) StartContainers() error {
 
 	// Create the CoreDNS container
 	d.dnsContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
-		Image: "k8s.gcr.io/coredns:1.6.2",
+		Image: corednsImage,
 		Cmd:   []string{"-conf", "/e2e/Corefile"},
 		ExposedPorts: nat.PortSet{
 			"53/tcp": struct{}{},
@@ -186,7 +197,7 @@ func (d *dockerManager) StartContainers() error {
 	}
 
 	d.txtdirectContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
-		Image: "okkur/txtdirect:0.4.0",
+		Image: txtdirectImage,
 		Cmd:   []string{"-conf", "/e2e/txtdirect.config"},
 		ExposedPorts: nat.PortSet{
 			"80/tcp": struct{}{},
@@ -260,7 +271,7 @@ func (d *dockerManager) StopContainers() error {
 func (d *dockerManager) RunTesterContainer() error {
 	var err error
 	d.testerContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
-		Image: "c.txtdirect.org/tester:0.0.1",
+		Image: testerImage,
 		Cmd:   []string{"go", "run", "main.go"},
 	}, &container.HostConfig{
 		DNS: []string{"172.20.10.1"},
@@ -323,10 +334,18 @@ func (d *dockerManager) ExamineLogs() error {
 }
 
 func (d *dockerManager) WaitForLogs() error {
-	_, err := d.cli.ContainerWait(d.ctx, d.testerContainer.ID)
-	if err != nil {
-		return fmt.Errorf("Couldn't wait for the tester container: %s", err.Error())
+	statusCh, errCh := d.cli.ContainerWait(d.ctx, d.testerContainer.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return fmt.Errorf("Couldn't wait for the tester container: %s", err.Error())
+		}
+	case status := <-statusCh:
+		if status.StatusCode != 0 {
+			return fmt.Errorf("Wait response's status code is wrong: %#+v", status.StatusCode)
+		}
 	}
+
 	return nil
 }
 
@@ -349,5 +368,17 @@ func (d *dockerManager) CountStats(stats []string) error {
 	}
 	d.stats.failed += failed
 
+	return nil
+}
+
+func (d *dockerManager) PullImages() error {
+	_, err := d.cli.ImagePull(d.ctx, corednsImage, types.ImagePullOptions{})
+	if err != nil {
+		return fmt.Errorf("Coudln't pull the CoreDNS image: %s", err.Error())
+	}
+	_, err = d.cli.ImagePull(d.ctx, txtdirectImage, types.ImagePullOptions{})
+	if err != nil {
+		return fmt.Errorf("Coudln't pull the TXTDirect image: %s", err.Error())
+	}
 	return nil
 }

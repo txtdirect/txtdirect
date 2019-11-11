@@ -1,7 +1,7 @@
 BIN := txtdirect
-MAINTAINER := okkur
+DOMAIN := c.txtdirect.org
 VERSION := 0.4.0
-IMAGE := $(MAINTAINER)/$(BIN):$(VERSION)
+IMAGE := $(DOMAIN)/$(BIN):$(VERSION)
 
 BUILD_GOOS := $(if $(GOOS),$(GOOS),linux)
 BUILD_GOARCH := $(if $(GOARCH),$(GOARCH),amd64)
@@ -32,10 +32,11 @@ docker-build:
 	docker run --network=host -v $(shell pwd):/source -v $(GOPATH)/pkg/mod:/go/pkg/mod golang:1.13-alpine /bin/sh \
 	-c "cd /source && apk add git gcc musl-dev make && make build"
 
-endtoend-test:
+endtoend-test: image-build
+	docker tag $(IMAGE) $(IMAGE)-dirty && \
 	cd e2e && \
-	docker build -t c.txtdirect.org/tester:0.0.1 . && \
-	GO111MODULE=on go run main.go
+	docker build -t c.txtdirect.org/tester:dirty . && \
+	VERSION=$(VERSION)-dirty GO111MODULE=on go run main.go
 
 version:
 	@echo $(VERSION)

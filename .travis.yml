@@ -8,6 +8,5 @@ cache:
     - $GOPATH/pkg/mod
 
 script:
-  - mkdir -p $GOPATH/pkg/mod/cache/vcs
   - make docker-test
   - make endtoend-test

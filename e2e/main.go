@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -23,7 +24,7 @@ const (
 	testerImage  = "c.txtdirect.org/tester:dirty"
 )
 
-var txtdirectImage = fmt.Sprintf("c.txtdirect.org/txtdirect:%s-dirty", os.Getenv("VERSION"))
+var txtdirectImage = fmt.Sprintf("c.txtdirect.org/txtdirect:%s", os.Getenv("VERSION"))
 
 var resultRegex = regexp.MustCompile("Total:+\\s(\\d+),\\sPassed:+\\s(\\d+),\\sFailed:+\\s(\\d+)")
 
@@ -269,10 +270,15 @@ func (d *dockerManager) StopContainers() error {
 }
 
 func (d *dockerManager) RunTesterContainer() error {
-	var err error
+	user, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("Couldn't get the current user: %s", err.Error())
+	}
+
 	d.testerContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
 		Image: testerImage,
 		Cmd:   []string{"go", "run", "main.go"},
+		User:  fmt.Sprintf("%s:%s", user.Uid, user.Gid),
 	}, &container.HostConfig{
 		DNS: []string{"172.20.10.1"},
 		Mounts: []mount.Mount{

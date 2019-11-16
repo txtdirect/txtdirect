@@ -32,8 +32,8 @@ docker-build:
 	docker run --user $(id -u):$(id -g) --network=host -v $(shell pwd):/source -v $(GOPATH)/pkg/mod:/go/pkg/mod golang:1.13-alpine /bin/sh \
 	-c "cd /source && apk add git gcc musl-dev make && make build"
 
-endtoend-test: image-build
-	docker tag $(IMAGE) $(IMAGE)-dirty && \
+endtoend-test: docker-build
+	docker build -t $(IMAGE)-dirty .
 	cd e2e && \
 	docker build -t c.txtdirect.org/tester:dirty . && \
 	VERSION=$(VERSION)-dirty GO111MODULE=on go run main.go

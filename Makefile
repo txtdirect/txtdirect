@@ -25,11 +25,11 @@ docker-run: image-build
 	docker run --name $(CONTAINER) $(IMAGE)
 
 docker-test:
-	docker run --user $(id -u):$(id -g) --network=host -v $(shell pwd):/source -v $(GOPATH)/pkg/mod:/go/pkg/mod golang:1.13-alpine /bin/sh \
+	docker run --user $(shell id -u):$(shell id -g) --network=host -v $(shell pwd):/source -v $(GOPATH)/pkg/mod:/go/pkg/mod golang:1.13-alpine /bin/sh \
 	-c "cd /source && apk add git gcc musl-dev make && GOROOT=\"/usr/local/go\" make test"
 
 docker-build:
-	docker run --user $(id -u):$(id -g) --network=host -v $(shell pwd):/source -v $(GOPATH)/pkg/mod:/go/pkg/mod golang:1.13-alpine /bin/sh \
+	docker run --user $(shell id -u):$(shell id -g) --network=host -v $(shell pwd):/source -v $(GOPATH)/pkg/mod:/go/pkg/mod golang:1.13-alpine /bin/sh \
 	-c "cd /source && apk add git gcc musl-dev make && make build"
 
 endtoend-test: docker-build

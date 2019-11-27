@@ -36,7 +36,7 @@ endtoend-test: docker-build
 	docker build -t $(IMAGE)-dirty .
 	cd e2e && \
 	docker build -t c.txtdirect.org/tester:dirty . && \
-	VERSION=$(VERSION)-dirty GO111MODULE=on go run main.go
+	VERSION=$(VERSION)-dirty go run main.go
 
 version:
 	@echo $(VERSION)

@@ -32,7 +32,7 @@ var tests = []test{
 			host: "noroot.path.path.example.com",
 			path: "/",
 		},
-		expected: "https://noroot-redicte.path.path.example.com",
+		expected: "https://noroot-redirect.path.path.example.com",
 	},
 	{
 		name: "Redirect a path record using predefined regex records",

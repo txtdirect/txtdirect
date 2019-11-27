@@ -1,22 +1,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
 	"regexp"
 	"strconv"
-
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 )
 
 const (
@@ -29,16 +21,10 @@ var txtdirectImage = fmt.Sprintf("c.txtdirect.org/txtdirect:%s", os.Getenv("VERS
 var resultRegex = regexp.MustCompile("Total:+\\s(\\d+),\\sPassed:+\\s(\\d+),\\sFailed:+\\s(\\d+)")
 
 type dockerManager struct {
-	ctx       context.Context
-	cli       *client.Client
 	dir       string
 	cdir      string
 	gomodpath string
 
-	network             types.NetworkCreateResponse
-	txtdirectContainer  container.ContainerCreateCreatedBody
-	dnsContainer        container.ContainerCreateCreatedBody
-	testerContainer     container.ContainerCreateCreatedBody
 	testerContainerLogs map[string][]byte
 
 	stats struct {
@@ -53,12 +39,8 @@ func main() {
 		testerContainerLogs: make(map[string][]byte),
 	}
 
-	if err := d.CreateClient(); err != nil {
+	if err := d.CheckClient(); err != nil {
 		log.Fatalf("[txtdirect_e2e]: Docker daemon didn't respond to client: %s", err)
-	}
-
-	if err := d.PullImages(); err != nil {
-		log.Fatalf("[txtdirect_e2e]: Couldn't pull images: %s", err)
 	}
 
 	var directories []string
@@ -76,14 +58,6 @@ func main() {
 
 		if err := d.RunTesterContainer(); err != nil {
 			log.Fatalf("[txtdirect_e2e]: Couldn't run the tests in container: %s", err.Error())
-		}
-
-		if err := d.WaitForLogs(); err != nil {
-			log.Fatalf("[txtdirect_e2e]: Couldn't wait for the logs: %s", err.Error())
-		}
-
-		if err := d.ReadTestLogs(); err != nil {
-			log.Fatalf("[txtdirect_e2e]: Couldn't read the tests logs: %s", err.Error())
 		}
 
 		if err := d.StopContainers(); err != nil {
@@ -113,15 +87,13 @@ func listDirectories(directories *[]string) error {
 	})
 }
 
-// CreateClient creates a Docker client and context and attaches them to the
-// dockerManager instance
-func (d *dockerManager) CreateClient() error {
-	d.ctx = context.Background()
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.39"))
+// CheckClient calls the "docker info" command to check if Docker daemon and CLI exist
+func (d *dockerManager) CheckClient() error {
+	_, err := exec.Command("docker", "info").CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Couldn't start the Docker client: %s", err.Error())
+		return fmt.Errorf("Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?")
 	}
-	d.cli = cli
+
 	return nil
 }
 
@@ -134,194 +106,127 @@ func (d *dockerManager) StartContainers() error {
 		return fmt.Errorf("Couldn't get the current working directory: %s", err.Error())
 	}
 
+	// Fetch GOPATH for mounting /go/pkg/mod volumes
 	if os.Getenv("GOPATH") == "" {
 		return fmt.Errorf("$GOPATH is empty")
 	}
 	d.gomodpath = fmt.Sprintf("%s/pkg/mod", os.Getenv("GOPATH"))
 
-	d.network, err = d.cli.NetworkCreate(d.ctx, "coretxtd", types.NetworkCreate{
-		IPAM: &network.IPAM{
-			Config: []network.IPAMConfig{
-				{
-					IPRange: "172.20.10.0/24",
-					Subnet:  "172.20.0.0/16",
-				},
-			},
-		},
-	})
+	// Create a Docker network for containers
+	_, err = exec.Command("docker", "network", "create", "--ip-range=\"172.20.10.0/24\"", "--subnet=\"172.20.0.0/16\"", "coretxtd").CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Couldn't create the network adaptor: %s", err.Error())
 	}
 
 	// Create the CoreDNS container
-	d.dnsContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
-		Image: corednsImage,
-		Cmd:   []string{"-conf", "/e2e/Corefile"},
-		ExposedPorts: nat.PortSet{
-			"53/tcp": struct{}{},
-			"53/udp": struct{}{},
-		},
-	}, &container.HostConfig{
-		Mounts: []mount.Mount{
-			{
-				Type:   mount.TypeBind,
-				Source: d.cdir + "/" + d.dir,
-				Target: "/e2e",
-			},
-			{
-				Type:   mount.TypeBind,
-				Source: d.gomodpath,
-				Target: "/go/pkg/mod",
-			},
-		},
-		PortBindings: nat.PortMap{
-			"53/tcp": []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "53",
-				},
-			},
-			"53/udp": []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "53",
-				},
-			},
-		},
-	}, &network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{
-			"coretxtd": &network.EndpointSettings{NetworkID: d.network.ID},
-		},
-	}, "")
+	_, err = exec.Command("docker",
+		"container", "run",
+		"-d",
+		// Exposed Ports
+		"-p", "53:53",
+		// Mounted volumes
+		"-v", fmt.Sprintf("%s/%s:/e2e", d.cdir, d.dir),
+		"-v", fmt.Sprintf("%s:/go/pkg/mod", d.gomodpath),
+		// Network
+		"--network", "coretxtd",
+		// Container Name
+		"--name", "e2e_coredns_container",
+		corednsImage,
+		// CMD
+		"-conf",
+		"/e2e/Corefile",
+	).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Couldn't create the CoreDNS container: %s", err.Error())
 	}
 
-	d.txtdirectContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
-		Image: txtdirectImage,
-		Cmd:   []string{"-conf", "/e2e/txtdirect.config"},
-		ExposedPorts: nat.PortSet{
-			"80/tcp": struct{}{},
-			"80/udp": struct{}{},
-		},
-	}, &container.HostConfig{
-		Mounts: []mount.Mount{
-			{
-				Type:   mount.TypeBind,
-				Source: d.cdir + "/" + d.dir,
-				Target: "/e2e",
-			},
-			{
-				Type:   mount.TypeBind,
-				Source: d.gomodpath,
-				Target: "/go/pkg/mod",
-			},
-		},
-		PortBindings: nat.PortMap{
-			"80/tcp": []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "80",
-				},
-			},
-			"80/udp": []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "80",
-				},
-			},
-		},
-	}, &network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{
-			"coretxtd": &network.EndpointSettings{NetworkID: d.network.ID},
-		},
-	}, "")
+	// Create the TXTDirect container
+	_, err = exec.Command("docker",
+		"container", "run",
+		"-d",
+		// Exposed Ports
+		"-p", "80:80",
+		// Mounted volumes
+		"-v", fmt.Sprintf("%s/%s:/e2e", d.cdir, d.dir),
+		"-v", fmt.Sprintf("%s:/go/pkg/mod", d.gomodpath),
+		// Network
+		"--network", "coretxtd",
+		// Container Name
+		"--name", "e2e_txtdirect_container",
+		txtdirectImage,
+		// CMD
+		"-conf",
+		"/e2e/txtdirect.config",
+	).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Couldn't create the TXTDirect container: %s", err.Error())
-	}
-
-	// Start the CoreDNS container
-	if err := d.cli.ContainerStart(d.ctx, d.dnsContainer.ID, types.ContainerStartOptions{}); err != nil {
-		return fmt.Errorf("Couldn't start the CoreDNS container: %s", err.Error())
-	}
-
-	// Start the TXTDirect container
-	if err := d.cli.ContainerStart(d.ctx, d.txtdirectContainer.ID, types.ContainerStartOptions{}); err != nil {
-		return fmt.Errorf("Couldn't start the TXTDirect container: %s", err.Error())
 	}
 
 	return nil
 }
 
 func (d *dockerManager) StopContainers() error {
-	if err := d.cli.ContainerStop(d.ctx, d.dnsContainer.ID, nil); err != nil {
+	_, err := exec.Command("docker",
+		"container", "rm", "-f",
+		"e2e_coredns_container",
+	).CombinedOutput()
+	if err != nil {
 		return fmt.Errorf("Couldn't remove the CoreDNS container: %s", err.Error())
 	}
-	if err := d.cli.ContainerStop(d.ctx, d.txtdirectContainer.ID, nil); err != nil {
+
+	_, err = exec.Command("docker",
+		"container", "rm", "-f",
+		"e2e_txtdirect_container",
+	).CombinedOutput()
+	if err != nil {
 		return fmt.Errorf("Couldn't remove the TXTDirect container: %s", err.Error())
 	}
-	if err := d.cli.ContainerStop(d.ctx, d.testerContainer.ID, nil); err != nil {
+
+	_, err = exec.Command("docker",
+		"container", "rm", "-f",
+		fmt.Sprintf("e2e_%s_container", d.dir),
+	).CombinedOutput()
+	if err != nil {
 		return fmt.Errorf("Couldn't remove the tester container: %s", err.Error())
 	}
-	if err := d.cli.NetworkRemove(d.ctx, d.network.ID); err != nil {
-		return fmt.Errorf("Couldn't remove the network adaptor: %s", err.Error())
+
+	_, err = exec.Command("docker",
+		"network", "rm",
+		"coretxtd",
+	).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Couldn't remove the TXTDirect container: %s", err.Error())
 	}
+
 	return nil
 }
 
 func (d *dockerManager) RunTesterContainer() error {
-	user, err := user.Current()
+	_, err := user.Current()
 	if err != nil {
 		return fmt.Errorf("Couldn't get the current user: %s", err.Error())
 	}
 
-	d.testerContainer, err = d.cli.ContainerCreate(d.ctx, &container.Config{
-		Image: testerImage,
-		Cmd:   []string{"go", "run", "main.go"},
-		User:  fmt.Sprintf("%s:%s", user.Uid, user.Gid),
-	}, &container.HostConfig{
-		DNS: []string{"172.20.10.1"},
-		Mounts: []mount.Mount{
-			{
-				Type:   mount.TypeBind,
-				Source: d.cdir + "/" + d.dir,
-				Target: "/e2e",
-			},
-			{
-				Type:   mount.TypeBind,
-				Source: d.gomodpath,
-				Target: "/go/pkg/mod",
-			},
-		},
-	}, &network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{
-			"coretxtd": &network.EndpointSettings{NetworkID: d.network.ID},
-		},
-	}, "")
+	// Create the tester container
+	d.testerContainerLogs[d.dir], err = exec.Command("docker",
+		"container", "run",
+		// Mounted volumes
+		"-v", fmt.Sprintf("%s/%s:/e2e", d.cdir, d.dir),
+		"-v", fmt.Sprintf("%s:/go/pkg/mod", d.gomodpath),
+		// DNS
+		"--dns", "172.20.10.1",
+		// Network
+		"--network", "coretxtd",
+		// Container Name
+		"--name", fmt.Sprintf("e2e_%s_container", d.dir),
+		testerImage,
+		// CMD
+		"go", "run", "main.go",
+	).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Couldn't create the tester container: %s", err.Error())
 	}
 
-	if err := d.cli.ContainerStart(d.ctx, d.testerContainer.ID, types.ContainerStartOptions{}); err != nil {
-		return fmt.Errorf("Couldn't start the tester container: %s", err.Error())
-	}
-
-	return nil
-}
-
-func (d *dockerManager) ReadTestLogs() error {
-	logsReader, err := d.cli.ContainerLogs(d.ctx, d.testerContainer.ID, types.ContainerLogsOptions{
-		ShowStdout: true,
-		ShowStderr: true,
-	})
-	if err != nil {
-		return fmt.Errorf("Couldn't get the tester container logs: %s", err.Error())
-	}
-
-	d.testerContainerLogs[d.dir], err = ioutil.ReadAll(logsReader)
-	if err != nil {
-		return fmt.Errorf("Couldn't read the tester container logs: %s", err.Error())
-	}
 	return nil
 }
 
@@ -336,22 +241,6 @@ func (d *dockerManager) ExamineLogs() error {
 		}
 	}
 	log.Printf("Total Tests: %d, Total Passed Tests: %d, Total Failed Tests: %d", d.stats.total, d.stats.passed, d.stats.failed)
-	return nil
-}
-
-func (d *dockerManager) WaitForLogs() error {
-	statusCh, errCh := d.cli.ContainerWait(d.ctx, d.testerContainer.ID, container.WaitConditionNotRunning)
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return fmt.Errorf("Couldn't wait for the tester container: %s", err.Error())
-		}
-	case status := <-statusCh:
-		if status.StatusCode != 0 {
-			return fmt.Errorf("Wait response's status code is wrong: %#+v", status.StatusCode)
-		}
-	}
-
 	return nil
 }
 
@@ -374,17 +263,5 @@ func (d *dockerManager) CountStats(stats []string) error {
 	}
 	d.stats.failed += failed
 
-	return nil
-}
-
-func (d *dockerManager) PullImages() error {
-	_, err := d.cli.ImagePull(d.ctx, corednsImage, types.ImagePullOptions{})
-	if err != nil {
-		return fmt.Errorf("Coudln't pull the CoreDNS image: %s", err.Error())
-	}
-	_, err = d.cli.ImagePull(d.ctx, txtdirectImage, types.ImagePullOptions{})
-	if err != nil {
-		return fmt.Errorf("Coudln't pull the TXTDirect image: %s", err.Error())
-	}
 	return nil
 }

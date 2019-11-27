@@ -1,4 +1,7 @@
-language: minimal
+language: go
+
+go:
+  - 1.13
 
 services:
   - docker

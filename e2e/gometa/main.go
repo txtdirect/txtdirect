@@ -44,6 +44,14 @@ var tests = []test{
 		},
 		expected: "https://gometa-redirect.gometa.path.example.com/second/golang/package",
 	},
+	{
+		name: "Fallback to path record's \"to=\" when gometa's \"to=\" is empty",
+		args: data{
+			host: "fallback.gometa.path.example.com",
+			path: "/fallback-empty-to",
+		},
+		expected: "https://fallback-to.gometa.path.example.com",
+	},
 }
 
 func main() {

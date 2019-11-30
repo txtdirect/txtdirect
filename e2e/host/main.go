@@ -16,6 +16,7 @@ type test struct {
 	args     data
 	expected string
 	referer  bool
+	status   int
 }
 
 var tests = []test{
@@ -60,6 +61,14 @@ var tests = []test{
 		expected: "https://referer-redirect.host.host.example.com",
 		referer:  true,
 	},
+	{
+		name: "Fallback to 404",
+		args: data{
+			host: "fallback.host.host.example.com",
+			path: "/",
+		},
+		status: 404,
+	},
 }
 
 func main() {
@@ -82,6 +91,17 @@ func main() {
 		if err != nil {
 			result[false] = append(result[false], test)
 			log.Printf("[%s]: Couldn't send the request: %s", test.name, err.Error())
+			continue
+		}
+
+		// Check response's status code
+		if test.status != 0 {
+			if resp.StatusCode != test.status {
+				result[false] = append(result[false], test)
+				log.Printf("[%s]: Expected %d status code, got %d", test.name, test.status, resp.StatusCode)
+				continue
+			}
+			result[true] = append(result[true], test)
 			continue
 		}
 

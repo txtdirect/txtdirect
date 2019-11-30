@@ -113,5 +113,5 @@ func main() {
 
 		result[true] = append(result[true], test)
 	}
-	log.Printf("TestCase: \"dockerv2_fallback\", Total: %d, Passed: %d, Failed: %d", len(tests), len(result[true]), len(result[false]))
+	log.Printf("TestCase: \"dockerv2\", Total: %d, Passed: %d, Failed: %d", len(tests), len(result[true]), len(result[false]))
 }

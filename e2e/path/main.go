@@ -50,6 +50,30 @@ var tests = []test{
 		},
 		expected: "https://predefined-redirect.host.path.example.com/second/test1/test2",
 	},
+	{
+		name: "Fallback to \"to=\" when wildcard not found",
+		args: data{
+			host: "path.path.example.com",
+			path: "/not/found",
+		},
+		expected: "https://fallback-to.path.path.example.com",
+	},
+	{
+		name: "Fallback to \"to=\" when \"re=\" and \"from=\" both exist",
+		args: data{
+			host: "fallback-refrom.path.path.example.com",
+			path: "/",
+		},
+		expected: "https://fallback-to.path.path.example.com",
+	},
+	{
+		name: "Fallback to \"to=\" when \"from=\" length doesn't match request's path length",
+		args: data{
+			host: "fallback-lenfrom.path.path.example.com",
+			path: "/",
+		},
+		expected: "https://fallback-to.path.path.example.com",
+	},
 }
 
 func main() {

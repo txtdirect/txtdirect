@@ -13,9 +13,15 @@ $TTL 1h
 example.com.                IN A 172.20.10.2
 
 
-package.git.git.example.com.             IN A 172.20.10.2
-_redirect.package.git.git.example.com.   IN TXT "v=txtv0;to=https://github.com/okkur/torproxy.git;type=git" 
+package.git.git.example.com.              IN A 172.20.10.2
+_redirect.package.git.git.example.com.    IN TXT "v=txtv0;to=https://github.com/okkur/torproxy.git;type=git" 
 
-git.path.example.com.             IN A 172.20.10.2
-_redirect.git.path.example.com.   IN TXT "v=txtv0;to=https://fallback-to.git.path.example.com;type=path" 
+git.path.example.com.                     IN A 172.20.10.2
+_redirect.git.path.example.com.           IN TXT "v=txtv0;to=https://fallback-to.git.path.example.com;type=path" 
 _redirect.package.git.path.example.com.   IN TXT "v=txtv0;to=https://github.com/okkur/torproxy.git;type=git" 
+
+fallback.git.git.example.com.             IN A 172.20.10.2
+_redirect.fallback.git.git.example.com.   IN TXT "v=txtv0;to=https://example.com/example/example.git;website=https://fallback-website.git.git.example.com;type=git"
+
+fallback.git.path.example.com.            IN A 172.20.10.2
+_redirect.fallback.git.path.example.com.  IN TXT "v=txtv0;to=https://example.com/example/example.git;website=https://fallback-website.git.path.example.com;type=git"

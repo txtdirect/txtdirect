@@ -1,6 +1,0 @@
-.:53 {
-  file /e2e/zonefile example.com
-  forward . 8.8.8.8
-  errors stdout
-  log
-}

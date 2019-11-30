@@ -44,9 +44,6 @@ var txts = map[string]string{
 	//	Fallback records
 	//
 
-	// type=host
-	"_redirect.fallbackhost.test.": "v=txtv0;to=https://{label3};type=host;code=302",
-
 	// type=path
 	"_redirect.fallbackpath.test.":        "v=txtv0;type=path;code=302;to=https://to.works.fine.test",
 	"_redirect.refrom.fallbackpath.test.": "v=txtv0;type=path;re=exist;from=$1$2;to=https://to.works.fine.test;code=302",

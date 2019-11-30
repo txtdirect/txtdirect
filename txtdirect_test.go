@@ -44,11 +44,6 @@ var txts = map[string]string{
 	//	Fallback records
 	//
 
-	// type=path
-	"_redirect.fallbackpath.test.":        "v=txtv0;type=path;code=302;to=https://to.works.fine.test",
-	"_redirect.refrom.fallbackpath.test.": "v=txtv0;type=path;re=exist;from=$1$2;to=https://to.works.fine.test;code=302",
-	"_redirect.lenfrom.test.":             "v=txtv0;type=path;from=$1$2$3;to=https://lenfrom.fallback.test;code=302",
-
 	// type=dockerv2
 	"_redirect.fallbackdockerv2.test.":       "v=txtv0;to=https://docker.to.test/;root=https://docker.root.test;type=dockerv2",
 	"_redirect.wrong.fallbackdockerv2.test.": "v=txtv0;to=:/wrong.uri/;type=dockerv2;website=https://gcr.io/",

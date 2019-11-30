@@ -70,5 +70,5 @@ func main() {
 
 		result[true] = append(result[true], test)
 	}
-	log.Printf("TestCase: \"gometa_fallback\", Total: %d, Passed: %d, Failed: %d", len(tests), len(result[true]), len(result[false]))
+	log.Printf("TestCase: \"git_fallback\", Total: %d, Passed: %d, Failed: %d", len(tests), len(result[true]), len(result[false]))
 }

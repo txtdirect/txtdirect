@@ -95,7 +95,7 @@ func (p *Path) RedirectRoot() error {
 	p.rw.Header().Add("Status-Code", strconv.Itoa(p.rec.Code))
 	http.Redirect(p.rw, p.req, p.rec.Root, p.rec.Code)
 	if p.c.Prometheus.Enable {
-		RequestsByStatus.WithLabelValues(p.req.Host, strconv.Itoa(p.rec.Code)).Add(1)
+		RequestsByStatus.WithLabelValues(strings.ToLower(p.req.Host), strconv.Itoa(p.rec.Code)).Add(1)
 	}
 	return nil
 }

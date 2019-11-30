@@ -63,8 +63,8 @@ func fallback(w http.ResponseWriter, r *http.Request, fallbackType string, code 
 
 func (f *Fallback) countFallback(recType string) {
 	if f.config.Prometheus.Enable {
-		FallbacksCount.WithLabelValues(f.request.Host, recType, f.fallbackType).Add(1)
-		RequestsByStatus.WithLabelValues(f.request.URL.Host, strconv.Itoa(f.code)).Add(1)
+		FallbacksCount.WithLabelValues(strings.ToLower(f.request.Host), recType, f.fallbackType).Add(1)
+		RequestsByStatus.WithLabelValues(strings.ToLower(f.request.URL.Host), strconv.Itoa(f.code)).Add(1)
 	}
 }
 

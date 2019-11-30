@@ -19,6 +19,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
@@ -215,7 +216,7 @@ func (rd TXTDirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, erro
 	// Count total redirects if prometheus is enabled and set cache header
 	if w.Header().Get("Status-Code") == "301" || w.Header().Get("Status-Code") == "302" {
 		if rd.Config.Prometheus.Enable {
-			RequestsCount.WithLabelValues(r.Host).Add(1)
+			RequestsCount.WithLabelValues(strings.ToLower(r.Host)).Add(1)
 		}
 		// Set Cache-Control header on permanent redirects
 		if w.Header().Get("Status-Code") == "301" {

@@ -43,11 +43,6 @@ var txts = map[string]string{
 	//
 	//	Fallback records
 	//
-
-	// type=git
-	"_redirect.fallbackgit.test.":              "v=txtv0;to=https://example.com/example/example.git;website=https://website.example.com;type=git",
-	"_redirect.path.fallbackgit.test.":         "v=txtv0;to=https://about.okkur.org/;type=path",
-	"_redirect.example.path.fallbackgit.test.": "v=txtv0;to=https://example.com/example/example.git;website=https://website.example.com;type=git",
 }
 
 // Testing DNS server port

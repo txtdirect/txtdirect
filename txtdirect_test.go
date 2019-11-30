@@ -39,10 +39,6 @@ var txts = map[string]string{
 	// query() function test records
 	"_redirect.about.test.": "v=txtv0;to=https://about.txtdirect.org",
 	"_redirect.pkg.test.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
-
-	//
-	//	Fallback records
-	//
 }
 
 // Testing DNS server port

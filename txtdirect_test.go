@@ -44,11 +44,6 @@ var txts = map[string]string{
 	//	Fallback records
 	//
 
-	// type=gometa
-	"_redirect.fallbackgometa.test.":          "v=txtv0;type=path;to=https://gometa.path.to.test",
-	"_redirect.pathto.fallbackgometa.test.":   "v=txtv0;to=wrong:/url.test;type=gometa",
-	"_redirect.redirect.fallbackgometa.test.": "v=txtv0;to=https://example.com/example/example/;type=gometa",
-
 	// type=git
 	"_redirect.fallbackgit.test.":              "v=txtv0;to=https://example.com/example/example.git;website=https://website.example.com;type=git",
 	"_redirect.path.fallbackgit.test.":         "v=txtv0;to=https://about.okkur.org/;type=path",

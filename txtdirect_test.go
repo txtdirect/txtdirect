@@ -44,10 +44,6 @@ var txts = map[string]string{
 	//	Fallback records
 	//
 
-	// type=dockerv2
-	"_redirect.fallbackdockerv2.test.":       "v=txtv0;to=https://docker.to.test/;root=https://docker.root.test;type=dockerv2",
-	"_redirect.wrong.fallbackdockerv2.test.": "v=txtv0;to=:/wrong.uri/;type=dockerv2;website=https://gcr.io/",
-
 	// type=gometa
 	"_redirect.fallbackgometa.test.":          "v=txtv0;type=path;to=https://gometa.path.to.test",
 	"_redirect.pathto.fallbackgometa.test.":   "v=txtv0;to=wrong:/url.test;type=gometa",

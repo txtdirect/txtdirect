@@ -165,6 +165,11 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 		r.Type = "host"
 	}
 
+	if r.Type == "host" && r.To == "" {
+		fallback(w, req, "global", http.StatusMovedPermanently, c)
+		return nil
+	}
+
 	if !contains(c.Enable, r.Type) {
 		return fmt.Errorf("%s type is not enabled in configuration", r.Type)
 	}

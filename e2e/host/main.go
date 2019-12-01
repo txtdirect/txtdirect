@@ -15,6 +15,7 @@ type test struct {
 	name     string
 	args     data
 	expected string
+	fallback bool
 	referer  bool
 	status   int
 }
@@ -50,7 +51,8 @@ var tests = []test{
 			host: "noto.host.host.example.com",
 			path: "/",
 		},
-		expected: "http://noto.host.host.example.com/",
+		fallback: true,
+		status:   404,
 	},
 	{
 		name: "Redirect to a host record's to= field and check referer header",

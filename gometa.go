@@ -56,7 +56,7 @@ func (g *Gometa) Serve() error {
 
 	gosource := strings.Contains(g.rec.To, "github.com")
 
-	RequestsByStatus.WithLabelValues(strings.ToLower(g.req.Host), strconv.Itoa(http.StatusFound)).Add(1)
+	RequestsByStatus.WithLabelValues(g.req.Host, strconv.Itoa(http.StatusFound)).Add(1)
 	return tmpl.Execute(g.rw, struct {
 		Host        string
 		Path        string

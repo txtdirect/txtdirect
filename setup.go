@@ -206,6 +206,7 @@ type TXTDirect struct {
 }
 
 func (rd TXTDirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
+	r.URL.Host = strings.ToLower(r.URL.Host)
 	if err := Redirect(w, r, rd.Config); err != nil {
 		if err.Error() == "option disabled" {
 			return rd.Next.ServeHTTP(w, r)
@@ -216,7 +217,7 @@ func (rd TXTDirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, erro
 	// Count total redirects if prometheus is enabled and set cache header
 	if w.Header().Get("Status-Code") == "301" || w.Header().Get("Status-Code") == "302" {
 		if rd.Config.Prometheus.Enable {
-			RequestsCount.WithLabelValues(strings.ToLower(r.Host)).Add(1)
+			RequestsCount.WithLabelValues(r.Host).Add(1)
 		}
 		// Set Cache-Control header on permanent redirects
 		if w.Header().Get("Status-Code") == "301" {

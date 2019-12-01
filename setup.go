@@ -19,6 +19,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
@@ -205,6 +206,7 @@ type TXTDirect struct {
 }
 
 func (rd TXTDirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
+	r.URL.Host = strings.ToLower(r.URL.Host)
 	if err := Redirect(w, r, rd.Config); err != nil {
 		if err.Error() == "option disabled" {
 			return rd.Next.ServeHTTP(w, r)

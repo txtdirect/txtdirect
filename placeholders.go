@@ -24,6 +24,7 @@ import (
 	"strings"
 )
 
+// PlaceholderRegex finds the placeholders like {x}
 var PlaceholderRegex = regexp.MustCompile("{[~>?]?\\w+}")
 
 // parsePlaceholders gets a string input and looks for placeholders inside

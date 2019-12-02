@@ -33,36 +33,40 @@ type Prometheus struct {
 	Address string
 	Path    string
 
-	once    sync.Once
 	next    httpserver.Handler
 	handler http.Handler
 }
 
 var (
+	// RequestsCount counts the total requests per host
 	RequestsCount = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
 		Name:      "redirect_count_total",
 		Help:      "Total requests per host",
 	}, []string{"host"})
 
+	// RequestsByStatus counts the total returned statuses per host
 	RequestsByStatus = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
 		Name:      "redirect_status_count_total",
 		Help:      "Total returned statuses per host",
 	}, []string{"host", "status"})
 
+	// RequestsCountBasedOnType counts the total requests for each host based on type
 	RequestsCountBasedOnType = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
 		Name:      "redirect_type_count_total",
 		Help:      "Total requests for each host based on type",
 	}, []string{"host", "type"})
 
+	// FallbacksCount counts the total fallbacks triggered for each type
 	FallbacksCount = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
 		Name:      "fallback_type_count_total",
 		Help:      "Total fallbacks triggered for each type",
 	}, []string{"host", "type", "fallback"})
 
+	// PathRedirectCount counts the total redirects per path for each host
 	PathRedirectCount = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "txtdirect",
 		Name:      "redirect_path_count_total",
@@ -91,7 +95,7 @@ func (p *Prometheus) SetDefaults() {
 }
 
 func (p *Prometheus) start() error {
-	p.once.Do(func() {
+	once.Do(func() {
 		prometheus.MustRegister(RequestsCount)
 		prometheus.MustRegister(RequestsByStatus)
 		prometheus.MustRegister(RequestsCountBasedOnType)
@@ -108,6 +112,7 @@ func (p *Prometheus) start() error {
 	return nil
 }
 
+// Setup registers the metrics on startup and creates the promethues request handler
 func (p *Prometheus) Setup(c *caddy.Controller) {
 	p.handler = promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{
 		ErrorHandling: promhttp.HTTPErrorOnError,

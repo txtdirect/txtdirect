@@ -23,6 +23,7 @@ import (
 	"strings"
 )
 
+// Dockerv2 keeps data for "dockerv2" type requests
 type Dockerv2 struct {
 	rw  http.ResponseWriter
 	req *http.Request
@@ -30,6 +31,7 @@ type Dockerv2 struct {
 	rec record
 }
 
+// NewDockerv2 returns a fresh istance of Dockerv2 struct
 func NewDockerv2(w http.ResponseWriter, r *http.Request, rec record, c Config) *Dockerv2 {
 	return &Dockerv2{
 		rw:  w,
@@ -44,6 +46,7 @@ var dockerRegexes = map[string]*regexp.Regexp{
 	"container": regexp.MustCompile("v2\\/(([\\w\\d-]+\\/?)+)\\/(tags|manifests|_catalog|blobs)"),
 }
 
+// Redirect handles the requests for "dockerv2" type
 func (d *Dockerv2) Redirect() error {
 	path := d.req.URL.Path
 	if !strings.HasPrefix(path, "/v2") {

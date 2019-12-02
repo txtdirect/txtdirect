@@ -25,6 +25,8 @@ import (
 	"github.com/caddyserver/caddy/caddyhttp/proxy"
 )
 
+// ProxyResponse keeps the custom response writer data and is
+// an custom implementation of net/http's default response writer
 type ProxyResponse struct {
 	headers    http.Header
 	body       []byte
@@ -41,6 +43,7 @@ type Proxy struct {
 	rec record
 }
 
+// NewProxy returns a fresh istance of Proxy struct
 func NewProxy(w http.ResponseWriter, r *http.Request, rec record, c Config) *Proxy {
 	return &Proxy{
 		rw:  w,
@@ -109,6 +112,8 @@ func (p *ProxyResponse) WriteHeader(status int) {
 	p.status = status
 }
 
+// ReplaceBody replaces the URIs inside the response body
+// to use the request's host instead of the endpoint's host
 func (p *ProxyResponse) ReplaceBody(scheme, to, host string) error {
 	replacedBody := bytes.Replace(p.bodyWriter.Bytes(), []byte(scheme+"://"+to), []byte(scheme+"://"+host), -1)
 	p.bodyWriter.Reset()
@@ -118,6 +123,7 @@ func (p *ProxyResponse) ReplaceBody(scheme, to, host string) error {
 	return nil
 }
 
+// WriteBody writes the response body to custom response writer's body
 func (p *ProxyResponse) WriteBody() error {
 	switch p.Header().Get("Content-Encoding") {
 	case "gzip":

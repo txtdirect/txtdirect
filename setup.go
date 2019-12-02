@@ -198,7 +198,7 @@ func removeArrayFromArray(array, toBeRemoved []string) []string {
 	return tmp
 }
 
-// Redirect is middleware to redirect requests based on TXT records
+// TXTDirect is middleware to redirect requests based on TXT records
 type TXTDirect struct {
 	Next   httpserver.Handler
 	Config Config

@@ -20,6 +20,7 @@ import (
 	"strings"
 )
 
+// Gometa keeps data for "gometa" type requests
 type Gometa struct {
 	rw  http.ResponseWriter
 	req *http.Request
@@ -27,6 +28,7 @@ type Gometa struct {
 	rec record
 }
 
+// NewGometa returns a fresh istance of Gometa struct
 func NewGometa(w http.ResponseWriter, r *http.Request, rec record, c Config) *Gometa {
 	return &Gometa{
 		rw:  w,
@@ -44,7 +46,7 @@ var tmpl = template.Must(template.New("").Parse(`<!DOCTYPE html>
 </head>
 </html>`))
 
-// gometa executes a template on the given ResponseWriter
+// Serve executes a template on the given ResponseWriter
 // that contains go-import meta tag
 func (g *Gometa) Serve() error {
 	if g.rec.Vcs == "" {
@@ -72,6 +74,8 @@ func (g *Gometa) Serve() error {
 	})
 }
 
+// ValidQuery checks the request query to make sure the requests are
+// coming from the Go tool.
 func (g *Gometa) ValidQuery() bool {
 	if g.req.URL.Query().Get("go-get") != "1" {
 		fallback(g.rw, g.req, "website", http.StatusFound, g.c)

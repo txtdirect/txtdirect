@@ -4,4 +4,5 @@ services:
   - docker
 
 script:
+  - go vet
   - make docker-test

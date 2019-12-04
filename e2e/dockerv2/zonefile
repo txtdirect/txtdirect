@@ -1,0 +1,19 @@
+@                   3600 IN SOA     ns.example.com. domains.example.com. (
+                                      2017101003   ; serial
+                                      5m           ; refresh
+                                      5m           ; retry
+                                      1w           ; expire
+                                      12h    )     ; minimum
+
+@                  86400 IN NS      ns.example.net.
+@                  86400 IN NS      ns.example.nl.
+
+$TTL 1h
+
+example.com.                IN A 172.20.10.2
+
+fallback.dockerv2.dockerv2.example.com.                    IN A 172.20.10.2
+_redirect.fallback.dockerv2.dockerv2.example.com.          IN TXT "v=txtv0;to=https://fallback-to.dockerv2.dockerv2.example.com;root=https://fallback-root.dockerv2.dockerv2.example.com;type=dockerv2" 
+
+fallback-wrong-to.dockerv2.dockerv2.example.com.                    IN A 172.20.10.2
+_redirect.fallback-wrong-to.dockerv2.dockerv2.example.com.          IN TXT "v=txtv0;to=:/wrong.uri/;type=dockerv2;website=https://fallback-website.dockerv2.dockerv2.example.com" 

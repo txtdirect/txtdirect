@@ -34,55 +34,11 @@ import (
 // Testing TXT records
 var txts = map[string]string{
 	// type=host
-	"_redirect.host.e2e.test.":           "v=txtv0;to=https://plain.host.test;type=host;ref=true;code=302",
-	"_redirect.nocode.host.e2e.test.":    "v=txtv0;to=https://nocode.host.test;type=host",
-	"_redirect.noversion.host.e2e.test.": "to=https://noversion.host.test;type=host",
-	"_redirect.noto.host.e2e.test.":      "v=txtv0;type=host",
-	// type=path
-	"_redirect.path.e2e.test.":         "v=txtv0;to=https://fallback.path.test;root=https://root.fallback.test;type=path",
-	"_redirect.chained.e2e.test.":      "v=txtv0;re=(x);to=https://fallback.example.com;type=path;code=302",
-	"_redirect.x.chained.e2e.test.":    "v=txtv0;re=(y);to=https://fallback.example.com;type=path;code=302",
-	"_redirect.y.chained.e2e.test.":    "v=txtv0;to=https://chaining.example.com;type=host;code=302",
-	"_redirect.nocode.path.e2e.test.":  "v=txtv0;to=https://nocode.fallback.path.test;type=host",
-	"_redirect.metapath.e2e.test.":     "v=txtv0;type=path",
-	"_redirect.regex.path.e2e.test.":   "v=txtv0;re=record;to=https://example.com;type=path",
-	"_redirect.1.regex.path.e2e.test.": "v=txtv0;re=\\/test1;to=https://example.com/first/predefined{1};type=host",
-	"_redirect.2.regex.path.e2e.test.": "v=txtv0;re=\\/test1\\/test2;to=https://example.com/second/predefined{1};type=host",
+	"_redirect.host.e2e.test.": "v=txtv0;to=https://plain.host.test;type=host;ref=true;code=302",
 
-	// type=gometa
-	"_redirect.pkg.txtdirect.test.":           "v=txtv0;to=https://example.com/example/example;type=gometa;vcs=git",
-	"_redirect.pkgweb.metapath.e2e.test.":     "v=txtv0;to=https://example.com/example/example;type=gometa;website=https://godoc.org/go.txtdirect.org/txtdirect",
-	"_redirect.pkg.metapath.e2e.test.":        "v=txtv0;to=https://example.com/example/example;type=gometa",
-	"_redirect.second.pkg.metapath.e2e.test.": "v=txtv0;to=https://example.com/example/example;type=gometa",
-	// type=""
+	// query() function test records
 	"_redirect.about.test.": "v=txtv0;to=https://about.txtdirect.org",
 	"_redirect.pkg.test.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
-
-	//
-	//	Fallback records
-	//
-
-	// type=host
-	"_redirect.fallbackhost.test.": "v=txtv0;to=https://{label3};type=host;code=302",
-
-	// type=path
-	"_redirect.fallbackpath.test.":        "v=txtv0;type=path;code=302;to=https://to.works.fine.test",
-	"_redirect.refrom.fallbackpath.test.": "v=txtv0;type=path;re=exist;from=$1$2;to=https://to.works.fine.test;code=302",
-	"_redirect.lenfrom.test.":             "v=txtv0;type=path;from=$1$2$3;to=https://lenfrom.fallback.test;code=302",
-
-	// type=dockerv2
-	"_redirect.fallbackdockerv2.test.":       "v=txtv0;to=https://docker.to.test/;root=https://docker.root.test;type=dockerv2",
-	"_redirect.wrong.fallbackdockerv2.test.": "v=txtv0;to=:/wrong.uri/;type=dockerv2;website=https://gcr.io/",
-
-	// type=gometa
-	"_redirect.fallbackgometa.test.":          "v=txtv0;type=path;to=https://gometa.path.to.test",
-	"_redirect.pathto.fallbackgometa.test.":   "v=txtv0;to=wrong:/url.test;type=gometa",
-	"_redirect.redirect.fallbackgometa.test.": "v=txtv0;to=https://example.com/example/example/;type=gometa",
-
-	// type=git
-	"_redirect.fallbackgit.test.":              "v=txtv0;to=https://example.com/example/example.git;website=https://website.example.com;type=git",
-	"_redirect.path.fallbackgit.test.":         "v=txtv0;to=https://about.okkur.org/;type=path",
-	"_redirect.example.path.fallbackgit.test.": "v=txtv0;to=https://example.com/example/example.git;website=https://website.example.com;type=git",
 }
 
 // Testing DNS server port
@@ -181,51 +137,6 @@ func TestRedirectE2e(t *testing.T) {
 		referer  bool
 	}{
 		{
-			url:      "https://host.e2e.test",
-			expected: "https://plain.host.test",
-			enable:   []string{"host"},
-		},
-		{
-			url:      "https://nocode.host.e2e.test",
-			expected: "https://nocode.host.test",
-			enable:   []string{"host"},
-		},
-		{
-			url:      "https://noversion.host.e2e.test",
-			expected: "https://noversion.host.test",
-			enable:   []string{"host"},
-		},
-		{
-			url:      "https://noto.host.e2e.test",
-			expected: "",
-			enable:   []string{"host"},
-		},
-		{
-			url:      "https://path.e2e.test/",
-			expected: "https://root.fallback.test",
-			enable:   []string{"path", "host"},
-		},
-		{
-			url:      "https://path.e2e.test/nocode",
-			expected: "https://nocode.fallback.path.test",
-			enable:   []string{"path", "host"},
-		},
-		{
-			url:      "https://pkg.txtdirect.test?go-get=1",
-			expected: "https://example.com/example/example",
-			enable:   []string{"gometa"},
-		},
-		{
-			url:      "https://metapath.e2e.test/pkg?go-get=1",
-			expected: "https://example.com/example/example",
-			enable:   []string{"gometa", "path"},
-		},
-		{
-			url:      "https://metapath.e2e.test/pkg/second?go-get=1",
-			expected: "https://example.com/example/example",
-			enable:   []string{"gometa", "path"},
-		},
-		{
 			url:      "https://127.0.0.1/test",
 			expected: "404",
 			enable:   []string{"host"},
@@ -244,26 +155,6 @@ func TestRedirectE2e(t *testing.T) {
 			url:      "https://2001:db8:1234::/48",
 			expected: "404",
 			enable:   []string{"host"},
-		},
-		{
-			url:      "https://host.e2e.test",
-			expected: "https://plain.host.test",
-			enable:   []string{"host"},
-			referer:  true,
-		},
-		{
-			url:      "https://chained.e2e.test/x/y",
-			expected: "https://chaining.example.com",
-			enable:   []string{"path"},
-		}, {
-			url:      "https://regex.path.e2e.test/test1",
-			expected: "https://example.com/first/predefined/test1",
-			enable:   []string{"host", "path"},
-		},
-		{
-			url:      "https://regex.path.e2e.test/test1/test2",
-			expected: "https://example.com/second/predefined/test1/test2",
-			enable:   []string{"host", "path"},
 		},
 	}
 	for _, test := range tests {

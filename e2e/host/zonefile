@@ -1,0 +1,33 @@
+@                   3600 IN SOA     ns.example.com. domains.example.com. (
+                                      2017101003   ; serial
+                                      5m           ; refresh
+                                      5m           ; retry
+                                      1w           ; expire
+                                      12h    )     ; minimum
+
+@                  86400 IN NS      ns.example.net.
+@                  86400 IN NS      ns.example.nl.
+
+$TTL 1h
+
+example.com.                IN A 172.20.10.2
+
+; Host records
+
+to.host.host.example.com.         IN A 172.20.10.2
+_redirect.to.host.host.example.com.          IN TXT "v=txtv0;to=https://to-redirect.host.host.example.com;type=host;code=302" 
+
+nocode.host.host.example.com.    IN A 172.20.10.2
+_redirect.nocode.host.host.example.com.      IN TXT "v=txtv0;to=https://nocode.host.host.example.com;type=host"
+
+noversion.host.host.example.com. IN A 172.20.10.2
+_redirect.noversion.host.host.example.com.   IN TXT "to=https://noversion.host.host.example.com;type=host"
+
+noto.host.host.example.com.      IN A 172.20.10.2
+_redirect.noto.host.host.example.com.        IN TXT "v=txtv0;type=host"
+
+referer.host.host.example.com.   IN A 172.20.10.2
+_redirect.referer.host.host.example.com.     IN TXT "to=https://referer-redirect.host.host.example.com;type=host;ref=true"
+
+fallback.host.host.example.com.              IN A 172.20.10.2
+_redirect.fallback.host.host.example.com.    IN TXT "v=txtv0;to=https://{label30};type=host;code=302" 

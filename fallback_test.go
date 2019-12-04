@@ -104,94 +104,10 @@ func Test_fallbackE2E(t *testing.T) {
 		headers  http.Header
 	}{
 		{
-			url:     "https://fallbackpath.test",
-			enable:  []string{"www"},
-			headers: http.Header{},
-		},
-		{
 			url:      "https://127.0.0.1",
 			enable:   []string{},
 			redirect: "https://isip.test",
 			headers:  http.Header{},
-		},
-		{
-			url:     "https://fallbackpath.test/wildcard",
-			enable:  []string{},
-			code:    404,
-			headers: http.Header{},
-		},
-		{
-			url:     "https://fallbackpath.test/refrom",
-			enable:  []string{"path"},
-			code:    302,
-			to:      "https://to.works.fine.test",
-			headers: http.Header{},
-		},
-		{
-			url:     "https://fallbackpath.test/",
-			enable:  []string{"path"},
-			code:    302,
-			to:      "https://to.works.fine.test",
-			headers: http.Header{},
-		},
-		{
-			url:     "https://lenfrom.test/",
-			enable:  []string{"path"},
-			code:    302,
-			to:      "https://lenfrom.fallback.test",
-			headers: http.Header{},
-		},
-		{
-			url:     "https://fallbackdockerv2.test",
-			enable:  []string{"dockerv2"},
-			code:    302,
-			to:      "https://docker.to.test/",
-			headers: http.Header{},
-		},
-		{
-			url:    "https://fallbackdockerv2.test/",
-			enable: []string{"dockerv2"},
-			code:   308,
-			root:   "https://docker.root.test",
-			headers: http.Header{
-				"User-Agent": []string{"Docker-Client"},
-			},
-		},
-		{
-			url:      "https://wrong.fallbackdockerv2.test/v2/test/path",
-			enable:   []string{"dockerv2"},
-			code:     302,
-			redirect: "https://gcr.io/",
-			headers: http.Header{
-				"User-Agent": []string{"Docker-Client"},
-			},
-		},
-		{
-			url:     "https://fallbackhost.test",
-			enable:  []string{"host"},
-			code:    404,
-			headers: http.Header{},
-		},
-		{
-			url:     "https://fallbackgometa.test/pathto",
-			enable:  []string{"path", "gometa"},
-			code:    302,
-			to:      "https://gometa.path.to.test",
-			headers: http.Header{},
-		},
-		{
-			url:     "https://fallbackgit.test",
-			enable:  []string{"git"},
-			code:    302,
-			website: "https://website.example.com",
-			headers: http.Header{},
-		},
-		{
-			url:     "https://path.fallbackgit.test/example",
-			enable:  []string{"path", "git"},
-			code:    302,
-			website: "https://website.example.com",
-			headers: http.Header{},
 		},
 	}
 	for _, test := range tests {

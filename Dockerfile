@@ -4,4 +4,4 @@ RUN apk --no-cache add ca-certificates
 
 ADD txtdirect /txtdirect
 
-CMD ["/txtdirect"]
+ENTRYPOINT ["/txtdirect"]

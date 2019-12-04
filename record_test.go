@@ -21,7 +21,7 @@ import (
 	"testing"
 )
 
-func TestParse(t *testing.T) {
+func TestParseRecord(t *testing.T) {
 	tests := []struct {
 		txtRecord string
 		expected  record
@@ -158,13 +158,13 @@ func TestParse(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		r := record{}
+		var r record
 		c := Config{
 			Enable: []string{test.expected.Type},
 		}
 		req, _ := http.NewRequest("GET", "http://example.com?url=https://example.com/testing", nil)
 		w := httptest.NewRecorder()
-		err := r.Parse(test.txtRecord, w, req, c)
+		r, err := ParseRecord(test.txtRecord, w, req, c)
 
 		if err != nil {
 			if test.err == nil || !strings.HasPrefix(err.Error(), test.err.Error()) {

@@ -144,8 +144,9 @@ func (p *Path) specificMatch(regexes RegexRecords) (*record, error) {
 	// Add the most specific match's path slice to the request context to use in placeholders
 	*p.req = *p.req.WithContext(context.WithValue(p.req.Context(), "regexMatches", recordMatch[keys[len(keys)-1]].Submatches))
 
-	rec := record{}
-	if err := rec.Parse(recordMatch[keys[len(keys)-1]].TXT, p.rw, p.req, p.c); err != nil {
+	var rec record
+	var err error
+	if rec, err = ParseRecord(recordMatch[keys[len(keys)-1]].TXT, p.rw, p.req, p.c); err != nil {
 		return nil, fmt.Errorf("Could not parse record: %s", err)
 	}
 
@@ -292,8 +293,8 @@ func getFinalRecord(zone string, from int, c Config, w http.ResponseWriter, r *h
 	}
 
 	txts[0], err = parsePlaceholders(txts[0], r, pathSlice)
-	rec := record{}
-	if err = rec.Parse(txts[0], w, r, c); err != nil {
+	var rec record
+	if rec, err = ParseRecord(txts[0], w, r, c); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 

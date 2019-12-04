@@ -300,7 +300,7 @@ func TestCaddyParse(t *testing.T) {
 	for i, test := range tests {
 		log.Println(log.Flags())
 		c := caddy.NewTestController("http", test.input)
-		conf, err := parse(c)
+		conf, err := ParseConfig(c)
 		if !test.shouldErr && err != nil {
 			t.Errorf("Test %d: Unexpected error %s", i, err)
 			continue

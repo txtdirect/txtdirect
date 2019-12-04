@@ -61,8 +61,8 @@ func getRecord(host string, c Config, w http.ResponseWriter, r *http.Request) (r
 		return record{}, fmt.Errorf("could not parse TXT record with %d records", len(txts))
 	}
 
-	rec := record{}
-	if err = rec.Parse(txts[0], w, r, c); err != nil {
+	var rec record
+	if rec, err = ParseRecord(txts[0], w, r, c); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
@@ -75,7 +75,8 @@ func getRecord(host string, c Config, w http.ResponseWriter, r *http.Request) (r
 // a TXTDirect record struct instance.
 // It will return an error if the DNS TXT record is not standard or
 // if the record type is not enabled in the TXTDirect's config.
-func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c Config) error {
+func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config) (record, error) {
+	r := record{}
 	s := strings.Split(str, ";")
 	for _, l := range s {
 		switch {
@@ -83,7 +84,7 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 			l = strings.TrimPrefix(l, "code=")
 			i, err := strconv.Atoi(l)
 			if err != nil {
-				return fmt.Errorf("could not parse status code: %s", err)
+				return record{}, fmt.Errorf("could not parse status code: %s", err)
 			}
 			r.Code = i
 
@@ -91,7 +92,7 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 			l = strings.TrimPrefix(l, "from=")
 			l, err := parsePlaceholders(l, req, []string{})
 			if err != nil {
-				return err
+				return record{}, err
 			}
 			r.From = l
 
@@ -103,7 +104,7 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 			l, err := strconv.ParseBool(strings.TrimPrefix(l, "ref="))
 			if err != nil {
 				fallback(w, req, "global", http.StatusMovedPermanently, c)
-				return err
+				return record{}, err
 			}
 			r.Ref = l
 
@@ -116,7 +117,7 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 			l = strings.TrimPrefix(l, "to=")
 			l, err := parsePlaceholders(l, req, []string{})
 			if err != nil {
-				return err
+				return record{}, err
 			}
 			l = ParseURI(l, w, req, c)
 			r.To = l
@@ -129,7 +130,7 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 			l = strings.TrimPrefix(l, "v=")
 			r.Version = l
 			if r.Version != "txtv0" {
-				return fmt.Errorf("unhandled version '%s'", r.Version)
+				return record{}, fmt.Errorf("unhandled version '%s'", r.Version)
 			}
 			log.Print("WARN: txtv0 is not suitable for production")
 
@@ -145,15 +146,15 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 		default:
 			tuple := strings.Split(l, "=")
 			if len(tuple) != 2 {
-				return fmt.Errorf("arbitrary data not allowed")
+				return record{}, fmt.Errorf("arbitrary data not allowed")
 			}
 			continue
 		}
 		if len(l) > 255 {
-			return fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
+			return record{}, fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
 		}
 		if r.Type == "dockerv2" && r.To == "" {
-			return fmt.Errorf("[txtdirect]: to= field is required in dockerv2 type")
+			return record{}, fmt.Errorf("[txtdirect]: to= field is required in dockerv2 type")
 		}
 	}
 
@@ -166,10 +167,10 @@ func (r *record) Parse(str string, w http.ResponseWriter, req *http.Request, c C
 	}
 
 	if !contains(c.Enable, r.Type) {
-		return fmt.Errorf("%s type is not enabled in configuration", r.Type)
+		return record{}, fmt.Errorf("%s type is not enabled in configuration", r.Type)
 	}
 
-	return nil
+	return r, nil
 }
 
 // Adds the given record to the request's context with "records" key.

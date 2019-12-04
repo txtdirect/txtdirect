@@ -168,7 +168,7 @@ func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config)
 
 	if r.Type == "host" && r.To == "" {
 		fallback(w, req, "global", http.StatusMovedPermanently, c)
-		return nil
+		return record{}, nil
 	}
 
 	if !contains(c.Enable, r.Type) {

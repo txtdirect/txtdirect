@@ -45,9 +45,17 @@ type RegexRecord struct {
 	Submatches []string
 }
 
+// PathRegex is the default regex to parse request's path
+// It can be replaced using the re= field in the records
 var PathRegex = regexp.MustCompile("\\/([A-Za-z0-9-._~!$'()*+,;=:@]+)")
+
+// FromRegex parses the from= field
 var FromRegex = regexp.MustCompile("\\/\\$(\\d+)")
+
+// GroupRegex parses the re= field to find the regex groups
 var GroupRegex = regexp.MustCompile("P<[a-zA-Z]+[a-zA-Z0-9]*>")
+
+// GroupOrderRegex finds the order of regex groups inside re=
 var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+[a-zA-Z0-9]*)>")
 
 // NewPath returns an instance of Path struct using the given data

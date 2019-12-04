@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/common/log"
 )
 
+// Git keeps data for "git" type requests
 type Git struct {
 	rw  http.ResponseWriter
 	req *http.Request
@@ -17,6 +18,7 @@ type Git struct {
 	rec record
 }
 
+// NewGit returns a fresh instance of Git struct
 func NewGit(w http.ResponseWriter, r *http.Request, c Config, rec record) *Git {
 	return &Git{
 		rw:  w,
@@ -26,6 +28,7 @@ func NewGit(w http.ResponseWriter, r *http.Request, c Config, rec record) *Git {
 	}
 }
 
+// Proxy handles the requests for "git" type
 func (g *Git) Proxy() error {
 	to, _, err := getBaseTarget(g.rec, g.req)
 	if err != nil {
@@ -68,6 +71,8 @@ func (g *Git) Proxy() error {
 	return nil
 }
 
+// ValidGitQuery checks the User-Agent header to make sure the requests are
+// coming from a Git client.
 func (g *Git) ValidGitQuery() bool {
 	if !strings.HasPrefix(g.req.Header.Get("User-Agent"), "git") {
 		fallback(g.rw, g.req, "website", g.rec.Code, g.c)

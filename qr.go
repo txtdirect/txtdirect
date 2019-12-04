@@ -23,6 +23,7 @@ type Qr struct {
 	foregroundColor color.Color
 }
 
+// Redirect handles the requests for "qr" requests
 func (qr *Qr) Redirect(w http.ResponseWriter, r *http.Request) error {
 	Qr, err := qrcode.New(r.Host+r.URL.String(), qr.RecoveryLevel)
 	if err != nil {
@@ -37,6 +38,7 @@ func (qr *Qr) Redirect(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// ParseColors parses the hex colors in the QR config to color.Color instances
 func (qr *Qr) ParseColors() error {
 	bg, err := hex.DecodeString(qr.BackgroundColor)
 	if err != nil {
@@ -51,6 +53,7 @@ func (qr *Qr) ParseColors() error {
 	return nil
 }
 
+// ParseQr parses the config for QR requests
 func (qr *Qr) ParseQr(c *caddy.Controller) error {
 	switch c.Val() {
 	case "size":
@@ -75,6 +78,7 @@ func (qr *Qr) ParseQr(c *caddy.Controller) error {
 	return nil
 }
 
+// SetDefaults sets the default values for QR config
 func (qr *Qr) SetDefaults() {
 	if qr.Size == 0 {
 		qr.Size = 256

@@ -14,5 +14,6 @@ before_script:
   - docker pull k8s.gcr.io/coredns:1.6.2
 
 script:
+  - go vet
   - make docker-test
   - make endtoend-test

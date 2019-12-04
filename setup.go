@@ -44,7 +44,7 @@ func init() {
 
 var allOptions = []string{"host", "path", "gometa", "www"}
 
-func parse(c *caddy.Controller) (Config, error) {
+func ParseConfig(c *caddy.Controller) (Config, error) {
 	var enable []string
 	var redirect string
 	var resolver string
@@ -160,7 +160,7 @@ func parse(c *caddy.Controller) (Config, error) {
 }
 
 func setup(c *caddy.Controller) error {
-	config, err := parse(c)
+	config, err := ParseConfig(c)
 	if err != nil {
 		return err
 	}

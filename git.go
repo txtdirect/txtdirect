@@ -18,7 +18,7 @@ type Git struct {
 	rec record
 }
 
-// NewGit returns a fresh istance of Git struct
+// NewGit returns a fresh instance of Git struct
 func NewGit(w http.ResponseWriter, r *http.Request, c Config, rec record) *Git {
 	return &Git{
 		rw:  w,

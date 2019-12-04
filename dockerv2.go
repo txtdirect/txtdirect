@@ -31,7 +31,7 @@ type Dockerv2 struct {
 	rec record
 }
 
-// NewDockerv2 returns a fresh istance of Dockerv2 struct
+// NewDockerv2 returns a fresh instance of Dockerv2 struct
 func NewDockerv2(w http.ResponseWriter, r *http.Request, rec record, c Config) *Dockerv2 {
 	return &Dockerv2{
 		rw:  w,

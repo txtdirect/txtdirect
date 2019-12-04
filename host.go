@@ -15,7 +15,7 @@ type Host struct {
 	rec record
 }
 
-// NewHost returns a fresh istance of Host struct
+// NewHost returns a fresh instance of Host struct
 func NewHost(w http.ResponseWriter, r *http.Request, rec record, c Config) *Host {
 	return &Host{
 		rw:  w,

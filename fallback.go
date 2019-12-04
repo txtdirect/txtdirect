@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Fallback keeps the data for fallback flow
+// Fallback keeps the data necessary for the fallback flow
 type Fallback struct {
 	rw      http.ResponseWriter
 	request *http.Request

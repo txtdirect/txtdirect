@@ -26,7 +26,7 @@ import (
 )
 
 // ProxyResponse keeps the custom response writer data and is
-// an custom implementation of net/http's default response writer
+// a custom implementation of net/http's default response writer
 type ProxyResponse struct {
 	headers    http.Header
 	body       []byte
@@ -43,7 +43,7 @@ type Proxy struct {
 	rec record
 }
 
-// NewProxy returns a fresh istance of Proxy struct
+// NewProxy returns a fresh instance of Proxy struct
 func NewProxy(w http.ResponseWriter, r *http.Request, rec record, c Config) *Proxy {
 	return &Proxy{
 		rw:  w,

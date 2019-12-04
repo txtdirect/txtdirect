@@ -28,7 +28,7 @@ type Gometa struct {
 	rec record
 }
 
-// NewGometa returns a fresh istance of Gometa struct
+// NewGometa returns a fresh instance of Gometa struct
 func NewGometa(w http.ResponseWriter, r *http.Request, rec record, c Config) *Gometa {
 	return &Gometa{
 		rw:  w,

@@ -26,139 +26,139 @@ func TestParseRecord(t *testing.T) {
 		txtRecord string
 		expected  record
 		err       error
+		status    int
 	}{
 		{
-			"v=txtv0;to=https://example.com/;code=302",
-			record{
+			txtRecord: "v=txtv0;to=https://example.com/;code=302",
+			expected: record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
 				Type:    "host",
 			},
-			nil,
+			err: nil,
 		},
 		{
-			"v=txtv0;to=https://example.com/",
-			record{
+			txtRecord: "v=txtv0;to=https://example.com/",
+			expected: record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
 				Type:    "host",
 			},
-			nil,
+			err: nil,
 		},
 		{
-			"v=txtv0;to=https://example.com/;code=302",
-			record{
+			txtRecord: "v=txtv0;to=https://example.com/;code=302",
+			expected: record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
 				Type:    "host",
 			},
-			nil,
+			err: nil,
 		},
 		{
-			"v=txtv0;to=https://example.com/;code=302;vcs=hg;type=gometa",
-			record{
+			txtRecord: "v=txtv0;to=https://example.com/;code=302;vcs=hg;type=gometa",
+			expected: record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
 				Vcs:     "hg",
 				Type:    "gometa",
 			},
-			nil,
+			err: nil,
 		},
 		{
-			"v=txtv0;to=https://example.com/;code=302;type=gometa;vcs=git",
-			record{
+			txtRecord: "v=txtv0;to=https://example.com/;code=302;type=gometa;vcs=git",
+			expected: record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
 				Vcs:     "git",
 				Type:    "gometa",
 			},
-			nil,
+			err: nil,
 		},
 		{
-			"v=txtv0;to=https://example.com/;code=test",
-			record{},
-			fmt.Errorf("could not parse status code"),
+			txtRecord: "v=txtv0;to=https://example.com/;code=test",
+			expected:  record{},
+			err:       fmt.Errorf("could not parse status code"),
 		},
 		{
-			"v=txtv1;to=https://example.com/;code=test",
-			record{},
-			fmt.Errorf("unhandled version 'txtv1'"),
+			txtRecord: "v=txtv1;to=https://example.com/;code=test",
+			expected:  record{},
+			err:       fmt.Errorf("unhandled version 'txtv1'"),
 		},
 		{
-			"v=txtv0;https://example.com/",
-			record{},
-			fmt.Errorf("arbitrary data not allowed"),
+			txtRecord: "v=txtv0;https://example.com/",
+			expected:  record{},
+			err:       fmt.Errorf("arbitrary data not allowed"),
 		},
 		{
-			"v=txtv0;to=https://example.com/caddy;type=path;code=302",
-			record{
+			txtRecord: "v=txtv0;to=https://example.com/caddy;type=path;code=302",
+			expected: record{
 				Version: "txtv0",
 				To:      "https://example.com/caddy",
 				Type:    "path",
 				Code:    302,
 			},
-			nil,
+			err: nil,
 		},
 		{
-			"v=txtv0;to=https://example.com/;key=value",
-			record{
+			txtRecord: "v=txtv0;to=https://example.com/;key=value",
+			expected: record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
 				Type:    "host",
 			},
-			nil,
+			err: nil,
 		},
 		{
-			"v=txtv0;to={?url}",
-			record{
+			txtRecord: "v=txtv0;to={?url}",
+			expected: record{
 				Version: "txtv0",
 				To:      "https://example.com/testing",
 				Code:    302,
 				Type:    "host",
 			},
-			nil,
+			err: nil,
 		},
 		{
-			"v=txtv0;to={?url};from={method}",
-			record{
+			txtRecord: "v=txtv0;to={?url};from={method}",
+			expected: record{
 				Version: "txtv0",
 				To:      "https://example.com/testing",
 				Code:    302,
 				Type:    "host",
 				From:    "GET",
 			},
-			nil,
+			err: nil,
 		},
 		{
-			"v=txtv0;ref=true;code=302",
-			record{
+			txtRecord: "v=txtv0;ref=true;code=302",
+			expected: record{
 				Version: "txtv0",
 				Type:    "host",
 				Code:    302,
 				Ref:     true,
 			},
-			nil,
+			status: 404,
 		},
 		{
-			"v=txtv0;ref=false;code=302",
-			record{
+			txtRecord: "v=txtv0;ref=false;code=302",
+			expected: record{
 				Version: "txtv0",
 				Type:    "host",
 				Code:    302,
 				Ref:     false,
 			},
-			nil,
+			status: 404,
 		},
 	}
 
 	for i, test := range tests {
-		var r record
 		c := Config{
 			Enable: []string{test.expected.Type},
 		}
@@ -172,6 +172,14 @@ func TestParseRecord(t *testing.T) {
 			}
 			continue
 		}
+
+		if test.status != 0 {
+			if w.Result().StatusCode != test.status {
+				t.Errorf("Test %d: Expected status code %d, got %d", i, test.status, w.Result().StatusCode)
+			}
+			continue
+		}
+
 		if err == nil && test.err != nil {
 			t.Errorf("Test %d: Expected error, got nil", i)
 			continue

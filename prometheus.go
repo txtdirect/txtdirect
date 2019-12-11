@@ -95,20 +95,18 @@ func (p *Prometheus) SetDefaults() {
 }
 
 func (p *Prometheus) start() error {
-	once.Do(func() {
-		prometheus.MustRegister(RequestsCount)
-		prometheus.MustRegister(RequestsByStatus)
-		prometheus.MustRegister(RequestsCountBasedOnType)
-		prometheus.MustRegister(FallbacksCount)
-		prometheus.MustRegister(PathRedirectCount)
-		http.Handle(p.Path, p.handler)
-		go func() {
-			err := http.ListenAndServe(p.Address, nil)
-			if err != nil {
-				log.Printf("[txtdirect]: Couldn't start http handler for prometheus metrics. %s", err.Error())
-			}
-		}()
-	})
+	prometheus.MustRegister(RequestsCount)
+	prometheus.MustRegister(RequestsByStatus)
+	prometheus.MustRegister(RequestsCountBasedOnType)
+	prometheus.MustRegister(FallbacksCount)
+	prometheus.MustRegister(PathRedirectCount)
+	http.Handle(p.Path, p.handler)
+	go func() {
+		err := http.ListenAndServe(p.Address, nil)
+		if err != nil {
+			log.Printf("[txtdirect]: Couldn't start http handler for prometheus metrics. %s", err.Error())
+		}
+	}()
 	return nil
 }
 

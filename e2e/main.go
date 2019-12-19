@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -162,10 +163,39 @@ func (d *dockerManager) StartContainers() error {
 		return fmt.Errorf("Couldn't create the TXTDirect container: %s", err.Error())
 	}
 
+	// Connect the Docker registry to the e2e network
+	if strings.Contains(d.dir, "dockerv2") {
+		_, err := exec.Command("docker", "network", "connect", "coretxtd", "registry").CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't connect Docker registry the network adaptor: %s", err.Error())
+		}
+
+		// Tag TXTDirect's image to use in custom registry
+		_, err = exec.Command("docker", "tag", txtdirectImage, "172.20.10.3:5000/txtdirect").CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't tag image to use in custom Docker registry: %s", err.Error())
+		}
+
+		// Push the TXTDirect image to the custom registry
+		_, err = exec.Command("docker", "push", "172.20.10.3:5000/txtdirect").CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't push the image to the custom Docker registry: %s", err.Error())
+		}
+	}
+
 	return nil
 }
 
 func (d *dockerManager) StopContainers() error {
+	if strings.Contains(d.dir, "dockerv2") {
+		_, err := exec.Command("docker",
+			"logs",
+			"e2e_txtdirect_container",
+		).CombinedOutput()
+		if err != nil {
+			return err
+		}
+	}
 	_, err := exec.Command("docker",
 		"container", "rm", "-f",
 		"e2e_coredns_container",
@@ -190,12 +220,23 @@ func (d *dockerManager) StopContainers() error {
 		return fmt.Errorf("Couldn't remove the tester container: %s", err.Error())
 	}
 
+	if strings.Contains(d.dir, "dockerv2") {
+		_, err = exec.Command("docker",
+			"network", "disconnect",
+			"coretxtd",
+			"registry",
+		).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't disconnect the Docker registry container: %s", err.Error())
+		}
+	}
+
 	_, err = exec.Command("docker",
 		"network", "rm",
 		"coretxtd",
 	).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Couldn't remove the TXTDirect container: %s", err.Error())
+		return fmt.Errorf("Couldn't remove the network adaptor: %s", err.Error())
 	}
 
 	return nil

@@ -248,11 +248,6 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 
 		docker := NewDockerv2(w, r, rec, c)
 
-		// Fallback gets triggered if the User-Agent isn't valid
-		if !docker.ValidAgent() {
-			return nil
-		}
-
 		if err := docker.Redirect(); err != nil {
 			log.Printf("[txtdirect]: couldn't redirect to the requested container: %s", err.Error())
 			fallback(w, r, "to", rec.Code, c)

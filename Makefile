@@ -34,9 +34,9 @@ docker-build:
 
 endtoend-test: docker-build
 	docker build -t $(IMAGE)-dirty .
-	[ ! "$(shell docker ps -a | grep registry)" ] && docker run -d -p 5000:5000 --name registry registry:2
 	cd e2e && \
 	docker build -t c.txtdirect.org/tester:dirty . && \
+ 	docker run -d -p 5000:5000 --name registry registry:2 && \
 	VERSION=$(VERSION)-dirty go run main.go
 
 version:

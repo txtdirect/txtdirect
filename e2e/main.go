@@ -70,6 +70,10 @@ func main() {
 		log.Fatalf("[txtdirect_e2e]: Couldn't examine the logs and count the stats: %s", err.Error())
 	}
 
+	if err := d.RemoveNetwork(); err != nil {
+		log.Fatalf("[txtdirect_e2e]: Couldn't remove the network adaptor: %s", err.Error())
+	}
+
 	if d.stats.failed != 0 {
 		log.Fatalf("[txtdirect_e2e]: Tests failed because there were %d failed tests.", d.stats.failed)
 	}
@@ -176,10 +180,20 @@ func (d *dockerManager) StartContainers() error {
 			return fmt.Errorf("Couldn't tag image to use in custom Docker registry: %s", err.Error())
 		}
 
+		_, err = exec.Command("docker", "save", "172.20.10.3:5000/txtdirect:latest", "-o", "txtdirect.tar").CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't export the image into a tarball: %s", err.Error())
+		}
+
 		// Push the TXTDirect image to the custom registry
-		_, err = exec.Command("docker", "push", "172.20.10.3:5000/txtdirect").CombinedOutput()
+		_, err = exec.Command("crane", "push", "txtdirect.tar", "172.20.10.3:5000/txtdirect").CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("Couldn't push the image to the custom Docker registry: %s", err.Error())
+		}
+
+		_, err = exec.Command("rm", "./txtdirect.tar").CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't remove the image tarball: %s", err.Error())
 		}
 	}
 
@@ -229,14 +243,6 @@ func (d *dockerManager) StopContainers() error {
 		if err != nil {
 			return fmt.Errorf("Couldn't disconnect the Docker registry container: %s", err.Error())
 		}
-	}
-
-	_, err = exec.Command("docker",
-		"network", "rm",
-		"coretxtd",
-	).CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Couldn't remove the network adaptor: %s", err.Error())
 	}
 
 	return nil
@@ -304,5 +310,16 @@ func (d *dockerManager) CountStats(stats []string) error {
 	}
 	d.stats.failed += failed
 
+	return nil
+}
+
+func (d *dockerManager) RemoveNetwork() error {
+	_, err := exec.Command("docker",
+		"network", "rm",
+		"coretxtd",
+	).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Couldn't remove the network adaptor: %s", err.Error())
+	}
 	return nil
 }

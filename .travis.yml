@@ -12,7 +12,7 @@ cache:
 
 before_script:
   - docker pull k8s.gcr.io/coredns:1.6.2
-  - docker run -d -p 5000:5000 --name registry registry:2
+  - docker pull registry:2
 
 script:
   - go vet

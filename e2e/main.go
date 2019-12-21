@@ -49,6 +49,10 @@ func main() {
 		log.Printf("[txtdirect_e2e]: Couldn't list the test directories: %s", err.Error())
 	}
 
+	if err := d.CreateNetwork(); err != nil {
+		log.Fatalf("[txtdirect_e2e]: Couldn't create the network adaptor: %s", err.Error())
+	}
+
 	// Run the tests for each test-case
 	for _, directory := range directories {
 		// Start the CoreDNS and TXTDirect containers for test-case
@@ -116,12 +120,6 @@ func (d *dockerManager) StartContainers() error {
 		return fmt.Errorf("$GOPATH is empty")
 	}
 	d.gomodpath = fmt.Sprintf("%s/pkg/mod", os.Getenv("GOPATH"))
-
-	// Create a Docker network for containers
-	_, err = exec.Command("docker", "network", "create", "--ip-range=\"172.20.10.0/24\"", "--subnet=\"172.20.0.0/16\"", "coretxtd").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Couldn't create the network adaptor: %s", err.Error())
-	}
 
 	// Create the CoreDNS container
 	_, err = exec.Command("docker",
@@ -320,6 +318,15 @@ func (d *dockerManager) RemoveNetwork() error {
 	).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Couldn't remove the network adaptor: %s", err.Error())
+	}
+	return nil
+}
+
+func (d *dockerManager) CreateNetwork() error {
+	// Create a Docker network for containers
+	_, err := exec.Command("docker", "network", "create", "--ip-range=\"172.20.10.0/24\"", "--subnet=\"172.20.0.0/16\"", "coretxtd").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Couldn't create the network adaptor: %s", err.Error())
 	}
 	return nil
 }

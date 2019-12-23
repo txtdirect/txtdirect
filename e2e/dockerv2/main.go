@@ -14,13 +14,6 @@ type data struct {
 	image string
 }
 
-type Kind string
-
-const (
-	Pull Kind = "pull"
-	Push Kind = "push"
-)
-
 type test struct {
 	name     string
 	args     data
@@ -28,7 +21,7 @@ type test struct {
 	referer  bool
 	status   int
 	headers  http.Header
-	kind     Kind
+	kind     string
 	fallback bool
 }
 
@@ -62,7 +55,7 @@ var tests = []test{
 		args: data{
 			image: "pull.dockerv2.dockerv2.example.com/txtdirect",
 		},
-		kind: Pull,
+		kind: "pull",
 	},
 }
 
@@ -76,7 +69,7 @@ func main() {
 		}
 
 		switch test.kind {
-		case Pull:
+		case "pull":
 			_, err := exec.Command("crane", "pull", "-i", test.args.image, "txtdirect_e2e").CombinedOutput()
 			if err != nil {
 				result[false] = append(result[false], test)

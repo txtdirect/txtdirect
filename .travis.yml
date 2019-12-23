@@ -12,6 +12,8 @@ cache:
 
 before_script:
   - docker pull k8s.gcr.io/coredns:1.6.2
+  - docker pull registry:2
+  - go get -u github.com/google/go-containerregistry/cmd/crane
 
 script:
   - go vet

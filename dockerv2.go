@@ -79,16 +79,6 @@ func (d *Dockerv2) Redirect() error {
 	return nil
 }
 
-// ValidAgent checks the User-Agent header to be sure it's Docker-Client
-func (d *Dockerv2) ValidAgent() bool {
-	if !strings.Contains(d.req.Header.Get("User-Agent"), "Docker-Client") {
-		log.Println("[txtdirect]: The request is not from docker client, fallback triggered.")
-		fallback(d.rw, d.req, "to", d.rec.Code, d.c)
-		return false
-	}
-	return true
-}
-
 func createDockerv2URI(to string, path string) (string, error) {
 	uri, err := url.Parse(to)
 	if err != nil {

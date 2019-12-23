@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -48,10 +49,15 @@ func main() {
 		log.Printf("[txtdirect_e2e]: Couldn't list the test directories: %s", err.Error())
 	}
 
+	if err := d.CreateNetwork(); err != nil {
+		log.Fatalf("[txtdirect_e2e]: Couldn't create the network adaptor: %s", err.Error())
+	}
+
 	// Run the tests for each test-case
 	for _, directory := range directories {
 		// Start the CoreDNS and TXTDirect containers for test-case
 		d.dir = directory
+
 		if err := d.StartContainers(); err != nil {
 			log.Fatalf("[txtdirect_e2e]: Couldn't start containers: %s", err.Error())
 		}
@@ -67,6 +73,10 @@ func main() {
 
 	if err := d.ExamineLogs(); err != nil {
 		log.Fatalf("[txtdirect_e2e]: Couldn't examine the logs and count the stats: %s", err.Error())
+	}
+
+	if err := d.RemoveNetwork(); err != nil {
+		log.Fatalf("[txtdirect_e2e]: Couldn't remove the network adaptor: %s", err.Error())
 	}
 
 	if d.stats.failed != 0 {
@@ -112,12 +122,6 @@ func (d *dockerManager) StartContainers() error {
 	}
 	d.gomodpath = fmt.Sprintf("%s/pkg/mod", os.Getenv("GOPATH"))
 
-	// Create a Docker network for containers
-	_, err = exec.Command("docker", "network", "create", "--ip-range=\"172.20.10.0/24\"", "--subnet=\"172.20.0.0/16\"", "coretxtd").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Couldn't create the network adaptor: %s", err.Error())
-	}
-
 	// Create the CoreDNS container
 	_, err = exec.Command("docker",
 		"container", "run",
@@ -162,10 +166,26 @@ func (d *dockerManager) StartContainers() error {
 		return fmt.Errorf("Couldn't create the TXTDirect container: %s", err.Error())
 	}
 
+	// Push the test image to the testing Docker registry
+	if strings.Contains(d.dir, "dockerv2") {
+		if err := d.PushTestImage(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (d *dockerManager) StopContainers() error {
+	if strings.Contains(d.dir, "dockerv2") {
+		_, err := exec.Command("docker",
+			"logs",
+			"e2e_txtdirect_container",
+		).CombinedOutput()
+		if err != nil {
+			return err
+		}
+	}
 	_, err := exec.Command("docker",
 		"container", "rm", "-f",
 		"e2e_coredns_container",
@@ -190,12 +210,15 @@ func (d *dockerManager) StopContainers() error {
 		return fmt.Errorf("Couldn't remove the tester container: %s", err.Error())
 	}
 
-	_, err = exec.Command("docker",
-		"network", "rm",
-		"coretxtd",
-	).CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Couldn't remove the TXTDirect container: %s", err.Error())
+	if strings.Contains(d.dir, "dockerv2") {
+		_, err = exec.Command("docker",
+			"network", "disconnect",
+			"coretxtd",
+			"registry",
+		).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't disconnect the Docker registry container: %s", err.Error())
+		}
 	}
 
 	return nil
@@ -262,6 +285,62 @@ func (d *dockerManager) CountStats(stats []string) error {
 		return fmt.Errorf("Couldn't convert count of failed tests to int: %s", err.Error())
 	}
 	d.stats.failed += failed
+
+	return nil
+}
+
+func (d *dockerManager) RemoveNetwork() error {
+	_, err := exec.Command("docker",
+		"network", "rm",
+		"coretxtd",
+	).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Couldn't remove the network adaptor: %s", err.Error())
+	}
+	return nil
+}
+
+func (d *dockerManager) CreateNetwork() error {
+	// Create a Docker network for containers
+	_, err := exec.Command("docker", "network", "create", "--ip-range=\"172.20.10.0/24\"", "--subnet=\"172.20.0.0/16\"", "coretxtd").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Couldn't create the network adaptor: %s", err.Error())
+	}
+	return nil
+}
+
+// PushTestImage connects the registry to network adaptor and pushes
+// a testing image to the registry
+func (d *dockerManager) PushTestImage() error {
+	// Connect registry to the network adaptor
+	_, err := exec.Command("docker", "network", "connect", "coretxtd", "registry").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Couldn't connect Docker registry the network adaptor: %s", err.Error())
+	}
+
+	// Tag TXTDirect's image to use in custom registry
+	_, err = exec.Command("docker", "tag", txtdirectImage, "172.20.10.3:5000/txtdirect").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Couldn't tag image to use in custom Docker registry: %s", err.Error())
+	}
+
+	// Export the image to a tarball
+	_, err = exec.Command("docker", "save", "172.20.10.3:5000/txtdirect:latest", "-o", "txtdirect.tar").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Couldn't export the image into a tarball: %s", err.Error())
+	}
+
+	// Push the TXTDirect image to the custom registry
+	_, err = exec.Command("crane", "push", "txtdirect.tar", "172.20.10.3:5000/txtdirect").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Couldn't push the image to the custom Docker registry: %s", err.Error())
+	}
+
+	// Remove the tarball after the push
+	_, err = exec.Command("rm", "./txtdirect.tar").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Couldn't remove the image tarball: %s", err.Error())
+	}
 
 	return nil
 }

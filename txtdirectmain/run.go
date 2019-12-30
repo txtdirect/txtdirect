@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/caddyserver/caddy"
@@ -26,9 +27,12 @@ func init() {
 
 // Run is TXTDirect's main() function.
 func Run() {
+	flag.Parse()
 	caddy.TrapSignals()
 
-	getFlags()
+	if err := getFlags(); err != nil {
+		log.Fatalf("[txtdirect]: Couldn't parse the flags: %s", err.Error())
+	}
 
 	if version {
 		showVersion()
@@ -78,6 +82,7 @@ func confLoader(serverType string) (caddy.Input, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return caddy.CaddyfileInput{
 		Contents:       contents,
 		Filepath:       conf,
@@ -160,14 +165,15 @@ var (
 	GitCommit string
 )
 
-func getFlags() {
-	confFlag := flag.Lookup("conf")
-	if confFlag != nil {
-		conf = confFlag.Value.String()
-	}
-
+func getFlags() error {
 	versionFlag := flag.Lookup("version")
 	if versionFlag != nil {
-		version = true
+		versionVal, err := strconv.ParseBool(versionFlag.Value.String())
+		if err != nil {
+			return fmt.Errorf("Coudln't parse the -version flag: %s", err.Error())
+		}
+		version = versionVal
 	}
+
+	return nil
 }

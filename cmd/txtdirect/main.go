@@ -14,7 +14,7 @@ limitations under the License.
 package main
 
 import (
-	"github.com/caddyserver/caddy/caddy/caddymain"
+	"go.txtdirect.org/txtdirect/txtdirectmain"
 
 	_ "github.com/SchumacherFM/mailout"
 	_ "github.com/captncraig/caddy-realip"
@@ -23,6 +23,5 @@ import (
 )
 
 func main() {
-	caddymain.EnableTelemetry = false
-	caddymain.Run()
+	txtdirectmain.Run()
 }

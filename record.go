@@ -34,6 +34,7 @@ type record struct {
 	Root    string
 	Re      string
 	Ref     bool
+	Headers map[string]string
 }
 
 // getRecord uses the given host to find a TXT record
@@ -71,12 +72,15 @@ func getRecord(host string, c Config, w http.ResponseWriter, r *http.Request) (r
 	return rec, nil
 }
 
-// Parse takes a string containing the DNS TXT record and returns
+// ParseRecord takes a string containing the DNS TXT record and returns
 // a TXTDirect record struct instance.
 // It will return an error if the DNS TXT record is not standard or
 // if the record type is not enabled in the TXTDirect's config.
 func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config) (record, error) {
-	r := record{}
+	r := record{
+		Headers: map[string]string{},
+	}
+
 	s := strings.Split(str, ";")
 	for _, l := range s {
 		switch {
@@ -142,6 +146,9 @@ func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config)
 			l = strings.TrimPrefix(l, "website=")
 			l = ParseURI(l, w, req, c)
 			r.Website = l
+		case strings.HasPrefix(l, ">"):
+			header := strings.Split(l, "=")
+			r.Headers[header[0][1:]] = header[1]
 
 		default:
 			tuple := strings.Split(l, "=")

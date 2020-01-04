@@ -34,7 +34,7 @@ import (
 // Testing TXT records
 var txts = map[string]string{
 	// type=host
-	"_redirect.host.e2e.test.": "v=txtv0;to=https://plain.host.test;type=host;ref=true;code=302",
+	"_redirect.host.e2e.test.": "v=txtv0;to=https://plain.host.test;type=host;ref=true;>TestHeader=TestValue;code=302",
 
 	// query() function test records
 	"_redirect.about.test.": "v=txtv0;to=https://about.txtdirect.org",
@@ -449,6 +449,39 @@ func TestServerHeaderE2E(t *testing.T) {
 		if !contains(resp.Header()["Server"], test.expected) {
 			t.Errorf("Expected \"Server\" header to be %s but it's %s", test.expected, resp.Header().Get("Server"))
 		}
+	}
+}
+
+// Note: RecordHeaders isn't a function, this test is for checking
+// response's headers with the custom headers in the record.
+func TestRecordHeadersE2E(t *testing.T) {
+	tests := []struct {
+		url     string
+		headers map[string]string
+	}{
+		{
+			"https://host.e2e.test",
+			map[string]string{"TestHeader": "TestValue"},
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.url, nil)
+		resp := httptest.NewRecorder()
+		c := Config{
+			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Enable:   []string{"host"},
+		}
+		err := Redirect(resp, req, c)
+		if err != nil {
+			t.Errorf("Unexpected Error: %s", err.Error())
+		}
+
+		for header, val := range test.headers {
+			if resp.Header().Get(header) != val {
+				t.Errorf("Expected \"%s\" header to be %s but it's %s", header, val, resp.Header().Get(header))
+			}
+		}
+
 	}
 }
 

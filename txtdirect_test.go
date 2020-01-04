@@ -34,11 +34,15 @@ import (
 // Testing TXT records
 var txts = map[string]string{
 	// type=host
-	"_redirect.host.e2e.test.": "v=txtv0;to=https://plain.host.test;type=host;ref=true;>TestHeader=TestValue;code=302",
+	"_redirect.host.host.example.com.": "v=txtv0;to=https://plain.host.test;type=host;ref=true;>TestHeader=TestValue;code=302",
+
+	// type=path
+	"_redirect.path.path.example.com.": "v=txtv0;type=path;>TestHeader=TestValue;>TestHeader1=TestValue1",
+	"_redirect.host.path.example.com.": "v=txtv0;type=host;to=https://host.host.example.com;",
 
 	// query() function test records
-	"_redirect.about.test.": "v=txtv0;to=https://about.txtdirect.org",
-	"_redirect.pkg.test.":   "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
+	"_redirect.about.host.host.example.com.":   "v=txtv0;to=https://about.txtdirect.org",
+	"_redirect.pkg.gometa.gometa.example.com.": "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
 }
 
 // Testing DNS server port
@@ -71,12 +75,12 @@ func Test_query(t *testing.T) {
 		txt  string
 	}{
 		{
-			"_redirect.about.test.",
-			txts["_redirect.about.test."],
+			"_redirect.about.host.host.example.com.",
+			txts["_redirect.about.host.host.example.com."],
 		},
 		{
-			"_redirect.pkg.test.",
-			txts["_redirect.pkg.test."],
+			"_redirect.pkg.gometa.gometa.example.com.",
+			txts["_redirect.pkg.gometa.gometa.example.com."],
 		},
 	}
 	for _, test := range tests {
@@ -121,7 +125,7 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 }
 
 func RunDNSServer() {
-	dns.HandleFunc("test.", handleDNSRequest)
+	dns.HandleFunc("example.com.", handleDNSRequest)
 	err := server.ListenAndServe()
 	defer server.Shutdown()
 	if err != nil {
@@ -366,21 +370,21 @@ func TestServerHeaderE2E(t *testing.T) {
 		expected     string
 	}{
 		{
-			"https://host.e2e.test",
+			"https://host.host.example.com",
 			[]string{"host"},
 			false,
 			false,
 			"TXTDirect",
 		},
 		{
-			"https://host.e2e.test",
+			"https://host.host.example.com",
 			[]string{"host"},
 			true,
 			false,
 			"Testing-TXTDirect",
 		},
 		{
-			"https://host.e2e.test",
+			"https://host.host.example.com",
 			[]string{"host"},
 			false,
 			true,
@@ -460,8 +464,15 @@ func TestRecordHeadersE2E(t *testing.T) {
 		headers map[string]string
 	}{
 		{
-			"https://host.e2e.test",
+			"https://host.host.example.com",
 			map[string]string{"TestHeader": "TestValue"},
+		},
+		{
+			"https://path.path.example.com/host",
+			map[string]string{
+				"TestHeader":  "TestValue",
+				"TestHeader1": "TestValue1",
+			},
 		},
 	}
 	for _, test := range tests {
@@ -469,7 +480,7 @@ func TestRecordHeadersE2E(t *testing.T) {
 		resp := httptest.NewRecorder()
 		c := Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
-			Enable:   []string{"host"},
+			Enable:   []string{"host", "path"},
 		}
 		err := Redirect(resp, req, c)
 		if err != nil {

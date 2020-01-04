@@ -69,6 +69,13 @@ func getRecord(host string, c Config, w http.ResponseWriter, r *http.Request) (r
 
 	r = rec.addToContext(r)
 
+	// Add the headers from record to the response
+	if len(rec.Headers) != 0 {
+		for header, val := range rec.Headers {
+			w.Header().Set(header, val)
+		}
+	}
+
 	return rec, nil
 }
 

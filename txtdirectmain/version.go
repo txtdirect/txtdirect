@@ -1,8 +1,11 @@
 package txtdirectmain
 
-// Various CoreDNS constants.
+// Various TXTDirect constants.
 const (
-	TXTDirectVersion = "0.4.0"
-	TXTDirectName    = "TXTDirect"
-	serverType       = "http"
+	TXTDirectName = "TXTDirect"
+	serverType    = "http"
 )
+
+// TXTDirectVersion gets filled in the build time using -ldflags
+// Check the Makefile for more information.
+var TXTDirectVersion = ""

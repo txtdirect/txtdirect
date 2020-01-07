@@ -1,7 +1,8 @@
 BIN := txtdirect
 DOMAIN := c.txtdirect.org
-VERSION := 0.4.0
+VERSION := $(shell cat ./VERSION)
 IMAGE := $(DOMAIN)/$(BIN):$(VERSION)
+CODEPATH := $(shell go list -m)
 
 BUILD_GOOS := $(if $(GOOS),$(GOOS),linux)
 BUILD_GOARCH := $(if $(GOARCH),$(GOARCH),amd64)
@@ -12,7 +13,7 @@ CONTAINER ?= $(BIN)
 
 build:
 	cd cmd/txtdirect && \
-	GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w"
+	GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w -X $(CODEPATH)/txtdirectmain.TXTDirectVersion=$(VERSION)"
 	mv cmd/txtdirect/txtdirect ./$(BIN)
 
 test:

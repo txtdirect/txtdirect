@@ -474,6 +474,10 @@ func TestRecordHeadersE2E(t *testing.T) {
 				"TestHeader1": "TestValue1",
 			},
 		},
+		{
+			"https://host.host.example.com",
+			map[string]string{"testheader": "TestValue"},
+		},
 	}
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)

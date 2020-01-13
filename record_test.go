@@ -156,6 +156,29 @@ func TestParseRecord(t *testing.T) {
 			},
 			status: 404,
 		},
+		{
+			txtRecord: "v=txtv0;type=path;code=302;>Header-1=HeaderValue",
+			expected: record{
+				Version: "txtv0",
+				Type:    "path",
+				Code:    302,
+				Ref:     false,
+				Headers: map[string]string{"Header-1": "HeaderValue"},
+			},
+		},
+		{
+			txtRecord: "v=txtv0;type=path;code=302;>Header-1=HeaderValue;>Header-2=HeaderValue",
+			expected: record{
+				Version: "txtv0",
+				Type:    "path",
+				Code:    302,
+				Ref:     false,
+				Headers: map[string]string{
+					"Header-1": "HeaderValue",
+					"Header-2": "HeaderValue",
+				},
+			},
+		},
 	}
 
 	for i, test := range tests {
@@ -199,6 +222,17 @@ func TestParseRecord(t *testing.T) {
 		}
 		if got, want := r.Vcs, test.expected.Vcs; got != want {
 			t.Errorf("Test %d: Expected Vcs to be '%s', got '%s'", i, want, got)
+		}
+
+		if len(r.Headers) != len(test.expected.Headers) {
+			t.Errorf("Test %d: Expected %d headers, got '%d'", i, len(r.Headers), len(test.expected.Headers))
+		}
+
+		for header, val := range r.Headers {
+			if test.expected.Headers[header] != val {
+				t.Errorf("Test %d: Expected %s Header to be '%s', got '%s'",
+					i, header, test.expected.Headers[header], val)
+			}
 		}
 	}
 }

@@ -1,11 +1,10 @@
 package config
 
 import (
-	"image/color"
 	"net/http"
 
 	"github.com/caddyserver/caddy/caddyhttp/httpserver"
-	qrcode "github.com/skip2/go-qrcode"
+	"go.txtdirect.org/txtdirect/plugins/qr"
 )
 
 // Config contains the middleware's configuration
@@ -15,18 +14,7 @@ type Config struct {
 	Resolver  string
 	LogOutput string
 	Prometheus Prometheus
-	Qr Qr
-}
-
-type Qr struct {
-	Enable          bool
-	Size            int
-	BackgroundColor string
-	ForegroundColor string
-	RecoveryLevel   qrcode.RecoveryLevel
-
-	BGColor color.Color
-	FGColor color.Color
+	Qr qr.Qr
 }
 
 // Prometheus contains Prometheus's configuration

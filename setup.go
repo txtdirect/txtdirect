@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"go.txtdirect.org/txtdirect/config"
+	"go.txtdirect.org/txtdirect/plugins/qr"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/caddyserver/caddy"
@@ -51,7 +52,7 @@ func ParseConfig(c *caddy.Controller) (config.Config, error) {
 	var resolver string
 	var prometheus Prometheus
 	var logfile string
-	var qr Qr
+	var qr qr.Qr
 
 	c.Next() // skip directive name
 	for c.NextBlock() {

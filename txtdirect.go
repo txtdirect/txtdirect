@@ -105,7 +105,6 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	rec, err := record.GetRecord(host, c, w, r)
 	r = rec.AddToContext(r)
 	if err != nil {
-		panic(err.Error())
 		record.Fallback(w, r, "global", http.StatusFound, c)
 		return nil
 	}

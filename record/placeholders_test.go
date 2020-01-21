@@ -158,7 +158,7 @@ func TestParsePlaceholders(t *testing.T) {
 		req.AddCookie(&http.Cookie{Name: "test", Value: "test"})
 		req.Header.Add("Test", "test-header")
 		req.SetBasicAuth("user1", "password")
-		result, err := parsePlaceholders(test.url, req, test.pathSlice)
+		result, err := ParsePlaceholders(test.url, req, test.pathSlice)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -192,7 +192,7 @@ func TestParsePlaceholdersFails(t *testing.T) {
 	}
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.requested, nil)
-		_, err := parsePlaceholders(test.url, req, test.pathSlice)
+		_, err := ParsePlaceholders(test.url, req, test.pathSlice)
 		if err == nil {
 			t.Errorf("Expected error, got nil")
 		}

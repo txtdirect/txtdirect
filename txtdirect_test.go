@@ -15,6 +15,7 @@ package txtdirect
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -32,6 +33,7 @@ import (
 	"go.txtdirect.org/txtdirect/config"
 	"go.txtdirect.org/txtdirect/query"
 	"go.txtdirect.org/txtdirect/record"
+	"go.txtdirect.org/txtdirect/variables"
 )
 
 // Testing TXT records
@@ -48,11 +50,8 @@ var txts = map[string]string{
 	"_redirect.pkg.gometa.gometa.example.com.": "v=txtv0;to=https://pkg.txtdirect.org;type=gometa",
 }
 
-// Testing DNS server port
-const port = 6000
-
 // Initialize dns server instance
-var server = &dns.Server{Addr: ":" + strconv.Itoa(port), Net: "udp"}
+var server = &dns.Server{Addr: ":" + strconv.Itoa(variables.Port), Net: "udp"}
 
 func TestMain(m *testing.M) {
 	go RunDNSServer()
@@ -89,7 +88,7 @@ func Test_query(t *testing.T) {
 	for _, test := range tests {
 		ctx := context.Background()
 		c := config.Config{
-			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Resolver: "127.0.0.1:" + strconv.Itoa(variables.Port),
 		}
 		resp, err := query.Query(test.zone, ctx, c)
 		if err != nil {
@@ -168,7 +167,7 @@ func TestRedirectE2e(t *testing.T) {
 		req := httptest.NewRequest("GET", test.url, nil)
 		resp := httptest.NewRecorder()
 		c := config.Config{
-			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Resolver: "127.0.0.1:" + strconv.Itoa(variables.Port),
 			Enable:   test.enable,
 		}
 		if err := Redirect(resp, req, c); err != nil {
@@ -183,25 +182,23 @@ func TestRedirectE2e(t *testing.T) {
 	}
 }
 
+// The URLs used in this test-case don't mean anything and the request is
+// supposed to trigger fallback and get redirected to Config.Redirect field.
 func TestConfigE2e(t *testing.T) {
 	tests := []struct {
 		url    string
-		txt    string
 		enable []string
 	}{
 		{
-			"https://e2e.txtdirect",
-			txts["_redirect.path.txtdirect."],
+			"https://example.com.",
 			[]string{},
 		},
 		{
-			"https://path.txtdirect/test",
-			txts["_redirect.path.e2e.txtdirect."],
+			"https://path.example.com/test",
 			[]string{"host"},
 		},
 		{
-			"https://gometa.txtdirect",
-			txts["_redirect.gometa.txtdirect."],
+			"https://gometa.example.com",
 			[]string{"host"},
 		},
 	}
@@ -209,7 +206,7 @@ func TestConfigE2e(t *testing.T) {
 		req := httptest.NewRequest("GET", test.url, nil)
 		resp := httptest.NewRecorder()
 		c := config.Config{
-			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Resolver: "127.0.0.1:" + strconv.Itoa(variables.Port),
 			Redirect: "https://txtdirect.org",
 		}
 		Redirect(resp, req, c)
@@ -398,7 +395,7 @@ func TestServerHeaderE2E(t *testing.T) {
 		req := httptest.NewRequest("GET", test.url, nil)
 		resp := httptest.NewRecorder()
 		c := config.Config{
-			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Resolver: "127.0.0.1:" + strconv.Itoa(variables.Port),
 			Enable:   test.enable,
 		}
 		err := Redirect(resp, req, c)
@@ -486,7 +483,7 @@ func TestRecordHeadersE2E(t *testing.T) {
 		req := httptest.NewRequest("GET", test.url, nil)
 		resp := httptest.NewRecorder()
 		c := config.Config{
-			Resolver: "127.0.0.1:" + strconv.Itoa(port),
+			Resolver: "127.0.0.1:" + strconv.Itoa(variables.Port),
 			Enable:   []string{"host", "path"},
 		}
 		err := Redirect(resp, req, c)
@@ -500,6 +497,50 @@ func TestRecordHeadersE2E(t *testing.T) {
 			}
 		}
 
+	}
+}
+
+func Test_fallbackE2E(t *testing.T) {
+	tests := []struct {
+		url      string
+		enable   []string
+		code     int
+		to       string
+		website  string
+		root     string
+		redirect string
+		headers  http.Header
+	}{
+		{
+			url:      "https://127.0.0.1",
+			enable:   []string{},
+			redirect: "https://isip.test",
+			headers:  http.Header{},
+		},
+	}
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", test.url, nil)
+		req.Header = test.headers
+		resp := httptest.NewRecorder()
+		c := config.Config{
+			Resolver: "127.0.0.1:" + strconv.Itoa(variables.Port),
+			Enable:   test.enable,
+			Redirect: test.redirect,
+		}
+		err := Redirect(resp, req, c)
+
+		location := resp.Header().Get("Location")
+
+		checkSpecificFallback(t, req, location, test.to, test.website, test.root)
+
+		// Records status code are defined in the txtdirect_test.go file's dns zone
+		if resp.Code != test.code {
+			checkGlobalFallback(t, req, location, c, resp.Code)
+		}
+
+		if err != nil {
+			t.Errorf("Unexpected error: %s", err.Error())
+		}
 	}
 }
 
@@ -533,4 +574,39 @@ func (u *fakeUpstream) Select(r *http.Request) *proxy.UpstreamHost {
 		}
 	}
 	return u.host
+}
+
+func checkGlobalFallback(t *testing.T, r *http.Request, location string, config config.Config, code int) {
+	if contains(config.Enable, "www") {
+		checkLocationHeader(t, location, fmt.Sprintf("https://www.%s", r.URL.Host))
+		return
+	}
+	if config.Redirect != "" {
+		checkLocationHeader(t, location, config.Redirect)
+		return
+	}
+	if code != 404 {
+		t.Errorf("Expected status code to be 404 but got %d", code)
+	}
+}
+
+func checkSpecificFallback(t *testing.T, r *http.Request, location, to, website, root string) {
+	if to != "" {
+		checkLocationHeader(t, location, to)
+		return
+	}
+	if website != "" {
+		checkLocationHeader(t, location, website)
+		return
+	}
+	if root != "" {
+		checkLocationHeader(t, location, root)
+		return
+	}
+}
+
+func checkLocationHeader(t *testing.T, location, item string) {
+	if location != item {
+		t.Errorf("Expected %s got %s", item, location)
+	}
 }

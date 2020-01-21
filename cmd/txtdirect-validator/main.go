@@ -7,7 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"go.txtdirect.org/txtdirect"
+	"go.txtdirect.org/txtdirect/config"
+	"go.txtdirect.org/txtdirect/record"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 
 	enabled = strings.Split(types, ",")
 
-	config := txtdirect.Config{
+	config := config.Config{
 		Enable: enabled,
 	}
 
@@ -27,7 +28,7 @@ func main() {
 		log.Fatalf("[txtdirect-validator]: A TXT record should be provided as a argument")
 	}
 
-	_, err := txtdirect.ParseRecord(os.Args[1], nil, &http.Request{}, config)
+	_, err := record.ParseRecord(os.Args[1], nil, &http.Request{}, config)
 	if err != nil {
 		log.Fatalf("[txtdirect-validator]: Couldn't parse the record: %s", err.Error())
 	}

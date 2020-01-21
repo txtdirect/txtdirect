@@ -14,10 +14,8 @@ limitations under the License.
 package txtdirect
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,6 +23,8 @@ import (
 
 	"go.txtdirect.org/txtdirect/config"
 	"go.txtdirect.org/txtdirect/plugins/prometheus"
+	"go.txtdirect.org/txtdirect/record"
+	"go.txtdirect.org/txtdirect/types"
 )
 
 const (
@@ -41,19 +41,6 @@ var bl = map[string]bool{
 	"/favicon.ico": true,
 }
 
-// getBaseTarget parses the placeholder in the given record's To= field
-// and returns the final address and http status code
-func getBaseTarget(rec record, r *http.Request) (string, int, error) {
-	if strings.ContainsAny(rec.To, "{}") {
-		to, err := parsePlaceholders(rec.To, r, []string{})
-		if err != nil {
-			return "", 0, err
-		}
-		rec.To = to
-	}
-	return rec.To, rec.Code, nil
-}
-
 // contains checks the given slice to see if an item exists
 // in that slice or not
 func contains(array []string, word string) bool {
@@ -63,56 +50,6 @@ func contains(array []string, word string) bool {
 		}
 	}
 	return false
-}
-
-// customResolver returns a net.Resolver instance based
-// on the given txtdirect config to use a custom DNS resolver.
-func customResolver(c config.Config) net.Resolver {
-	return net.Resolver{
-		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			d := net.Dialer{}
-			return d.DialContext(ctx, network, c.Resolver)
-		},
-	}
-}
-
-func absoluteZone(zone string) string {
-	// Removes port from zone
-	if strings.Contains(zone, ":") {
-		zoneSlice := strings.Split(zone, ":")
-		zone = zoneSlice[0]
-	}
-
-	if !strings.HasPrefix(zone, basezone) {
-		zone = strings.Join([]string{basezone, zone}, ".")
-	}
-
-	if strings.HasSuffix(zone, ".") {
-		return zone
-	}
-
-	return strings.Join([]string{zone, "."}, "")
-}
-
-// query checks the given zone using net.LookupTXT to
-// find TXT records in that zone
-func query(zone string, ctx context.Context, c config.Config) ([]string, error) {
-	var txts []string
-	var err error
-	if c.Resolver != "" {
-		net := customResolver(c)
-		txts, err = net.LookupTXT(ctx, absoluteZone(zone))
-	} else {
-		txts, err = net.LookupTXT(absoluteZone(zone))
-	}
-	if err != nil {
-		return nil, fmt.Errorf("could not get TXT record: %s", err)
-	}
-	if txts[0] == "" {
-		return nil, fmt.Errorf("TXT record doesn't exist or is empty")
-	}
-	return txts, nil
 }
 
 func isIP(host string) bool {
@@ -161,15 +98,15 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 
 	if isIP(host) {
 		log.Println("[txtdirect]: Trying to access 127.0.0.1, fallback triggered.")
-		fallback(w, r, "global", http.StatusMovedPermanently, c)
+		record.Fallback(w, r, "global", http.StatusMovedPermanently, c)
 		return nil
 	}
 
-	rec, err := getRecord(host, c, w, r)
-	r = rec.addToContext(r)
+	rec, err := record.GetRecord(host, c, w, r)
+	r = rec.AddToContext(r)
 	if err != nil {
 		panic(err.Error())
-		fallback(w, r, "global", http.StatusFound, c)
+		record.Fallback(w, r, "global", http.StatusFound, c)
 		return nil
 	}
 
@@ -189,7 +126,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 
 	if rec.Re != "" && rec.From != "" {
 		log.Println("[txtdirect]: It's not allowed to use both re= and from= in a record.")
-		fallback(w, r, "to", rec.Code, c)
+		record.Fallback(w, r, "to", rec.Code, c)
 		return nil
 	}
 
@@ -197,13 +134,13 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 		prometheus.RequestsCountBasedOnType.WithLabelValues(host, "path").Add(1)
 		prometheus.PathRedirectCount.WithLabelValues(host, path).Add(1)
 
-		path := NewPath(w, r, path, rec, c)
+		path := types.NewPath(w, r, path, rec, c)
 
-		if path.path == "/" {
+		if path.Path == "/" {
 			return path.RedirectRoot()
 		}
 
-		if path.path != "" && rec.Re != "record" {
+		if path.Path != "" && rec.Re != "record" {
 			record := path.Redirect()
 			// It means fallback got triggered, If record is nil
 			if record == nil {
@@ -213,14 +150,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 		}
 
 		// Use predefined regexes if custom regex is set to "record"
-		if path.rec.Re == "record" {
-			record, err := path.SpecificRecord()
+		if path.Rec.Re == "record" {
+			specificRec, err := path.SpecificRecord()
 			if err != nil {
 				log.Printf("[txtdirect]: Fallback is triggered because redirect to the most specific match failed: %s", err.Error())
-				fallback(path.rw, path.req, "to", path.rec.Code, path.c)
+				record.Fallback(path.Rw, path.Req, "to", path.Rec.Code, path.C)
 				return nil
 			}
-			rec = *record
+			rec = *specificRec
 		}
 	}
 
@@ -228,10 +165,10 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 		prometheus.RequestsCountBasedOnType.WithLabelValues(host, "proxy").Add(1)
 		log.Printf("[txtdirect]: %s > %s", rec.From, rec.To)
 
-		proxy := NewProxy(w, r, rec, c)
+		proxy := types.NewProxy(w, r, rec, c)
 		if err = proxy.Proxy(); err != nil {
 			log.Print("Fallback is triggered because an error has occurred: ", err)
-			fallback(w, r, "to", rec.Code, c)
+			record.Fallback(w, r, "to", rec.Code, c)
 		}
 
 		return nil
@@ -240,11 +177,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	if rec.Type == "dockerv2" {
 		prometheus.RequestsCountBasedOnType.WithLabelValues(host, "dockerv2").Add(1)
 
-		docker := NewDockerv2(w, r, rec, c)
+		docker := types.NewDockerv2(w, r, rec, c)
 
 		if err := docker.Redirect(); err != nil {
 			log.Printf("[txtdirect]: couldn't redirect to the requested container: %s", err.Error())
-			fallback(w, r, "to", rec.Code, c)
+			record.Fallback(w, r, "to", rec.Code, c)
 			return nil
 		}
 		return nil
@@ -253,7 +190,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	if rec.Type == "host" {
 		prometheus.RequestsCountBasedOnType.WithLabelValues(host, "host").Add(1)
 
-		host := NewHost(w, r, rec, c)
+		host := types.NewHost(w, r, rec, c)
 
 		if err := host.Redirect(); err != nil {
 			return err
@@ -264,7 +201,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	if rec.Type == "gometa" {
 		prometheus.RequestsCountBasedOnType.WithLabelValues(host, "gometa").Add(1)
 
-		gometa := NewGometa(w, r, rec, c)
+		gometa := types.NewGometa(w, r, rec, c)
 
 		// Triggers fallback when request isn't from `go get`
 		if !gometa.ValidQuery() {
@@ -275,7 +212,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	}
 
 	if rec.Type == "git" {
-		git := NewGit(w, r, c, rec)
+		git := types.NewGit(w, r, c, rec)
 
 		// Triggers fallback when request isn't from a Git client
 		if !git.ValidGitQuery() {

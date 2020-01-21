@@ -30,6 +30,8 @@ import (
 	"github.com/caddyserver/caddy/caddyhttp/proxy"
 	"github.com/miekg/dns"
 	"go.txtdirect.org/txtdirect/config"
+	"go.txtdirect.org/txtdirect/query"
+	"go.txtdirect.org/txtdirect/record"
 )
 
 // Testing TXT records
@@ -89,7 +91,7 @@ func Test_query(t *testing.T) {
 		c := config.Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
 		}
-		resp, err := query(test.zone, ctx, c)
+		resp, err := query.Query(test.zone, ctx, c)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -274,7 +276,7 @@ func Test_customResolver(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		resolver := customResolver(test.config)
+		resolver := query.CustomResolver(test.config)
 		if resolver.PreferGo != true {
 			t.Errorf("Expected PreferGo option to be enabled in the returned resolver")
 		}
@@ -310,15 +312,15 @@ func Test_contains(t *testing.T) {
 	}
 }
 
-func Test_getBaseTarget(t *testing.T) {
+func Test_GetBaseTarget(t *testing.T) {
 	tests := []struct {
-		record record
+		record record.Record
 		reqURL string
 		url    string
 		status int
 	}{
 		{
-			record{
+			record.Record{
 				To:   "https://example.test",
 				Code: 200,
 			},
@@ -327,7 +329,7 @@ func Test_getBaseTarget(t *testing.T) {
 			200,
 		},
 		{
-			record{
+			record.Record{
 				To:   "https://{host}/{method}",
 				Code: 200,
 			},
@@ -336,7 +338,7 @@ func Test_getBaseTarget(t *testing.T) {
 			200,
 		},
 		{
-			record{
+			record.Record{
 				To:   "https://testing.test{path}",
 				Code: 301,
 			},
@@ -347,7 +349,7 @@ func Test_getBaseTarget(t *testing.T) {
 	}
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.reqURL, nil)
-		to, status, err := getBaseTarget(test.record, req)
+		to, status, err := record.GetBaseTarget(test.record, req)
 		if err != nil {
 			t.Errorf("Expected the err to be nil but got %s", err)
 		}

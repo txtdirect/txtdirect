@@ -29,6 +29,7 @@ import (
 	"github.com/caddyserver/caddy/caddyhttp/httpserver"
 	"github.com/caddyserver/caddy/caddyhttp/proxy"
 	"github.com/miekg/dns"
+	"go.txtdirect.org/txtdirect/config"
 )
 
 // Testing TXT records
@@ -57,7 +58,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestRedirectBlacklist(t *testing.T) {
-	config := Config{
+	config := config.Config{
 		Enable: []string{"path"},
 	}
 	req := httptest.NewRequest("GET", "https://txtdirect.com/favicon.ico", nil)
@@ -85,7 +86,7 @@ func Test_query(t *testing.T) {
 	}
 	for _, test := range tests {
 		ctx := context.Background()
-		c := Config{
+		c := config.Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
 		}
 		resp, err := query(test.zone, ctx, c)
@@ -164,7 +165,7 @@ func TestRedirectE2e(t *testing.T) {
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)
 		resp := httptest.NewRecorder()
-		c := Config{
+		c := config.Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
 			Enable:   test.enable,
 		}
@@ -205,7 +206,7 @@ func TestConfigE2e(t *testing.T) {
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)
 		resp := httptest.NewRecorder()
-		c := Config{
+		c := config.Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
 			Redirect: "https://txtdirect.org",
 		}
@@ -259,15 +260,15 @@ func Test_isIP(t *testing.T) {
 
 func Test_customResolver(t *testing.T) {
 	tests := []struct {
-		config Config
+		config config.Config
 	}{
 		{
-			Config{
+			config.Config{
 				Resolver: "127.0.0.1",
 			},
 		},
 		{
-			Config{
+			config.Config{
 				Resolver: "8.8.8.8",
 			},
 		},
@@ -394,7 +395,7 @@ func TestServerHeaderE2E(t *testing.T) {
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)
 		resp := httptest.NewRecorder()
-		c := Config{
+		c := config.Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
 			Enable:   test.enable,
 		}
@@ -482,7 +483,7 @@ func TestRecordHeadersE2E(t *testing.T) {
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)
 		resp := httptest.NewRecorder()
-		c := Config{
+		c := config.Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
 			Enable:   []string{"host", "path"},
 		}

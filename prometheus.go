@@ -25,17 +25,11 @@ import (
 	"github.com/caddyserver/caddy/caddyhttp/httpserver"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.txtdirect.org/txtdirect/config"
 )
 
 // Prometheus contains Prometheus's configuration
-type Prometheus struct {
-	Enable  bool
-	Address string
-	Path    string
-
-	next    httpserver.Handler
-	handler http.Handler
-}
+type Prometheus config.Prometheus
 
 var (
 	// RequestsCount counts the total requests per host
@@ -100,7 +94,7 @@ func (p *Prometheus) start() error {
 	prometheus.MustRegister(RequestsCountBasedOnType)
 	prometheus.MustRegister(FallbacksCount)
 	prometheus.MustRegister(PathRedirectCount)
-	http.Handle(p.Path, p.handler)
+	http.Handle(p.Path, p.Handler)
 	go func() {
 		err := http.ListenAndServe(p.Address, nil)
 		if err != nil {
@@ -112,7 +106,7 @@ func (p *Prometheus) start() error {
 
 // Setup registers the metrics on startup and creates the promethues request handler
 func (p *Prometheus) Setup(c *caddy.Controller) {
-	p.handler = promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{
+	p.Handler = promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{
 		ErrorHandling: promhttp.HTTPErrorOnError,
 		ErrorLog:      log.New(os.Stderr, "", log.LstdFlags),
 	})
@@ -123,13 +117,13 @@ func (p *Prometheus) Setup(c *caddy.Controller) {
 
 	cfg := httpserver.GetConfig(c)
 	cfg.AddMiddleware(func(next httpserver.Handler) httpserver.Handler {
-		p.next = next
+		p.Next = next
 		return p
 	})
 }
 
 func (p *Prometheus) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	next := p.next
+	next := p.Next
 
 	rw := httpserver.NewResponseRecorder(w)
 

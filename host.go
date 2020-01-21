@@ -5,18 +5,20 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"go.txtdirect.org/txtdirect/config"
 )
 
 // Host keeps data for "host" type requests
 type Host struct {
 	rw  http.ResponseWriter
 	req *http.Request
-	c   Config
+	c   config.Config
 	rec record
 }
 
 // NewHost returns a fresh instance of Host struct
-func NewHost(w http.ResponseWriter, r *http.Request, rec record, c Config) *Host {
+func NewHost(w http.ResponseWriter, r *http.Request, rec record, c config.Config) *Host {
 	return &Host{
 		rw:  w,
 		req: r,

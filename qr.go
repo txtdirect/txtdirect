@@ -9,19 +9,11 @@ import (
 
 	"github.com/caddyserver/caddy"
 	qrcode "github.com/skip2/go-qrcode"
+	"go.txtdirect.org/txtdirect/config"
 )
 
 // Qr contains Qr code generator's configuration
-type Qr struct {
-	Enable          bool
-	Size            int
-	BackgroundColor string
-	ForegroundColor string
-	RecoveryLevel   qrcode.RecoveryLevel
-
-	backgroundColor color.Color
-	foregroundColor color.Color
-}
+type Qr config.Qr
 
 // Redirect handles the requests for "qr" requests
 func (qr *Qr) Redirect(w http.ResponseWriter, r *http.Request) error {
@@ -32,7 +24,7 @@ func (qr *Qr) Redirect(w http.ResponseWriter, r *http.Request) error {
 	if err = qr.ParseColors(); err != nil {
 		return fmt.Errorf("Coudln't parse colors: %s", err.Error())
 	}
-	Qr.BackgroundColor, Qr.ForegroundColor = qr.backgroundColor, qr.foregroundColor
+	Qr.BackgroundColor, Qr.ForegroundColor = qr.BGColor, qr.FGColor
 
 	Qr.Write(qr.Size, w)
 	return nil
@@ -44,12 +36,12 @@ func (qr *Qr) ParseColors() error {
 	if err != nil {
 		return err
 	}
-	qr.backgroundColor = color.RGBA{bg[0], bg[1], bg[2], bg[3]}
+	qr.BGColor = color.RGBA{bg[0], bg[1], bg[2], bg[3]}
 	fg, _ := hex.DecodeString(qr.ForegroundColor)
 	if err != nil {
 		return err
 	}
-	qr.foregroundColor = color.RGBA{fg[0], fg[1], fg[2], fg[3]}
+	qr.FGColor = color.RGBA{fg[0], fg[1], fg[2], fg[3]}
 	return nil
 }
 

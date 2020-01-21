@@ -8,18 +8,19 @@ import (
 
 	"github.com/caddyserver/caddy/caddyhttp/proxy"
 	"github.com/prometheus/common/log"
+	"go.txtdirect.org/txtdirect/config"
 )
 
 // Git keeps data for "git" type requests
 type Git struct {
 	rw  http.ResponseWriter
 	req *http.Request
-	c   Config
+	c   config.Config
 	rec record
 }
 
 // NewGit returns a fresh instance of Git struct
-func NewGit(w http.ResponseWriter, r *http.Request, c Config, rec record) *Git {
+func NewGit(w http.ResponseWriter, r *http.Request, c config.Config, rec record) *Git {
 	return &Git{
 		rw:  w,
 		req: r,

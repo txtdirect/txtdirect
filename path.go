@@ -23,13 +23,15 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"go.txtdirect.org/txtdirect/config"
 )
 
 // Path contains the data that are needed to redirect path requests
 type Path struct {
 	rw   http.ResponseWriter
 	req  *http.Request
-	c    Config
+	c    config.Config
 	path string
 	rec  record
 }
@@ -59,7 +61,7 @@ var GroupRegex = regexp.MustCompile("P<[a-zA-Z]+[a-zA-Z0-9]*>")
 var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+[a-zA-Z0-9]*)>")
 
 // NewPath returns an instance of Path struct using the given data
-func NewPath(w http.ResponseWriter, r *http.Request, path string, rec record, c Config) *Path {
+func NewPath(w http.ResponseWriter, r *http.Request, path string, rec record, c config.Config) *Path {
 	return &Path{
 		rw:   w,
 		req:  r,
@@ -285,7 +287,7 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 
 // getFinalRecord finds the final TXT record for the given zone.
 // It will try wildcards if the first zone return error
-func getFinalRecord(zone string, from int, c Config, w http.ResponseWriter, r *http.Request, pathSlice []string) (record, error) {
+func getFinalRecord(zone string, from int, c config.Config, w http.ResponseWriter, r *http.Request, pathSlice []string) (record, error) {
 	txts, err := query(zone, r.Context(), c)
 	if err != nil {
 		// if nothing found, jump into wildcards

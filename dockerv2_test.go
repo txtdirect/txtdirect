@@ -18,6 +18,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"go.txtdirect.org/txtdirect/config"
 )
 
 func Test_generateDockerv2URI(t *testing.T) {
@@ -114,7 +116,7 @@ func Test_generateDockerv2URI(t *testing.T) {
 		req := httptest.NewRequest("GET", fmt.Sprintf("https://example.com%s", test.path), nil)
 		resp := httptest.NewRecorder()
 		req = test.rec.addToContext(req)
-		docker := NewDockerv2(resp, req, test.rec, Config{})
+		docker := NewDockerv2(resp, req, test.rec, config.Config{})
 
 		if err := docker.Redirect(); err != nil {
 			t.Errorf("Unexpected error happened: %s", err)

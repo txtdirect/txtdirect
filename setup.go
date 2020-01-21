@@ -21,6 +21,7 @@ import (
 	"os"
 	"strings"
 
+	"go.txtdirect.org/txtdirect/config"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/caddyserver/caddy"
@@ -44,7 +45,7 @@ func init() {
 
 var allOptions = []string{"host", "path", "gometa", "www"}
 
-func ParseConfig(c *caddy.Controller) (Config, error) {
+func ParseConfig(c *caddy.Controller) (config.Config, error) {
 	var enable []string
 	var redirect string
 	var resolver string
@@ -58,34 +59,34 @@ func ParseConfig(c *caddy.Controller) (Config, error) {
 		switch option {
 		case "disable":
 			if enable != nil {
-				return Config{}, c.ArgErr()
+				return config.Config{}, c.ArgErr()
 			}
 			toDisable := c.RemainingArgs()
 			if len(toDisable) == 0 {
-				return Config{}, c.ArgErr()
+				return config.Config{}, c.ArgErr()
 			}
 			enable = removeArrayFromArray(allOptions, toDisable)
 
 		case "enable":
 			if enable != nil {
-				return Config{}, c.ArgErr()
+				return config.Config{}, c.ArgErr()
 			}
 			enable = c.RemainingArgs()
 			if len(enable) == 0 {
-				return Config{}, c.ArgErr()
+				return config.Config{}, c.ArgErr()
 			}
 
 		case "redirect":
 			toRedirect := c.RemainingArgs()
 			if len(toRedirect) != 1 {
-				return Config{}, c.ArgErr()
+				return config.Config{}, c.ArgErr()
 			}
 			redirect = toRedirect[0]
 
 		case "resolver":
 			resolverAddr := c.RemainingArgs()
 			if len(resolverAddr) != 1 {
-				return Config{}, c.ArgErr()
+				return config.Config{}, c.ArgErr()
 			}
 			resolver = resolverAddr[0]
 
@@ -108,7 +109,7 @@ func ParseConfig(c *caddy.Controller) (Config, error) {
 				}
 				err := prometheus.ParsePrometheus(c, c.Val(), c.RemainingArgs()[0])
 				if err != nil {
-					return Config{}, err
+					return config.Config{}, err
 				}
 			}
 
@@ -123,12 +124,12 @@ func ParseConfig(c *caddy.Controller) (Config, error) {
 					break
 				}
 				if err := qr.ParseQr(c); err != nil {
-					return Config{}, err
+					return config.Config{}, err
 				}
 			}
 
 		default:
-			return Config{}, c.ArgErr() // unhandled option
+			return config.Config{}, c.ArgErr() // unhandled option
 		}
 	}
 
@@ -145,7 +146,7 @@ func ParseConfig(c *caddy.Controller) (Config, error) {
 		qr.SetDefaults()
 	}
 
-	config := Config{
+	config := config.Config{
 		Enable:     enable,
 		Redirect:   redirect,
 		Resolver:   resolver,
@@ -202,7 +203,7 @@ func removeArrayFromArray(array, toBeRemoved []string) []string {
 // TXTDirect is middleware to redirect requests based on TXT records
 type TXTDirect struct {
 	Next   httpserver.Handler
-	Config Config
+	Config config.Config
 }
 
 func (rd TXTDirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {

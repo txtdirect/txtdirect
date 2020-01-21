@@ -3,6 +3,8 @@ package txtdirect
 import (
 	"net/http/httptest"
 	"testing"
+
+	"go.txtdirect.org/txtdirect/config"
 )
 
 func TestGit_Proxy(t *testing.T) {
@@ -27,7 +29,7 @@ func TestGit_Proxy(t *testing.T) {
 	for _, test := range tests {
 		req := httptest.NewRequest("GET", test.url, nil)
 		resp := httptest.NewRecorder()
-		g := NewGit(resp, req, Config{}, test.rec)
+		g := NewGit(resp, req, config.Config{}, test.rec)
 		if err := g.Proxy(); err != nil && !test.wantErr {
 			t.Errorf("Unexpected error while fetching the Git repository: %s", err.Error())
 		}

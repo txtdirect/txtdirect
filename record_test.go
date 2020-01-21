@@ -19,6 +19,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"go.txtdirect.org/txtdirect/config"
 )
 
 func TestParseRecord(t *testing.T) {
@@ -182,7 +184,7 @@ func TestParseRecord(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		c := Config{
+		c := config.Config{
 			Enable: []string{test.expected.Type},
 		}
 		req, _ := http.NewRequest("GET", "http://example.com?url=https://example.com/testing", nil)

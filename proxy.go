@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	"github.com/caddyserver/caddy/caddyhttp/proxy"
+	"go.txtdirect.org/txtdirect/config"
 )
 
 // ProxyResponse keeps the custom response writer data and is
@@ -39,12 +40,12 @@ type ProxyResponse struct {
 type Proxy struct {
 	rw  http.ResponseWriter
 	req *http.Request
-	c   Config
+	c   config.Config
 	rec record
 }
 
 // NewProxy returns a fresh instance of Proxy struct
-func NewProxy(w http.ResponseWriter, r *http.Request, rec record, c Config) *Proxy {
+func NewProxy(w http.ResponseWriter, r *http.Request, rec record, c config.Config) *Proxy {
 	return &Proxy{
 		rw:  w,
 		req: r,

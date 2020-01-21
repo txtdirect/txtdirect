@@ -18,18 +18,20 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"go.txtdirect.org/txtdirect/config"
 )
 
 // Gometa keeps data for "gometa" type requests
 type Gometa struct {
 	rw  http.ResponseWriter
 	req *http.Request
-	c   Config
+	c   config.Config
 	rec record
 }
 
 // NewGometa returns a fresh instance of Gometa struct
-func NewGometa(w http.ResponseWriter, r *http.Request, rec record, c Config) *Gometa {
+func NewGometa(w http.ResponseWriter, r *http.Request, rec record, c config.Config) *Gometa {
 	return &Gometa{
 		rw:  w,
 		req: r,

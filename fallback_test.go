@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"go.txtdirect.org/txtdirect/config"
 )
 
 func Test_fallback(t *testing.T) {
@@ -77,7 +79,7 @@ func Test_fallback(t *testing.T) {
 		req := httptest.NewRequest("GET", url, nil)
 		req = test.record.addToContext(req)
 		resp := httptest.NewRecorder()
-		c := Config{
+		c := config.Config{
 			Redirect: test.redirect,
 			Enable:   test.enable,
 		}
@@ -114,7 +116,7 @@ func Test_fallbackE2E(t *testing.T) {
 		req := httptest.NewRequest("GET", test.url, nil)
 		req.Header = test.headers
 		resp := httptest.NewRecorder()
-		c := Config{
+		c := config.Config{
 			Resolver: "127.0.0.1:" + strconv.Itoa(port),
 			Enable:   test.enable,
 			Redirect: test.redirect,
@@ -136,7 +138,7 @@ func Test_fallbackE2E(t *testing.T) {
 	}
 }
 
-func checkGlobalFallback(t *testing.T, r *http.Request, location string, config Config, code int) {
+func checkGlobalFallback(t *testing.T, r *http.Request, location string, config config.Config, code int) {
 	if contains(config.Enable, "www") {
 		checkLocationHeader(t, location, fmt.Sprintf("https://www.%s", r.URL.Host))
 		return

@@ -21,18 +21,20 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"go.txtdirect.org/txtdirect/config"
 )
 
 // Dockerv2 keeps data for "dockerv2" type requests
 type Dockerv2 struct {
 	rw  http.ResponseWriter
 	req *http.Request
-	c   Config
+	c   config.Config
 	rec record
 }
 
 // NewDockerv2 returns a fresh instance of Dockerv2 struct
-func NewDockerv2(w http.ResponseWriter, r *http.Request, rec record, c Config) *Dockerv2 {
+func NewDockerv2(w http.ResponseWriter, r *http.Request, rec record, c config.Config) *Dockerv2 {
 	return &Dockerv2{
 		rw:  w,
 		req: r,
@@ -52,10 +54,10 @@ func (d *Dockerv2) Redirect() error {
 	if !strings.HasPrefix(path, "/v2") {
 		log.Printf("[txtdirect]: unrecognized path for dockerv2: %s", path)
 		if path == "" || path == "/" {
-			fallback(d.rw, d.req, "root", http.StatusPermanentRedirect, Config{})
+			fallback(d.rw, d.req, "root", http.StatusPermanentRedirect, config.Config{})
 			return nil
 		}
-		fallback(d.rw, d.req, "website", http.StatusPermanentRedirect, Config{})
+		fallback(d.rw, d.req, "website", http.StatusPermanentRedirect, config.Config{})
 		return nil
 	}
 	if dockerRegexes["v2"].MatchString(path) {

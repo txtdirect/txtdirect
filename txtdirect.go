@@ -16,6 +16,7 @@ package txtdirect
 import (
 	"context"
 	"fmt"
+	"go.txtdirect.org/txtdirect/config"
 	"log"
 	"net"
 	"net/http"
@@ -36,16 +37,6 @@ const (
 
 var bl = map[string]bool{
 	"/favicon.ico": true,
-}
-
-// Config contains the middleware's configuration
-type Config struct {
-	Enable     []string
-	Redirect   string
-	Resolver   string
-	LogOutput  string
-	Prometheus Prometheus
-	Qr         Qr
 }
 
 // getBaseTarget parses the placeholder in the given record's To= field
@@ -74,7 +65,7 @@ func contains(array []string, word string) bool {
 
 // customResolver returns a net.Resolver instance based
 // on the given txtdirect config to use a custom DNS resolver.
-func customResolver(c Config) net.Resolver {
+func customResolver(c config.Config) net.Resolver {
 	return net.Resolver{
 		PreferGo: true,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
@@ -104,7 +95,7 @@ func absoluteZone(zone string) string {
 
 // query checks the given zone using net.LookupTXT to
 // find TXT records in that zone
-func query(zone string, ctx context.Context, c Config) ([]string, error) {
+func query(zone string, ctx context.Context, c config.Config) ([]string, error) {
 	var txts []string
 	var err error
 	if c.Resolver != "" {
@@ -131,7 +122,7 @@ func isIP(host string) bool {
 	return err == nil
 }
 
-func blacklistRedirect(w http.ResponseWriter, r *http.Request, c Config) error {
+func blacklistRedirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	if bl[r.URL.Path] {
 		redirect := strings.Join([]string{r.Host, r.URL.Path}, "")
 
@@ -148,7 +139,7 @@ func blacklistRedirect(w http.ResponseWriter, r *http.Request, c Config) error {
 }
 
 // Redirect the request depending on the redirect record found
-func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
+func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	w.Header().Set("Server", "TXTDirect")
 
 	host := r.Host
@@ -175,6 +166,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	rec, err := getRecord(host, c, w, r)
 	r = rec.addToContext(r)
 	if err != nil {
+		panic(err.Error())
 		fallback(w, r, "global", http.StatusFound, c)
 		return nil
 	}

@@ -21,6 +21,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"go.txtdirect.org/txtdirect/config"
 )
 
 type record struct {
@@ -41,7 +43,7 @@ type record struct {
 // and then parses the txt record and returns a TXTDirect record
 // struct instance. It returns an error when it can't find any txt
 // records or if the TXT record is not standard.
-func getRecord(host string, c Config, w http.ResponseWriter, r *http.Request) (record, error) {
+func getRecord(host string, c config.Config, w http.ResponseWriter, r *http.Request) (record, error) {
 	txts, err := query(host, r.Context(), c)
 	if err != nil {
 		log.Printf("Initial DNS query failed: %s", err)
@@ -83,7 +85,7 @@ func getRecord(host string, c Config, w http.ResponseWriter, r *http.Request) (r
 // a TXTDirect record struct instance.
 // It will return an error if the DNS TXT record is not standard or
 // if the record type is not enabled in the TXTDirect's config.
-func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config) (record, error) {
+func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c config.Config) (record, error) {
 	r := record{
 		Headers: map[string]string{},
 	}
@@ -209,7 +211,7 @@ func (rec record) addToContext(r *http.Request) *http.Request {
 }
 
 // ParseURI parses the given URI and triggers fallback if the URI isn't valid
-func ParseURI(uri string, w http.ResponseWriter, r *http.Request, c Config) string {
+func ParseURI(uri string, w http.ResponseWriter, r *http.Request, c config.Config) string {
 	url, err := url.Parse(uri)
 	if err != nil {
 		fallback(w, r, "global", http.StatusMovedPermanently, c)

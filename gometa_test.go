@@ -18,6 +18,8 @@ import (
 	"io/ioutil"
 	"net/http/httptest"
 	"testing"
+
+	"go.txtdirect.org/txtdirect/config"
 )
 
 func TestGometa(t *testing.T) {
@@ -89,7 +91,7 @@ func TestGometa(t *testing.T) {
 	for i, test := range tests {
 		req := httptest.NewRequest("GET", fmt.Sprintf("https://%s%s", test.host, test.path), nil)
 		resp := httptest.NewRecorder()
-		gometa := NewGometa(resp, req, test.record, Config{})
+		gometa := NewGometa(resp, req, test.record, config.Config{})
 
 		if err := gometa.Serve(); err != nil {
 			t.Errorf("Test %d: Unexpected error: %s", i, err)

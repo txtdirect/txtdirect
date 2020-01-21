@@ -20,13 +20,14 @@ import (
 	"testing"
 
 	"github.com/caddyserver/caddy"
+	"go.txtdirect.org/txtdirect/config"
 )
 
 func TestCaddyParse(t *testing.T) {
 	tests := []struct {
 		input     string
 		shouldErr bool
-		expected  Config
+		expected  config.Config
 	}{
 		{
 			`
@@ -35,7 +36,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			true,
-			Config{},
+			config.Config{},
 		},
 		{
 			`
@@ -44,7 +45,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			true,
-			Config{},
+			config.Config{},
 		},
 		{
 			`
@@ -53,7 +54,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			true,
-			Config{},
+			config.Config{},
 		},
 		{
 			`
@@ -63,7 +64,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			true,
-			Config{},
+			config.Config{},
 		},
 		{
 			`
@@ -73,7 +74,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			true,
-			Config{},
+			config.Config{},
 		},
 		{
 			`
@@ -82,12 +83,12 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			true,
-			Config{},
+			config.Config{},
 		},
 		{
 			`txtdirect`,
 			false,
-			Config{
+			config.Config{
 				Enable: allOptions,
 			},
 		},
@@ -98,7 +99,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Enable: []string{"host"},
 			},
 		},
@@ -109,7 +110,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Enable: []string{"path", "gometa", "www"},
 			},
 		},
@@ -120,7 +121,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Redirect: "https://example.com",
 				Enable:   allOptions,
 			},
@@ -133,7 +134,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
 			},
@@ -146,7 +147,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"path"},
 			},
@@ -160,7 +161,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
 				Prometheus: Prometheus{
@@ -182,7 +183,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
 				Prometheus: Prometheus{
@@ -201,7 +202,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Enable:    []string{"host", "gometa"},
 				Resolver:  "127.0.0.1",
 				LogOutput: "stderr",
@@ -216,7 +217,7 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Enable:    []string{"host", "gometa"},
 				Resolver:  "127.0.0.1",
 				LogOutput: "stdout",
@@ -236,11 +237,11 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
 				Resolver: "127.0.0.1",
-				Qr: Qr{
+				Qr: config.Qr{
 					Size:            256,
 					BackgroundColor: "ffffffff",
 					ForegroundColor: "000000ff",
@@ -262,11 +263,11 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
 				Resolver: "127.0.0.1",
-				Qr: Qr{
+				Qr: config.Qr{
 					Size:            256,
 					BackgroundColor: "ffffffff",
 					ForegroundColor: "000000ff",
@@ -284,11 +285,11 @@ func TestCaddyParse(t *testing.T) {
 			}
 			`,
 			false,
-			Config{
+			config.Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
 				Resolver: "127.0.0.1",
-				Qr: Qr{
+				Qr: config.Qr{
 					Size:            256,
 					BackgroundColor: "ffffffff",
 					ForegroundColor: "00000000",

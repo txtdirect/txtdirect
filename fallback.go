@@ -6,13 +6,15 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"go.txtdirect.org/txtdirect/config"
 )
 
 // Fallback keeps the data necessary for the fallback flow
 type Fallback struct {
 	rw      http.ResponseWriter
 	request *http.Request
-	config  Config
+	config  config.Config
 
 	records    []record
 	pathRecord record
@@ -29,7 +31,7 @@ type Fallback struct {
 // fallback redirects the request to the given fallback address
 // and if it's not provided it will check txtdirect config for
 // default fallback address
-func fallback(w http.ResponseWriter, r *http.Request, fallbackType string, code int, c Config) {
+func fallback(w http.ResponseWriter, r *http.Request, fallbackType string, code int, c config.Config) {
 	if code == http.StatusMovedPermanently {
 		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 	}

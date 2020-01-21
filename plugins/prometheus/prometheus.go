@@ -11,13 +11,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package txtdirect
+package prometheus
 
 import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 
@@ -25,11 +24,7 @@ import (
 	"github.com/caddyserver/caddy/caddyhttp/httpserver"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.txtdirect.org/txtdirect/config"
 )
-
-// Prometheus contains Prometheus's configuration
-type Prometheus config.Prometheus
 
 var (
 	// RequestsCount counts the total requests per host
@@ -130,24 +125,4 @@ func (p *Prometheus) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, err
 	status, err := next.ServeHTTP(rw, r)
 
 	return status, err
-}
-
-// ParsePrometheus parses the txtdirect config for Prometheus
-func (p *Prometheus) ParsePrometheus(c *caddy.Controller, key, value string) error {
-	switch key {
-	case "enable":
-		value, err := strconv.ParseBool(value)
-		if err != nil {
-			return c.ArgErr()
-		}
-		p.Enable = value
-	case "address":
-		// TODO: validate the given address
-		p.Address = value
-	case "path":
-		p.Path = value
-	default:
-		return c.ArgErr() // unhandled option for prometheus
-	}
-	return nil
 }

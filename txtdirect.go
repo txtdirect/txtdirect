@@ -16,13 +16,15 @@ package txtdirect
 import (
 	"context"
 	"fmt"
-	"go.txtdirect.org/txtdirect/config"
 	"log"
 	"net"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"go.txtdirect.org/txtdirect/config"
+	"go.txtdirect.org/txtdirect/plugins/prometheus"
 )
 
 const (
@@ -132,7 +134,7 @@ func blacklistRedirect(w http.ResponseWriter, r *http.Request, c config.Config) 
 		w.Header().Add("Status-Code", strconv.Itoa(http.StatusNotFound))
 		http.Redirect(w, r, redirect, http.StatusNotFound)
 		if c.Prometheus.Enable {
-			RequestsByStatus.WithLabelValues(r.Host, strconv.Itoa(http.StatusNotFound)).Add(1)
+			prometheus.RequestsByStatus.WithLabelValues(r.Host, strconv.Itoa(http.StatusNotFound)).Add(1)
 		}
 	}
 	return nil
@@ -192,8 +194,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	}
 
 	if rec.Type == "path" {
-		RequestsCountBasedOnType.WithLabelValues(host, "path").Add(1)
-		PathRedirectCount.WithLabelValues(host, path).Add(1)
+		prometheus.RequestsCountBasedOnType.WithLabelValues(host, "path").Add(1)
+		prometheus.PathRedirectCount.WithLabelValues(host, path).Add(1)
 
 		path := NewPath(w, r, path, rec, c)
 
@@ -223,7 +225,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	}
 
 	if rec.Type == "proxy" {
-		RequestsCountBasedOnType.WithLabelValues(host, "proxy").Add(1)
+		prometheus.RequestsCountBasedOnType.WithLabelValues(host, "proxy").Add(1)
 		log.Printf("[txtdirect]: %s > %s", rec.From, rec.To)
 
 		proxy := NewProxy(w, r, rec, c)
@@ -236,7 +238,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	}
 
 	if rec.Type == "dockerv2" {
-		RequestsCountBasedOnType.WithLabelValues(host, "dockerv2").Add(1)
+		prometheus.RequestsCountBasedOnType.WithLabelValues(host, "dockerv2").Add(1)
 
 		docker := NewDockerv2(w, r, rec, c)
 
@@ -249,7 +251,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	}
 
 	if rec.Type == "host" {
-		RequestsCountBasedOnType.WithLabelValues(host, "host").Add(1)
+		prometheus.RequestsCountBasedOnType.WithLabelValues(host, "host").Add(1)
 
 		host := NewHost(w, r, rec, c)
 
@@ -260,7 +262,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c config.Config) error {
 	}
 
 	if rec.Type == "gometa" {
-		RequestsCountBasedOnType.WithLabelValues(host, "gometa").Add(1)
+		prometheus.RequestsCountBasedOnType.WithLabelValues(host, "gometa").Add(1)
 
 		gometa := NewGometa(w, r, rec, c)
 

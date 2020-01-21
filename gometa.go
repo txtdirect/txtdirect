@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"go.txtdirect.org/txtdirect/config"
+	"go.txtdirect.org/txtdirect/plugins/prometheus"
 )
 
 // Gometa keeps data for "gometa" type requests
@@ -60,7 +61,7 @@ func (g *Gometa) Serve() error {
 
 	gosource := strings.Contains(g.rec.To, "github.com")
 
-	RequestsByStatus.WithLabelValues(g.req.Host, strconv.Itoa(http.StatusFound)).Add(1)
+	prometheus.RequestsByStatus.WithLabelValues(g.req.Host, strconv.Itoa(http.StatusFound)).Add(1)
 	return tmpl.Execute(g.rw, struct {
 		Host        string
 		Path        string

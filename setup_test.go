@@ -21,6 +21,8 @@ import (
 
 	"github.com/caddyserver/caddy"
 	"go.txtdirect.org/txtdirect/config"
+	"go.txtdirect.org/txtdirect/plugins/prometheus"
+	"go.txtdirect.org/txtdirect/plugins/qr"
 )
 
 func TestCaddyParse(t *testing.T) {
@@ -164,7 +166,7 @@ func TestCaddyParse(t *testing.T) {
 			config.Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
-				Prometheus: Prometheus{
+				Prometheus: prometheus.Prometheus{
 					Enable:  true,
 					Address: "localhost:9183",
 					Path:    "/metrics",
@@ -186,7 +188,7 @@ func TestCaddyParse(t *testing.T) {
 			config.Config{
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
-				Prometheus: Prometheus{
+				Prometheus: prometheus.Prometheus{
 					Enable:  true,
 					Address: "localhost:6666",
 					Path:    "/metrics",
@@ -241,7 +243,7 @@ func TestCaddyParse(t *testing.T) {
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
 				Resolver: "127.0.0.1",
-				Qr: config.Qr{
+				Qr: qr.Qr{
 					Size:            256,
 					BackgroundColor: "ffffffff",
 					ForegroundColor: "000000ff",
@@ -267,7 +269,7 @@ func TestCaddyParse(t *testing.T) {
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
 				Resolver: "127.0.0.1",
-				Qr: config.Qr{
+				Qr: qr.Qr{
 					Size:            256,
 					BackgroundColor: "ffffffff",
 					ForegroundColor: "000000ff",
@@ -289,7 +291,7 @@ func TestCaddyParse(t *testing.T) {
 				Redirect: "https://example.com",
 				Enable:   []string{"host"},
 				Resolver: "127.0.0.1",
-				Qr: config.Qr{
+				Qr: qr.Qr{
 					Size:            256,
 					BackgroundColor: "ffffffff",
 					ForegroundColor: "00000000",

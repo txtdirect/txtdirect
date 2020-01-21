@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"go.txtdirect.org/txtdirect/config"
+	"go.txtdirect.org/txtdirect/plugins/prometheus"
 )
 
 // Path contains the data that are needed to redirect path requests
@@ -105,7 +106,7 @@ func (p *Path) RedirectRoot() error {
 	p.rw.Header().Add("Status-Code", strconv.Itoa(p.rec.Code))
 	http.Redirect(p.rw, p.req, p.rec.Root, p.rec.Code)
 	if p.c.Prometheus.Enable {
-		RequestsByStatus.WithLabelValues(p.req.Host, strconv.Itoa(p.rec.Code)).Add(1)
+		prometheus.RequestsByStatus.WithLabelValues(p.req.Host, strconv.Itoa(p.rec.Code)).Add(1)
 	}
 	return nil
 }

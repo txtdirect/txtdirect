@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"go.txtdirect.org/txtdirect/config"
+	"go.txtdirect.org/txtdirect/plugins/prometheus"
 )
 
 // Fallback keeps the data necessary for the fallback flow
@@ -66,8 +67,8 @@ func fallback(w http.ResponseWriter, r *http.Request, fallbackType string, code 
 
 func (f *Fallback) countFallback(recType string) {
 	if f.config.Prometheus.Enable {
-		FallbacksCount.WithLabelValues(f.request.Host, recType, f.fallbackType).Add(1)
-		RequestsByStatus.WithLabelValues(f.request.URL.Host, strconv.Itoa(f.code)).Add(1)
+		prometheus.FallbacksCount.WithLabelValues(f.request.Host, recType, f.fallbackType).Add(1)
+		prometheus.RequestsByStatus.WithLabelValues(f.request.URL.Host, strconv.Itoa(f.code)).Add(1)
 	}
 }
 

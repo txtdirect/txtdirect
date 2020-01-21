@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"go.txtdirect.org/txtdirect/config"
+	"go.txtdirect.org/txtdirect/plugins/prometheus"
 	"go.txtdirect.org/txtdirect/plugins/qr"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
@@ -50,7 +51,7 @@ func ParseConfig(c *caddy.Controller) (config.Config, error) {
 	var enable []string
 	var redirect string
 	var resolver string
-	var prometheus Prometheus
+	var prometheus prometheus.Prometheus
 	var logfile string
 	var qr qr.Qr
 
@@ -219,7 +220,7 @@ func (rd TXTDirect) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, erro
 	// Count total redirects if prometheus is enabled and set cache header
 	if w.Header().Get("Status-Code") == "301" || w.Header().Get("Status-Code") == "302" {
 		if rd.Config.Prometheus.Enable {
-			RequestsCount.WithLabelValues(r.Host).Add(1)
+			prometheus.RequestsCount.WithLabelValues(r.Host).Add(1)
 		}
 		// Set Cache-Control header on permanent redirects
 		if w.Header().Get("Status-Code") == "301" {

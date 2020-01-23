@@ -199,11 +199,6 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 
 	path = fmt.Sprintf("%s?%s", path, r.URL.RawQuery)
 
-	// Normalize the path to follow RFC1034 rules
-	if strings.ContainsAny(path, ".") {
-		path = strings.Replace(path, ".", "-", -1)
-	}
-
 	pathSubmatchs := PathRegex.FindAllStringSubmatch(path, -1)
 	if rec.Re != "" {
 		// Compile the record regex and find path submatches
@@ -230,6 +225,7 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 
 			url := sortMap(unordered)
 			*r = *r.WithContext(context.WithValue(r.Context(), "regexMatches", unordered))
+			url = normalize(url)
 			reverse(url)
 			from := len(pathSlice)
 			url = append(url, r.Host)
@@ -245,6 +241,7 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 	if len(pathSlice) < 1 && rec.Re != "" {
 		return "", 0, []string{}, fmt.Errorf("custom regex doesn't work on %s", path)
 	}
+	pathSlice = normalize(pathSlice)
 	from := len(pathSlice)
 	if rec.From != "" {
 		fromSubmatch := FromRegex.FindAllStringSubmatch(rec.From, -1)
@@ -339,6 +336,18 @@ func sortMap(m map[string]string) []string {
 
 	for _, k := range keys {
 		result = append(result, m[k])
+	}
+	return result
+}
+
+// Normalize the path to follow RFC1034 rules
+func normalize(input []string) []string {
+	var result []string
+	for _, value := range input {
+		if strings.ContainsAny(value, ".") {
+			value = strings.Replace(value, ".", "-", -1)
+		}
+		result = append(result, value)
 	}
 	return result
 }

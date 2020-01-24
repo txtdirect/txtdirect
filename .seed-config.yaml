@@ -6,7 +6,7 @@ project:
   oneLiner: "Convenient redirects based on DNS TXT-records"
   description: |
     Convenient and minimalistic DNS based redirects, while controlling your data with your own DNS records.
-  version: "v0.2.0"
+  version: "v0.4.0"
 
 vision:
   type: "community"
@@ -16,7 +16,7 @@ vision:
   aim: "TXTDirect provides the specification for redirection records and a based implementation as caddy plugin."
 
 supportLinks:
-  documentation: "https://s.txtdirect.org/docs"
+  documentation: "https://txtdirect.org/docs"
 
 contributionLinks:
   issueTemplate: "/.github/ISSUE_TEMPLATE.md"
@@ -41,7 +41,7 @@ maintainers:
     nick: "erbesharat"
 
 repo:
-  link: "https://github.com/txtdirect/txtdirect/"
+  link: "https://txtdirect.org/code/"
   type: "Github"
 
 issueTemplate:
@@ -53,10 +53,10 @@ badges:
   - image: "https://img.shields.io/badge/state-beta-blue.svg"
     alt: "state"
   - image: "https://img.shields.io/github/release/txtdirect/txtdirect.svg"
-    link: "https://github.com/txtdirect/txtdirect/releases"
+    link: "https://txtdirect.org/releases/"
     alt: "release"
   - image: "https://img.shields.io/github/license/txtdirect/txtdirect.svg"
-    link: "LICENSE"
+    link: "https://txtdirect.org/license/"
     alt: "license"
   - image: "https://travis-ci.org/txtdirect/txtdirect.svg?branch=master"
     alt: "Build Status"

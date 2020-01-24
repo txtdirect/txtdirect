@@ -89,6 +89,12 @@ func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config)
 	}
 
 	s := strings.Split(str, ";")
+
+	// Trim whitespace both leading and trailing
+	for i := range s {
+		s[i] = strings.TrimSpace(s[i])
+	}
+
 	for _, l := range s {
 		switch {
 		case strings.HasPrefix(l, "code="):
@@ -155,8 +161,11 @@ func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config)
 			r.Website = l
 		case strings.HasPrefix(l, ">"):
 			header := strings.Split(l, "=")
-			r.Headers[header[0][1:]] = header[1]
-
+			h, err := url.PathUnescape(header[1])
+			if err != nil {
+				return record{}, err
+			}
+			r.Headers[header[0][1:]] = h
 		default:
 			tuple := strings.Split(l, "=")
 			if len(tuple) != 2 {

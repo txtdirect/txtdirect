@@ -197,7 +197,12 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 		path = path[:strings.Index(path, "/info/refs")]
 	}
 
-	path = fmt.Sprintf("%s?%s", path, r.URL.RawQuery)
+	// Only add request query to path if the custom regex needs it. Unless it
+	// might cause problems on custom regexes that don't need query to generate
+	// the zone
+	if strings.Contains(rec.Re, "query") {
+		path = fmt.Sprintf("%s?%s", path, r.URL.RawQuery)
+	}
 
 	pathSubmatchs := PathRegex.FindAllStringSubmatch(path, -1)
 	if rec.Re != "" {
@@ -210,7 +215,6 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 
 		// Only generate the zone if the custom regex contains a group
 		if GroupRegex.MatchString(rec.Re) {
-			//
 			pathSlice := []string{}
 			unordered := make(map[string]string)
 			for _, item := range pathSubmatchs[0] {

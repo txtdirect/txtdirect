@@ -77,6 +77,13 @@ func getRecord(host string, c Config, w http.ResponseWriter, r *http.Request) (r
 		}
 	}
 
+	if len(rec.Use) != 0 {
+		rec, err = rec.ReplaceRecord(c, w, r)
+		if err != nil {
+			return record{}, fmt.Errorf("Couldn't replace the record: %s", err.Error())
+		}
+	}
+
 	return rec, nil
 }
 
@@ -233,4 +240,21 @@ func ParseURI(uri string, w http.ResponseWriter, r *http.Request, c Config) stri
 		return ""
 	}
 	return url.String()
+}
+
+// ReplaceRecord will check all of the use= fields and sends a request to each
+// upstream zone address and choses the first one that returns the final TXT
+// record
+func (rec *record) ReplaceRecord(c Config, w http.ResponseWriter, r *http.Request) (record, error) {
+	var upstreamRec record
+	var err error
+
+	for _, zone := range rec.Use {
+		upstreamRec, err = getRecord(zone, c, w, r)
+		if err != nil {
+			return record{}, fmt.Errorf("Couldn't query the upstream record: %s", err.Error())
+		}
+	}
+
+	return upstreamRec, nil
 }

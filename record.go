@@ -28,6 +28,7 @@ type record struct {
 	To      string
 	Code    int
 	Type    string
+	Use     []string
 	Vcs     string
 	Website string
 	From    string
@@ -142,6 +143,13 @@ func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config)
 		case strings.HasPrefix(l, "type="):
 			l = strings.TrimPrefix(l, "type=")
 			r.Type = l
+
+		case strings.HasPrefix(l, "use="):
+			l = strings.TrimPrefix(l, "use=")
+			if !strings.HasPrefix(l, "_redirect.") {
+				return record{}, fmt.Errorf("The given zone address is invalid")
+			}
+			r.Use = append(r.Use, l)
 
 		case strings.HasPrefix(l, "v="):
 			l = strings.TrimPrefix(l, "v=")

@@ -147,6 +147,13 @@ func blacklistRedirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	return nil
 }
 
+func UpstreamZone(r *http.Request) string {
+	if zone := r.Context().Value("upstreamZone"); zone != nil {
+		return zone.(string)
+	}
+	return r.Host
+}
+
 // Redirect the request depending on the redirect record found
 func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	w.Header().Set("Server", "TXTDirect")
@@ -173,11 +180,30 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	rec, err := getRecord(host, c, w, r)
-	r = rec.addToContext(r)
 	if err != nil {
 		fallback(w, r, "global", http.StatusFound, c)
 		return nil
 	}
+
+	// Add the upstream zone address from the use= fields to the request context
+	// and replace the source record with the upstream record
+	if len(rec.Use) != 0 {
+		var zone string
+		rec, zone, err = rec.UpstreamRecord(c, w, r)
+		if err != nil {
+			return fmt.Errorf("Couldn't replace the record: %s", err.Error())
+		}
+
+		zoneSplited := strings.Split(zone, ".")
+
+		r = r.WithContext(context.WithValue(
+			r.Context(),
+			"upstreamZone",
+			strings.Join(zoneSplited[1:], "."),
+		))
+	}
+
+	r = rec.addToContext(r)
 
 	// Add referer header
 	if rec.Ref && r.Header.Get("Referer") == "" {

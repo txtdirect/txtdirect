@@ -36,3 +36,9 @@ _redirect.fallback-refrom.path.path.example.com.       IN TXT "v=txtv0;type=path
 
 fallback-lenfrom.path.path.example.com.                IN A 172.20.10.2
 _redirect.fallback-lenfrom.path.path.example.com.      IN TXT "v=txtv0;type=path;from=$1$2$3;to=https://fallback-to.path.path.example.com;code=302"
+
+sourcerecord.path.path.example.com.                    IN A 172.20.10.2
+upstreamrecord.path.path.example.com.                  IN A 172.20.10.2
+_redirect.sourcerecord.path.path.example.com.          IN TXT "v=txtv0;type=path;use=_redirect.upstreamrecord.path.path.example.com"
+_redirect.upstreamrecord.path.path.example.com.        IN TXT "v=txtv0;type=path"
+_redirect._.upstreamrecord.path.path.example.com.      IN TXT "v=txtv0;to=https://upstream.path.path.example.com;type=host;code=302" 

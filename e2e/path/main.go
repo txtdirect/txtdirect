@@ -74,6 +74,14 @@ var tests = []test{
 		},
 		expected: "https://fallback-to.path.path.example.com",
 	},
+	{
+		name: "Redirect using the use= field and upstream record",
+		args: data{
+			host: "sourcerecord.path.path.example.com",
+			path: "/testing",
+		},
+		expected: "https://upstream.path.path.example.com",
+	},
 }
 
 func main() {

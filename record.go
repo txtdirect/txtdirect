@@ -242,11 +242,10 @@ func (rec *record) UpstreamRecord(c Config, w http.ResponseWriter, r *http.Reque
 	var upstreamRec record
 	var err error
 
-	// TODO: Check all the zones then return an error if no record found
 	for _, zone := range rec.Use {
 		upstreamRec, err = getRecord(zone, c, w, r)
 		if err != nil {
-			return record{}, zone, fmt.Errorf("Couldn't query the upstream record: %s", err.Error())
+			continue
 		}
 		return upstreamRec, zone, nil
 	}

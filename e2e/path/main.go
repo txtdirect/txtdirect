@@ -82,6 +82,14 @@ var tests = []test{
 		},
 		expected: "https://upstream.path.path.example.com",
 	},
+	{
+		name: "Redirect to upstream record using multiple use= fields",
+		args: data{
+			host: "srcrecord.path.path.example.com",
+			path: "/testing",
+		},
+		expected: "https://upstream.path.path.example.com",
+	},
 }
 
 func main() {

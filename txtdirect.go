@@ -185,6 +185,8 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		return nil
 	}
 
+	fmt.Println(rec)
+
 	// Add the upstream zone address from the use= fields to the request context
 	// and replace the source record with the upstream record
 	if len(rec.Use) != 0 {

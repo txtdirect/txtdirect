@@ -177,16 +177,6 @@ func (d *dockerManager) StartContainers() error {
 }
 
 func (d *dockerManager) StopContainers() error {
-	if strings.Contains(d.dir, "path") {
-		logs, err := exec.Command("docker",
-			"logs",
-			"e2e_txtdirect_container",
-		).CombinedOutput()
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(logs))
-	}
 	_, err := exec.Command("docker",
 		"container", "rm", "-f",
 		"e2e_coredns_container",

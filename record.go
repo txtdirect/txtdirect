@@ -128,6 +128,10 @@ func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config)
 
 		case strings.HasPrefix(l, "root="):
 			l = strings.TrimPrefix(l, "root=")
+			l, err := parsePlaceholders(l, req, []string{})
+			if err != nil {
+				return record{}, err
+			}
 			l = ParseURI(l, w, req, c)
 			r.Root = l
 

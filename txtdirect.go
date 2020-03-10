@@ -186,12 +186,13 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	// Add the upstream zone address from the use= fields to the request context
-	// and replace the source record with the upstream record
 	if len(rec.Use) != 0 {
 		var zone string
 		rec, zone, err = rec.UpstreamRecord(c, w, r)
 		if err != nil {
-			return fmt.Errorf("Couldn't replace the record: %s", err.Error())
+			log.Printf("[txtdirect]: Couldn't fetch the upstream record: %s", err.Error())
+			fallback(w, r, "global", http.StatusFound, c)
+			return nil
 		}
 
 		zoneSplited := strings.Split(zone, ".")

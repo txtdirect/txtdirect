@@ -162,8 +162,11 @@ func Test_zoneFromPath(t *testing.T) {
 		zone, _, _, err := zoneFromPath(req, rec)
 		if err != nil {
 			// Check negative tests
-			if err.Error() == test.err.Error() {
-				continue
+			if test.err != nil {
+				if err.Error() == test.err.Error() {
+					continue
+				}
+				t.Errorf("Expected %s, got %s", test.err.Error(), err.Error())
 			}
 			t.Errorf("Got error: %s", err.Error())
 		}

@@ -200,7 +200,7 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 	// Only add request query to path if the custom regex needs it. Unless it
 	// might cause problems on custom regexes that don't need query to generate
 	// the zone
-	if strings.Contains(rec.Re, "query") {
+	if strings.Contains(rec.Re, "?query") {
 		path = fmt.Sprintf("%s?%s", path, r.URL.RawQuery)
 	}
 

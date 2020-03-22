@@ -42,7 +42,7 @@ var tests = []test{
 			host: "predefined-regex.path.path.example.com",
 			path: "/test1",
 		},
-		expected: "https://predefined-redirect.host.path.example.com/first/test1",
+		expected: "https://predefined-redirect.host.path.example.com/second/test1",
 	},
 	{
 		name: "Redirect a path record using predefined regex records",
@@ -50,7 +50,7 @@ var tests = []test{
 			host: "predefined-regex.path.path.example.com",
 			path: "/test1/test2",
 		},
-		expected: "https://predefined-redirect.host.path.example.com/second/test1/test2",
+		expected: "https://predefined-redirect.host.path.example.com/first/test1/test2",
 	},
 	{
 		name: "Fallback to \"to=\" when wildcard not found",

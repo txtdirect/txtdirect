@@ -34,12 +34,9 @@ type Path struct {
 	rec  record
 }
 
-// RegexRecords connects each zone address to a RegexRecord
-// which contains raw TXT record and the re= field
-type RegexRecords map[string]RegexRecord
-
 // RegexRecord holds the TXT record and re= field of a predefined regex record
 type RegexRecord struct {
+	Position   int
 	TXT        string
 	Regex      string
 	Submatches []string
@@ -118,6 +115,7 @@ func (p *Path) SpecificRecord() (*record, error) {
 		return nil, err
 	}
 
+	// Find the most specific regex
 	record, err := p.specificMatch(regexes)
 	if err != nil {
 		return nil, err
@@ -126,44 +124,46 @@ func (p *Path) SpecificRecord() (*record, error) {
 	return record, nil
 }
 
-func (p *Path) specificMatch(regexes RegexRecords) (*record, error) {
-	recordMatch := make(map[int]RegexRecord)
-
+func (p *Path) specificMatch(regexes []RegexRecord) (*record, error) {
+	var specificZone RegexRecord
 	// Run each regex on the path and list them in a map
 	for _, zone := range regexes {
+		// Compile the regex and find the path submatches
 		regex, err := regexp.Compile(zone.Regex)
 		if err != nil {
 			return nil, fmt.Errorf("Couldn't compile the regex: %s", err.Error())
 		}
 		matches := regex.FindAllStringSubmatch(p.path, -1)
-		if len(matches) > 0 {
-			zone.Submatches = matches[0]
-		}
-		recordMatch[len(zone.Submatches)] = zone
-	}
 
-	// Sort the map keys to find the most specific match
-	var keys []int
-	for k := range recordMatch {
-		keys = append(keys, k)
+		if len(matches) == 0 {
+			continue
+		}
+
+		zone.Submatches = matches[0]
+
+		// Use the next regex if it has more matches
+		if len(zone.Submatches) > len(specificZone.Submatches) {
+			specificZone = zone
+		}
 	}
-	sort.Ints(keys)
 
 	// Add the most specific match's path slice to the request context to use in placeholders
-	*p.req = *p.req.WithContext(context.WithValue(p.req.Context(), "regexMatches", recordMatch[keys[len(keys)-1]].Submatches))
+	*p.req = *p.req.WithContext(context.WithValue(p.req.Context(), "regexMatches", specificZone.Submatches))
 
+	// Parse the specific regex record
 	var rec record
 	var err error
-	if rec, err = ParseRecord(recordMatch[keys[len(keys)-1]].TXT, p.rw, p.req, p.c); err != nil {
+	if rec, err = ParseRecord(specificZone.TXT, p.rw, p.req, p.c); err != nil {
 		return nil, fmt.Errorf("Could not parse record: %s", err)
 	}
 
 	return &rec, nil
 }
 
-func (p *Path) fetchRegexes() (RegexRecords, error) {
-	regexes := make(RegexRecords)
+func (p *Path) fetchRegexes() ([]RegexRecord, error) {
+	regexes := []RegexRecord{}
 	for i, loop := 1, true; loop != false; i++ {
+		// Send a DNS query to each predefined regex record
 		txts, err := query(fmt.Sprintf("%d.%s", i, UpstreamZone(p.req)), p.req.Context(), p.c)
 		if err != nil && len(regexes) >= 1 {
 			break
@@ -172,16 +172,22 @@ func (p *Path) fetchRegexes() (RegexRecords, error) {
 			return nil, fmt.Errorf("Couldn't fetch the subzones for predefined regex: %s", err.Error())
 		}
 
+		// All predefined regex records should contain the re= field (even non-path records)
 		if !strings.Contains(txts[0], "re=") {
 			return nil, fmt.Errorf("Couldn't find the re= field in records: %s", err.Error())
 		}
 
-		// Extract the re= field from record and add it to the map
-		regexes[fmt.Sprintf("%d.%s", i, UpstreamZone(p.req))] = RegexRecord{
-			TXT:   txts[0],
-			Regex: strings.TrimPrefix(strings.Split(txts[0][strings.Index(txts[0], "re="):], ";")[0], "re="),
-		}
+		// Extract the re= field from record and add it to the regex slice
+		regexes = append(regexes, RegexRecord{
+			Position: i,
+			TXT:      txts[0],
+			Regex:    strings.TrimPrefix(strings.Split(txts[0][strings.Index(txts[0], "re="):], ";")[0], "re="),
+		})
 	}
+
+	sort.Slice(regexes, func(i, j int) bool {
+		return regexes[i].Position < regexes[j].Position
+	})
 
 	return regexes, nil
 }

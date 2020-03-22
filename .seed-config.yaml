@@ -6,7 +6,7 @@ project:
   oneLiner: "Convenient redirects based on DNS TXT-records"
   description: |
     Convenient and minimalistic DNS based redirects, while controlling your data with your own DNS records.
-  version: "v0.4.0"
+  version: "v0.4.1"
 
 vision:
   type: "community"
@@ -46,8 +46,8 @@ repo:
 
 issueTemplate:
   questions:
-  - "OS"
-  - "Caddy version"
+    - "OS"
+    - "Caddy version"
 
 badges:
   - image: "https://img.shields.io/badge/state-beta-blue.svg"

@@ -15,6 +15,8 @@ type test struct {
 	name     string
 	args     data
 	expected string
+	fallback bool
+	status   int
 }
 
 var tests = []test{
@@ -56,6 +58,7 @@ var tests = []test{
 			host: "path.path.example.com",
 			path: "/not/found",
 		},
+		fallback: true,
 		expected: "https://fallback-to.path.path.example.com",
 	},
 	{
@@ -64,6 +67,7 @@ var tests = []test{
 			host: "fallback-refrom.path.path.example.com",
 			path: "/",
 		},
+		fallback: true,
 		expected: "https://fallback-to.path.path.example.com",
 	},
 	{
@@ -72,7 +76,33 @@ var tests = []test{
 			host: "fallback-lenfrom.path.path.example.com",
 			path: "/",
 		},
+		fallback: true,
 		expected: "https://fallback-to.path.path.example.com",
+	},
+	{
+		name: "Redirect using the use= field and upstream record",
+		args: data{
+			host: "sourcerecord.path.path.example.com",
+			path: "/testing",
+		},
+		expected: "https://upstream.path.path.example.com",
+	},
+	{
+		name: "Redirect to upstream record using multiple use= fields and skipping non-working upstream",
+		args: data{
+			host: "srcrecord.path.path.example.com",
+			path: "/testing",
+		},
+		expected: "https://upstream.path.path.example.com",
+	},
+	{
+		name: "Fallback when the upstream record doesn't respond",
+		args: data{
+			host: "fallbackupstream.path.path.example.com",
+			path: "/testing",
+		},
+		fallback: true,
+		status:   404,
 	},
 }
 
@@ -90,6 +120,17 @@ func main() {
 		if err != nil {
 			result[false] = append(result[false], test)
 			log.Printf("[%s]: Couldn't send the request: %s", test.name, err.Error())
+			continue
+		}
+
+		// Check response's status code
+		if test.status != 0 {
+			if resp.StatusCode != test.status {
+				result[false] = append(result[false], test)
+				log.Printf("[%s]: Expected %d status code, got %d", test.name, test.status, resp.StatusCode)
+				continue
+			}
+			result[true] = append(result[true], test)
 			continue
 		}
 

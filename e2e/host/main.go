@@ -71,6 +71,22 @@ var tests = []test{
 		},
 		status: 404,
 	},
+	{
+		name: "Redirect using the use= field and upstream record",
+		args: data{
+			host: "sourcerecord.host.host.example.com",
+			path: "/",
+		},
+		expected: "https://upstream.host.host.example.com",
+	},
+	{
+		name: "Redirect using the upstream record and ignore the source record's to= field",
+		args: data{
+			host: "sourcerecord.host.host.example.com",
+			path: "/",
+		},
+		expected: "https://upstream.host.host.example.com",
+	},
 }
 
 func main() {

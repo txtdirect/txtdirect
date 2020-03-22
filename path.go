@@ -96,14 +96,14 @@ func (p *Path) RedirectRoot() error {
 		fallback(p.rw, p.req, "to", p.rec.Code, p.c)
 		return nil
 	}
-	log.Printf("[txtdirect]: %s > %s", p.req.Host+p.req.URL.Path, p.rec.Root)
+	log.Printf("[txtdirect]: %s > %s", UpstreamZone(p.req)+p.req.URL.Path, p.rec.Root)
 	if p.rec.Code == http.StatusMovedPermanently {
 		p.rw.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
 	}
 	p.rw.Header().Add("Status-Code", strconv.Itoa(p.rec.Code))
 	http.Redirect(p.rw, p.req, p.rec.Root, p.rec.Code)
 	if p.c.Prometheus.Enable {
-		RequestsByStatus.WithLabelValues(p.req.Host, strconv.Itoa(p.rec.Code)).Add(1)
+		RequestsByStatus.WithLabelValues(UpstreamZone(p.req), strconv.Itoa(p.rec.Code)).Add(1)
 	}
 	return nil
 }
@@ -164,7 +164,7 @@ func (p *Path) specificMatch(regexes RegexRecords) (*record, error) {
 func (p *Path) fetchRegexes() (RegexRecords, error) {
 	regexes := make(RegexRecords)
 	for i, loop := 1, true; loop != false; i++ {
-		txts, err := query(fmt.Sprintf("%d.%s", i, p.req.Host), p.req.Context(), p.c)
+		txts, err := query(fmt.Sprintf("%d.%s", i, UpstreamZone(p.req)), p.req.Context(), p.c)
 		if err != nil && len(regexes) >= 1 {
 			break
 		}
@@ -177,7 +177,7 @@ func (p *Path) fetchRegexes() (RegexRecords, error) {
 		}
 
 		// Extract the re= field from record and add it to the map
-		regexes[fmt.Sprintf("%d.%s", i, p.req.Host)] = RegexRecord{
+		regexes[fmt.Sprintf("%d.%s", i, UpstreamZone(p.req))] = RegexRecord{
 			TXT:   txts[0],
 			Regex: strings.TrimPrefix(strings.Split(txts[0][strings.Index(txts[0], "re="):], ";")[0], "re="),
 		}
@@ -228,7 +228,7 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 			url = normalize(url)
 			reverse(url)
 			from := len(pathSlice)
-			url = append(url, r.Host)
+			url = append(url, UpstreamZone(r))
 			url = append([]string{basezone}, url...)
 			return strings.Join(url, "."), from, pathSlice, nil
 		}
@@ -269,13 +269,13 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 			generatedPath = append(generatedPath, fromSlice[k])
 		}
 
-		url := append(generatedPath, r.Host)
+		url := append(generatedPath, UpstreamZone(r))
 		url = append([]string{basezone}, url...)
 		return strings.Join(url, "."), from, pathSlice, nil
 	}
 	ps := pathSlice
 	reverse(pathSlice)
-	url := append(pathSlice, r.Host)
+	url := append(pathSlice, UpstreamZone(r))
 	url = append([]string{basezone}, url...)
 	return strings.Join(url, "."), from, ps, nil
 }

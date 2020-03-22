@@ -180,6 +180,28 @@ func TestParseRecord(t *testing.T) {
 			},
 		},
 		{
+			txtRecord: "v=txtv0;type=host;to=https://example.com;code=302;use=_redirect.example.com",
+			expected: record{
+				Version: "txtv0",
+				Type:    "host",
+				Code:    302,
+				Ref:     false,
+				To:      "https://example.com",
+				Use:     []string{"_redirect.example.com"},
+			},
+		},
+		{
+			txtRecord: "v=txtv0;type=host;to=https://example.com;use=_redirect.example.com;use=_redirect.example2.com",
+			expected: record{
+				Version: "txtv0",
+				Type:    "host",
+				Code:    302,
+				Ref:     false,
+				To:      "https://example.com",
+				Use:     []string{"_redirect.example.com", "_redirect.example2.com"},
+			},
+		},
+		{
 			// Commonly used http headers used for better real world testing.
 			// Taken from: https://www.whitehatsec.com/blog/list-of-http-response-headers/
 			txtRecord: `v=txtv0;type=path;code=302;
@@ -365,6 +387,13 @@ func TestParseRecord(t *testing.T) {
 			if test.expected.Headers[header] != val {
 				t.Errorf("Test %d: Expected %s Header to be '%s', got '%s'",
 					i, header, test.expected.Headers[header], val)
+			}
+		}
+
+		for i, zone := range r.Use {
+			if test.expected.Use[i] != zone {
+				t.Errorf("Test %d: Expected zone address to be '%s', got '%s'",
+					i, test.expected.Use[i], zone)
 			}
 		}
 	}

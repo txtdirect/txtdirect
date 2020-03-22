@@ -28,6 +28,7 @@ type record struct {
 	To      string
 	Code    int
 	Type    string
+	Use     []string
 	Vcs     string
 	Website string
 	From    string
@@ -143,6 +144,13 @@ func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config)
 			l = strings.TrimPrefix(l, "type=")
 			r.Type = l
 
+		case strings.HasPrefix(l, "use="):
+			l = strings.TrimPrefix(l, "use=")
+			if !strings.HasPrefix(l, "_redirect.") {
+				return record{}, fmt.Errorf("The given zone address is invalid")
+			}
+			r.Use = append(r.Use, l)
+
 		case strings.HasPrefix(l, "v="):
 			l = strings.TrimPrefix(l, "v=")
 			r.Version = l
@@ -185,17 +193,20 @@ func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config)
 		r.Code = http.StatusFound
 	}
 
-	if r.Type == "" {
-		r.Type = "host"
-	}
+	// Only apply rules and default to records that doesn't point to a upstream record
+	if len(r.Use) == 0 {
+		if r.Type == "" {
+			r.Type = "host"
+		}
 
-	if r.Type == "host" && r.To == "" {
-		fallback(w, req, "global", http.StatusMovedPermanently, c)
-		return record{}, nil
-	}
+		if r.Type == "host" && r.To == "" {
+			fallback(w, req, "global", http.StatusMovedPermanently, c)
+			return record{}, nil
+		}
 
-	if !contains(c.Enable, r.Type) {
-		return record{}, fmt.Errorf("%s type is not enabled in configuration", r.Type)
+		if !contains(c.Enable, r.Type) {
+			return record{}, fmt.Errorf("%s type is not enabled in configuration", r.Type)
+		}
 	}
 
 	return r, nil
@@ -225,4 +236,22 @@ func ParseURI(uri string, w http.ResponseWriter, r *http.Request, c Config) stri
 		return ""
 	}
 	return url.String()
+}
+
+// UpstreamRecord will check all of the use= fields and sends a request to each
+// upstream zone address and choses the first one that returns the final TXT
+// record
+func (rec *record) UpstreamRecord(c Config, w http.ResponseWriter, r *http.Request) (record, string, error) {
+	var upstreamRec record
+	var err error
+
+	for _, zone := range rec.Use {
+		upstreamRec, err = getRecord(zone, c, w, r)
+		if err != nil {
+			continue
+		}
+		return upstreamRec, zone, nil
+	}
+
+	return record{}, "", fmt.Errorf("Couldn't find any records from upstream")
 }

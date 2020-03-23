@@ -18,6 +18,35 @@ _2020_
 
 -->
 
+# v0.4.1
+
+_2020-03-23_
+
+- [Downloads for v0.4.1](https://txtdirect.org/releases/v0.4.1)
+- [Container build for v0.4.1](https://c.txtdirect.org/txtdirect)
+- [Changelog since v0.4.0](#changes-since-v040)
+- [Documentation for v0.4.1](#documentation-for-v041)
+
+## Documentation for v0.4.1
+
+[Documentation](https://txtdirect.org/docs)
+
+[Examples](https://txtdirect.org/examples)
+
+## Changes since v0.4.0
+
+- Support upstream records to avoid having duplicate records on different zones
+- Add `use=` to TXT record fields
+- Add more E2E tests to cover upstream record support
+
+## Fixes since v0.4.0
+
+- Fix a bug in custom regexes that required request's query
+- Fix predefined regex order bug
+- Custom headers get urldecoded to create valid headers
+
+---
+
 # v0.4.0
 _2020-01-24_
   - [Downloads for v0.4.0](https://txtdirect.org/releases/v0.4.0)

@@ -129,7 +129,7 @@ var tests = []test{
 		expected: "https://redirect-host.host.path.example.com",
 	},
 	{
-		name: "Use regex placeholders in fallback trigerred by chained record",
+		name: "Use regex placeholders in fallback triggered by chained record",
 		args: data{
 			host: "chaining-regex.path.path.example.com",
 			path: "/fallback-placeholder/",

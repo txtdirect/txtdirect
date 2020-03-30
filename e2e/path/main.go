@@ -128,6 +128,14 @@ var tests = []test{
 		},
 		expected: "https://redirect-host.host.path.example.com",
 	},
+	{
+		name: "Use regex placeholders in fallback trigerred by chained record",
+		args: data{
+			host: "chaining-regex.path.path.example.com",
+			path: "/fallback-placeholder/",
+		},
+		expected: "https://fallback.path.path.example.com/fallback-placeholder",
+	},
 }
 
 func main() {

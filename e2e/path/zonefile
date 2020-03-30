@@ -62,3 +62,7 @@ host-regex.host.path.example.com.                      IN A 172.20.10.2
 _redirect.chaining.path.path.example.com.              IN TXT "v=txtv0;type=path;to=https://fallback-to.path.path.example.com;code=302"
 _redirect._.chaining.path.path.example.com.            IN TXT "v=txtv0;type=path;re=/host/;to=https://host-regex.host.path.example.com"
 _redirect.host-regex.host.path.example.com.            IN TXT "v=txtv0;type=host;to=https://redirect-{1}.host.path.example.com"
+
+chaining-regex.path.path.example.com.                  IN A 172.20.10.2
+_redirect.chaining-regex.path.path.example.com.        IN TXT "v=txtv0;type=path;to=https://fallback-to.path.path.example.com;code=302"
+_redirect._.chaining-regex.path.path.example.com.      IN TXT "v=txtv0;type=path;re=/random/;to=https://fallback.path.path.example.com/{1}"

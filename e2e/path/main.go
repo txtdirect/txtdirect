@@ -105,7 +105,7 @@ var tests = []test{
 		status:   404,
 	},
 	{
-		name: "Fallback when path not given to chained path records",
+		name: "Prioritise the parent record's to= field to chained records in fallback",
 		args: data{
 			host: "pathchain.path.path.example.com",
 			path: "/",
@@ -121,7 +121,7 @@ var tests = []test{
 		expected: "https://fallback-unknown-path.path.path.example.com",
 	},
 	{
-		name: "Use regex plaecholders in a host record chained to a path record",
+		name: "Use regex placeholders in a host record chained to a path record",
 		args: data{
 			host: "chaining.path.path.example.com",
 			path: "/host/",

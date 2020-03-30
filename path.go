@@ -81,7 +81,10 @@ func (p *Path) Redirect() *record {
 
 	if rec.Type == "path" {
 		// If the current record and the last record added to the context
-		// are equal, use the current record's to= field to find the final record
+		// are equal, use the current record's to= field to find the final record.
+		// Without this check, a request loop to the same zone will happen because
+		// the chained record would redirect the request with the same path to
+		// itself.
 		if last := p.lastPathRecord(); last != nil && reflect.DeepEqual(rec, *last) {
 			url, err := url.Parse(rec.To)
 			rec, err := getRecord(url.Host, p.c, p.rw, p.req)

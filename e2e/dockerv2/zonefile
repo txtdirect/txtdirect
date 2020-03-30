@@ -12,11 +12,11 @@ $TTL 1h
 
 example.com.                IN A 172.20.10.2
 
-pull.dockerv2.dockerv2.example.com.                    IN A 172.20.10.2
-_redirect.pull.dockerv2.dockerv2.example.com.          IN TXT "v=txtv0;to=http://172.20.10.3:5000/txtdirect;type=dockerv2" 
+pull.dockerv2.dockerv2.example.com.                           IN A 172.20.10.2
+_redirect.pull.dockerv2.dockerv2.example.com.                 IN TXT "v=txtv0;to=http://172.20.10.3:5000/txtdirect;type=dockerv2" 
 
-fallback.dockerv2.dockerv2.example.com.                    IN A 172.20.10.2
-_redirect.fallback.dockerv2.dockerv2.example.com.          IN TXT "v=txtv0;to=https://fallback-to.dockerv2.dockerv2.example.com;root=https://fallback-root.dockerv2.dockerv2.example.com;type=dockerv2" 
+fallback.dockerv2.dockerv2.example.com.                       IN A 172.20.10.2
+_redirect.fallback.dockerv2.dockerv2.example.com.             IN TXT "v=txtv0;to=https://fallback-to.dockerv2.dockerv2.example.com;root=https://fallback-root.dockerv2.dockerv2.example.com;type=dockerv2" 
 
-fallback-wrong-to.dockerv2.dockerv2.example.com.                    IN A 172.20.10.2
-_redirect.fallback-wrong-to.dockerv2.dockerv2.example.com.          IN TXT "v=txtv0;to=:/wrong.uri/;type=dockerv2;website=https://fallback-website.dockerv2.dockerv2.example.com" 
+fallback-wrong-to.dockerv2.dockerv2.example.com.              IN A 172.20.10.2
+_redirect.fallback-wrong-to.dockerv2.dockerv2.example.com.    IN TXT "v=txtv0;to=:/wrong.uri/;type=dockerv2;website=https://fallback-website.dockerv2.dockerv2.example.com" 

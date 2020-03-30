@@ -104,6 +104,38 @@ var tests = []test{
 		fallback: true,
 		status:   404,
 	},
+	{
+		name: "Prioritise the parent record's to= field to chained records in fallback",
+		args: data{
+			host: "pathchain.path.path.example.com",
+			path: "/",
+		},
+		expected: "https://fallback-to.path.path.example.com",
+	},
+	{
+		name: "Fallback when wrong path is given to chained path records",
+		args: data{
+			host: "pathchain.path.path.example.com",
+			path: "/wrong",
+		},
+		expected: "https://fallback-unknown-path.path.path.example.com",
+	},
+	{
+		name: "Use regex placeholders in a host record chained to a path record",
+		args: data{
+			host: "chaining.path.path.example.com",
+			path: "/host/",
+		},
+		expected: "https://redirect-host.host.path.example.com",
+	},
+	{
+		name: "Use regex placeholders in fallback triggered by chained record",
+		args: data{
+			host: "chaining-regex.path.path.example.com",
+			path: "/fallback-placeholder/",
+		},
+		expected: "https://fallback.path.path.example.com/fallback-placeholder",
+	},
 }
 
 func main() {

@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -78,6 +80,21 @@ func (p *Path) Redirect() *record {
 	}
 
 	if rec.Type == "path" {
+		// If the current record and the last record added to the context
+		// are equal, use the current record's to= field to find the final record.
+		// Without this check, a request loop to the same zone will happen because
+		// the chained record would redirect the request with the same path to
+		// itself.
+		if last := p.lastPathRecord(); last != nil && reflect.DeepEqual(rec, *last) {
+			url, err := url.Parse(rec.To)
+			rec, err := getRecord(url.Host, p.c, p.rw, p.req)
+			if err != nil {
+				log.Print("Fallback is triggered because an error has occurred: ", err)
+				fallback(p.rw, p.req, "to", p.rec.Code, p.c)
+				return nil
+			}
+			return &rec
+		}
 		p.rec = rec
 		return p.Redirect()
 	}
@@ -360,4 +377,14 @@ func normalize(input []string) []string {
 		result = append(result, value)
 	}
 	return result
+}
+
+func (p *Path) lastPathRecord() *record {
+	records := p.req.Context().Value("records").([]record)
+
+	if len(records) < 2 {
+		return nil
+	}
+
+	return &records[len(records)-1]
 }

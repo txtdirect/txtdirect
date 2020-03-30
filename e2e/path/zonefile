@@ -52,3 +52,17 @@ _redirect._.uprecord.path.path.example.com.            IN TXT "v=txtv0;to=https:
 
 fallbackupstream.path.path.example.com.                IN A 172.20.10.2
 _redirect.fallbackupstream.path.path.example.com.      IN TXT "v=txtv0;type=path;use=_redirect.wrongupstream.path.path.example.com"
+
+pathchain.path.path.example.com.                       IN A 172.20.10.2
+_redirect.pathchain.path.path.example.com.             IN TXT "v=txtv0;type=path;to=https://fallback-to.path.path.example.com;code=302"
+_redirect._.pathchain.path.path.example.com.           IN TXT "v=txtv0;type=path;re=/fallback/;to=https://fallback-unknown-path.path.path.example.com"
+
+chaining.path.path.example.com.                        IN A 172.20.10.2
+host-regex.host.path.example.com.                      IN A 172.20.10.2
+_redirect.chaining.path.path.example.com.              IN TXT "v=txtv0;type=path;to=https://fallback-to.path.path.example.com;code=302"
+_redirect._.chaining.path.path.example.com.            IN TXT "v=txtv0;type=path;re=/host/;to=https://host-regex.host.path.example.com"
+_redirect.host-regex.host.path.example.com.            IN TXT "v=txtv0;type=host;to=https://redirect-{1}.host.path.example.com"
+
+chaining-regex.path.path.example.com.                  IN A 172.20.10.2
+_redirect.chaining-regex.path.path.example.com.        IN TXT "v=txtv0;type=path;to=https://fallback-to.path.path.example.com;code=302"
+_redirect._.chaining-regex.path.path.example.com.      IN TXT "v=txtv0;type=path;re=/random/;to=https://fallback.path.path.example.com/{1}"

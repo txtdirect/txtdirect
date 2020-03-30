@@ -87,6 +87,14 @@ var tests = []test{
 		},
 		expected: "https://upstream.host.host.example.com",
 	},
+	{
+		name: "Redirect using chained path records to a host record",
+		args: data{
+			host: "chaining.path.path.example.com",
+			path: "/releases",
+		},
+		expected: "https://chained-redirect.host.path.example.com",
+	},
 }
 
 func main() {

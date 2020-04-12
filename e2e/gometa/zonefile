@@ -29,10 +29,3 @@ _redirect.empty-to.gometa.path.example.com.    IN TXT "v=txtv0;to=wrong:/url.tes
 custom-regex.gometa.path.example.com.          IN A   172.20.10.2
 _redirect.custom-regex.gometa.path.example.com.                            IN TXT "v=txtv0;type=path;root=https://no-path.gometa.path.example.com{uri};re=^/(?P<repo>[^/]*)(?P<subpath>/.*)?$"
 _redirect._._.custom-regex.gometa.path.example.com.                        IN TXT "v=txtv0;type=gometa;to=https://package.gometa.path.example.com/{repo}"
-
-
-; repo-and-package.gometa.path.example.com.                            IN A   172.20.10.2
-
-; _redirect.repo-and-package.gometa.path.example.com.                  IN TXT "v=txtv0;type=path;code=301;to=https://default.gometa.path.example.com/{sig_repo}/{repo_subpath};re=^/(?P<sig_repo>.*?)(?!/+$)(?P<repo_subpath>/.*)?$"
-; _redirect._.repo-and-package.gometa.path.example.com.                IN TXT "v=txtv0;type=host;code=301;to=https://nongoget.gometa.path.example.com/{sig_repo}"
-; _redirect._._.repo-and-package.gometa.path.example.com.              IN TXT "v=txtv0;type=gometa;to=https://github.com/kubernetes-sigs/{sig_repo}"

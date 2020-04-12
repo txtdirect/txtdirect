@@ -80,15 +80,6 @@ var tests = []test{
 		expected: "https://package.gometa.path.example.com/txtdirect",
 		comment:  "for: k8s.io",
 	},
-	// {
-	// 	name: "Redirect to host record if request doesn't have ?go-get=1",
-	// 	args: data{
-	// 		host: "repo-and-package.gometa.path.example.com",
-	// 		path: "/txtdirect",
-	// 	},
-	// 	expected: "https://nongoget.gometa.path.example.com/txtdirect",
-	//  comment: "sigs.k8s.io",
-	// },
 }
 
 func main() {

@@ -61,11 +61,11 @@ chaining-regex.path.path.example.com.                  IN A 172.20.10.2
 _redirect.chaining-regex.path.path.example.com.        IN TXT "v=txtv0;type=path;to=https://fallback-to.path.path.example.com;code=302"
 _redirect._.chaining-regex.path.path.example.com.      IN TXT "v=txtv0;type=path;re=/random/;to=https://fallback.path.path.example.com/{1}"
 
-srcrecord.path.path.example.com.                            IN A 172.20.10.2
-uprecord.path.path.example.com.                             IN A 172.20.10.2
-_redirect.srcrecord.path.path.example.com.                  IN TXT "v=txtv0;type=path;use=_redirect.wrongupstream.path.path.example.com;use=_redirect.uprecord.path.path.example.com"
-_redirect.uprecord.path.path.example.com.                   IN TXT "v=txtv0;type=path"
-_redirect._.uprecord.path.path.example.com.                 IN TXT "v=txtv0;to=https://upstream.path.path.example.com;type=host;code=302" 
+src-multiple-use.path.path.example.com.                     IN A 172.20.10.2
+uprecord-multiple-use.path.path.example.com.                IN A 172.20.10.2
+_redirect.src-multiple-use.path.path.example.com.           IN TXT "v=txtv0;type=path;use=_redirect.wrongupstream.path.path.example.com;use=_redirect.uprecord-multiple-use.path.path.example.com"
+_redirect.uprecord-multiple-use.path.path.example.com.      IN TXT "v=txtv0;type=path"
+_redirect._.uprecord-multiple-use.path.path.example.com.    IN TXT "v=txtv0;to=https://upstream.path.path.example.com;type=host;code=302" 
      
 numbered-regex.host.path.example.com.                       IN A 172.20.10.2
 _redirect.numbered-regex.host.path.example.com.             IN TXT "v=txtv0;type=path;root=https://fallback.host.path.example.com;re=^/(.*)?$"
@@ -90,28 +90,28 @@ _redirect.3.predefined-multinumbered.host.path.example.com. IN TXT "v=txtv0;type
 predefined-version.host.path.example.com.                   IN A 172.20.10.2
 _redirect.predefined-version.host.path.example.com.         IN TXT "v=txtv0;type=path;root=https://index.host.path.example.com;re=record"
 _redirect.1.predefined-version.host.path.example.com.       IN TXT "v=txtv0;type=host;to=https://first-record.host.path.example.com{1};re=^/v[0-9]+\.[0-9]+(/.*)?$"
-_redirect.2.predefined-version.host.path.example.com.       IN TXT "v=txtv0;type=host;to=https://second-record.host.path.example.com/docs/{1};re=^/(.*)$"
+_redirect.2.predefined-version.host.path.example.com.       IN TXT "v=txtv0;type=host;to=https://second-record.host.path.example.com/docs{1};re=^/(.*)$"
 
 predefined-versionword.host.path.example.com.               IN A 172.20.10.2
 _redirect.predefined-versionword.host.path.example.com.     IN TXT "v=txtv0;type=path;root=https://index.host.path.example.com;re=record"
 _redirect.1.predefined-versionword.host.path.example.com.   IN TXT "v=txtv0;type=host;to=https://first-record.host.path.example.com/release-{2}/examples{3};re=^/v([0-9]+\.[0-9]+)(/.*)?$"
-_redirect.2.predefined-versionword.host.path.example.com.   IN TXT "v=txtv0;type=host;to=https://second-record.host.path.example.com/{1};re=^/(.*)$"
+_redirect.2.predefined-versionword.host.path.example.com.   IN TXT "v=txtv0;type=host;to=https://second-record.host.path.example.com{1};re=^/(.*)$"
 
 predefined-simpletospecific.host.path.example.com.             IN A 172.20.10.2
 _redirect.predefined-simpletospecific.host.path.example.com.   IN TXT "v=txtv0;type=path;root=https://index.host.path.example.com;re=record"
 _redirect.1.predefined-simpletospecific.host.path.example.com. IN TXT "v=txtv0;type=host;to=https://first-record.host.path.example.com/{2}/{3};re=^/([^/]*)/(.*)$"
 _redirect.2.predefined-simpletospecific.host.path.example.com. IN TXT "v=txtv0;type=host;to=https://second-record.host.path.example.com/{2};re=^/([^/]*)/?$"
 
-predefined.host.path.example.com.             IN A 172.20.10.2
-_redirect.predefined.host.path.example.com.   IN TXT "v=txtv0;type=path;root=https://index.host.path.example.com;re=record"
-_redirect.1.predefined.host.path.example.com. IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/1;re=^/api-review$"
-_redirect.2.predefined.host.path.example.com. IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/2;re=^/bot-commands$"
-_redirect.3.predefined.host.path.example.com. IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/3;re=^/github-labels$"
-_redirect.4.predefined.host.path.example.com. IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/4;re=^/good-first-issue$"
-_redirect.5.predefined.host.path.example.com. IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/5;re=^/help-wanted$"
-_redirect.6.predefined.host.path.example.com. IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/6;re=^/needs-ok-to-test$"
-_redirect.7.predefined.host.path.example.com. IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/7;re=^/oncall$"
-_redirect.8.predefined.host.path.example.com. IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/8;re=^/oncall-hotlist$"
+predefined.host.path.example.com.                              IN A 172.20.10.2
+_redirect.predefined.host.path.example.com.                    IN TXT "v=txtv0;type=path;root=https://index.host.path.example.com"
+_redirect.api-review.predefined.host.path.example.com.         IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/1"
+_redirect.bot-commands.predefined.host.path.example.com.       IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/2"
+_redirect.github-labels.predefined.host.path.example.com.      IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/3"
+_redirect.good-first-issue.predefined.host.path.example.com.   IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/4"
+_redirect.help-wanted.predefined.host.path.example.com.        IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/5"
+_redirect.needs-ok-to-test.predefined.host.path.example.com.   IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/6"
+_redirect.oncall.predefined.host.path.example.com.             IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/7"
+_redirect.oncall-hotlist.predefined.host.path.example.com.     IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/8"
 
 predefined-release.host.path.example.com.             IN A 172.20.10.2
 _redirect.predefined-release.host.path.example.com.   IN TXT "v=txtv0;type=path;root=https://index.host.path.example.com;re=record"

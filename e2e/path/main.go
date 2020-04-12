@@ -91,7 +91,7 @@ var tests = []test{
 	{
 		name: "Redirect to upstream record using multiple use= fields and skipping non-working upstream",
 		args: data{
-			host: "srcrecord.path.path.example.com",
+			host: "src-multiple-use.path.path.example.com",
 			path: "/testing",
 		},
 		expected: "https://upstream.path.path.example.com",
@@ -255,12 +255,30 @@ var tests = []test{
 		comment:  "for: docs.k8s.io",
 	},
 	{
+		name: "Redirect to second host record's to= when path doesn't contain a version",
+		args: data{
+			host: "predefined-version.host.path.example.com",
+			path: "/testing",
+		},
+		expected: "https://second-record.host.path.example.com/docs/testing",
+		comment:  "for: docs.k8s.io",
+	},
+	{
 		name: "Redirect to host record's to= when path contains a version and word",
 		args: data{
 			host: "predefined-versionword.host.path.example.com",
 			path: "/v0.0/beta",
 		},
 		expected: "https://first-record.host.path.example.com/release-0.0/examples/beta",
+		comment:  "for: examples.k8s.io",
+	},
+	{
+		name: "Redirect to second host record's to= when path doesn't contain a version and word",
+		args: data{
+			host: "predefined-versionword.host.path.example.com",
+			path: "/testing",
+		},
+		expected: "https://second-record.host.path.example.com/testing",
 		comment:  "for: examples.k8s.io",
 	},
 	{
@@ -279,6 +297,15 @@ var tests = []test{
 			path: "/[test]/testing",
 		},
 		expected: "https://first-record.host.path.example.com/[test]/testing",
+		comment:  "for: git.k8s.io",
+	},
+	{
+		name: "Redirect to second host record's to= when path doesn't contain brackets",
+		args: data{
+			host: "predefined-simpletospecific.host.path.example.com",
+			path: "/testing",
+		},
+		expected: "https://second-record.host.path.example.com/testing",
 		comment:  "for: git.k8s.io",
 	},
 	{

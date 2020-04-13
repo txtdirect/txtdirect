@@ -10,22 +10,22 @@
 
 $TTL 1H
 
-example.com.                                   IN A 172.20.10.2
+example.com.                                               IN A 172.20.10.2
 
-gometa.gometa.example.com.                     IN A 172.20.10.2
-_redirect.gometa.gometa.example.com.           IN TXT "v=txtv0;to=https://gometa-redirect.gometa.gometa.example.com/golang/package;type=gometa;vcs=git"
+gometa.gometa.example.com.                                 IN A 172.20.10.2
+_redirect.gometa.gometa.example.com.                       IN TXT "v=txtv0;to=https://gometa-redirect.gometa.gometa.example.com/golang/package;type=gometa;vcs=git"
 
-path.example.com.                              IN A 172.20.10.2
-_redirect.path.example.com.                    IN TXT "v=txtv0;type=path"
-_redirect.gometa.path.example.com.             IN TXT "v=txtv0;to=https://gometa-redirect.gometa.path.example.com/golang/package;type=gometa"
-_redirect.multiple.gometa.path.example.com.    IN TXT "v=txtv0;to=https://gometa-redirect.gometa.path.example.com/second/golang/package;type=gometa"
+path.example.com.                                          IN A 172.20.10.2
+_redirect.path.example.com.                                IN TXT "v=txtv0;type=path"
+_redirect.gometa.path.example.com.                         IN TXT "v=txtv0;to=https://gometa-redirect.gometa.path.example.com/golang/package;type=gometa"
+_redirect.multiple.gometa.path.example.com.                IN TXT "v=txtv0;to=https://gometa-redirect.gometa.path.example.com/second/golang/package;type=gometa"
 
-fallback.gometa.path.example.com.              IN A 172.20.10.2
-_redirect.fallback.gometa.path.example.com.    IN TXT "v=txtv0;type=path;to=https://fallback-to.gometa.path.example.com"
+fallback.gometa.path.example.com.                          IN A 172.20.10.2
+_redirect.fallback.gometa.path.example.com.                IN TXT "v=txtv0;type=path;to=https://fallback-to.gometa.path.example.com"
 
-fallback-empty-to.gometa.path.example.com.     IN A 172.20.10.2
-_redirect.empty-to.gometa.path.example.com.    IN TXT "v=txtv0;to=wrong:/url.test;type=gometa"
+fallback-empty-to.gometa.path.example.com.                 IN A 172.20.10.2
+_redirect.empty-to.gometa.path.example.com.                IN TXT "v=txtv0;to=wrong:/url.test;type=gometa"
 
-custom-regex.gometa.path.example.com.          IN A   172.20.10.2
-_redirect.custom-regex.gometa.path.example.com.                            IN TXT "v=txtv0;type=path;root=https://no-path.gometa.path.example.com{uri};re=^/(?P<repo>[^/]*)(?P<subpath>/.*)?$"
-_redirect._._.custom-regex.gometa.path.example.com.                        IN TXT "v=txtv0;type=gometa;to=https://package.gometa.path.example.com/{repo}"
+custom-regex.gometa.path.example.com.                      IN A   172.20.10.2
+_redirect.custom-regex.gometa.path.example.com.            IN TXT "v=txtv0;type=path;root=https://no-path.gometa.path.example.com{uri};re=^/(?P<repo>[^/]*)(?P<subpath>/.*)?$"
+_redirect._._.custom-regex.gometa.path.example.com.        IN TXT "v=txtv0;type=gometa;to=https://package.gometa.path.example.com/{repo}"

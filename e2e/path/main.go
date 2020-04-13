@@ -311,10 +311,10 @@ var tests = []test{
 	{
 		name: "Redirect to host record's to= using multiple predefined regexes",
 		args: data{
-			host: "predefined.host.path.example.com",
+			host: "path-subdomain.host.path.example.com",
 			path: "/good-first-issue",
 		},
-		expected: "https://predefined-regex.host.path.example.com/4",
+		expected: "https://path-subdomain-redirect.host.path.example.com/4",
 		comment:  "for: go.k8s.io",
 	},
 	{

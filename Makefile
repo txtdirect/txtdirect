@@ -1,6 +1,7 @@
 BIN := txtdirect
 DOMAIN := c.txtdirect.org
 VERSION := $(shell cat ./VERSION)
+GITCOMMIT:=$(shell git describe --dirty --always)
 IMAGE := $(DOMAIN)/$(BIN):$(VERSION)
 CODEPATH := $(shell go list -m)
 
@@ -13,7 +14,7 @@ CONTAINER ?= $(BIN)
 
 build:
 	cd cmd/txtdirect && \
-	GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w -X $(CODEPATH)/txtdirectmain.TXTDirectVersion=$(VERSION)"
+	GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w -X $(CODEPATH)/txtdirectmain.TXTDirectVersion=$(VERSION) -X $(CODEPATH)/txtdirectmain.GitCommit=$(GITCOMMIT)"
 	mv cmd/txtdirect/txtdirect ./$(BIN)
 
 test:

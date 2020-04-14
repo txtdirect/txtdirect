@@ -17,6 +17,7 @@ type test struct {
 	name     string
 	args     data
 	expected string
+	comment  string
 }
 
 var tests = []test{
@@ -52,6 +53,33 @@ var tests = []test{
 		},
 		expected: "https://fallback-to.gometa.path.example.com",
 	},
+	{
+		name: "Fallback to path record's \"to=\" when path is empty",
+		args: data{
+			host: "custom-regex.gometa.path.example.com",
+			path: "/",
+		},
+		expected: "https://no-path.gometa.path.example.com/",
+		comment:  "for: k8s.io",
+	},
+	{
+		name: "Redirect to gometa record using the custom regex in path record",
+		args: data{
+			host: "custom-regex.gometa.path.example.com",
+			path: "/txtdirect/txtdirect?go-get=1",
+		},
+		expected: "https://package.gometa.path.example.com/txtdirect",
+		comment:  "for: k8s.io",
+	},
+	{
+		name: "Redirect to gometa record using the custom regex and single path",
+		args: data{
+			host: "custom-regex.gometa.path.example.com",
+			path: "/txtdirect?go-get=1",
+		},
+		expected: "https://package.gometa.path.example.com/txtdirect",
+		comment:  "for: k8s.io",
+	},
 }
 
 func main() {
@@ -64,6 +92,7 @@ func main() {
 		}
 
 		req, err := http.NewRequest("GET", fmt.Sprintf("http://%s%s", test.args.host, test.args.path), nil)
+		req.URL.EscapedPath()
 		resp, err := client.Do(req)
 		if err != nil {
 			result[false] = append(result[false], test)

@@ -119,7 +119,6 @@ _redirect.1.predefined-release.host.path.example.com.              IN TXT "v=txt
 
 
 apexuse.path.path.example.com.                                     IN A 172.20.10.2
-userec.path.path.example.com.                                      IN A 172.20.10.2
 _redirect._.apexuse.path.path.example.com.                         IN TXT "v=txtv0;use=_redirect.userec.path.path.example.com"
 _redirect._.userec.path.path.example.com.                          IN TXT "v=txtv0;type=path;to=https://fallback-use.path.path.example.com;code=302"
 _redirect.test.userec.path.path.example.com.                       IN TXT "v=txtv0;type=path;to=https://apexuse-to.path.path.example.com;code=302"

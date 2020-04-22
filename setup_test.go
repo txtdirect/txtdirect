@@ -195,6 +195,29 @@ func TestCaddyParse(t *testing.T) {
 		{
 			`
 			txtdirect {
+				enable host
+				redirect https://example.com
+				prometheus {
+					path /metrics
+					path_metrics_whitelist example.com,example.org
+				}
+			}
+			`,
+			false,
+			Config{
+				Redirect: "https://example.com",
+				Enable:   []string{"host"},
+				Prometheus: Prometheus{
+					Enable:        true,
+					Address:       "localhost:9183",
+					Path:          "/metrics",
+					PathWhitelist: []string{"example.com", "example.org"},
+				},
+			},
+		},
+		{
+			`
+			txtdirect {
 				enable host gometa
 				logfile stderr
 				resolver 127.0.0.1
@@ -323,8 +346,16 @@ func TestCaddyParse(t *testing.T) {
 		}
 
 		if test.expected.Prometheus.Enable == true {
-			if conf.Prometheus != test.expected.Prometheus {
-				t.Errorf("Expected %+v for prometheus config got %+v", test.expected.Prometheus, conf.Prometheus)
+			if conf.Prometheus.Address != test.expected.Prometheus.Address {
+				t.Errorf("Expected %s for Prometheus address, got %+s", test.expected.Prometheus.Address, conf.Prometheus.Address)
+			}
+			if conf.Prometheus.Path != test.expected.Prometheus.Path {
+				t.Errorf("Expected %s for Prometheus path, got %+s", test.expected.Prometheus.Path, conf.Prometheus.Path)
+			}
+			for _, uri := range test.expected.Prometheus.PathWhitelist {
+				if !contains(conf.Prometheus.PathWhitelist, uri) {
+					t.Errorf("Expected %s for Prometheus path metrics whitelist", uri)
+				}
 			}
 		}
 

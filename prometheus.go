@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,9 +30,10 @@ import (
 
 // Prometheus contains Prometheus's configuration
 type Prometheus struct {
-	Enable  bool
-	Address string
-	Path    string
+	Enable        bool
+	Address       string
+	Path          string
+	PathWhitelist []string
 
 	next    httpserver.Handler
 	handler http.Handler
@@ -152,6 +154,8 @@ func (p *Prometheus) ParsePrometheus(c *caddy.Controller, key, value string) err
 		p.Address = value
 	case "path":
 		p.Path = value
+	case "path_metrics_whitelist":
+		p.PathWhitelist = strings.Split(value, ",")
 	default:
 		return c.ArgErr() // unhandled option for prometheus
 	}

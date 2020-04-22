@@ -326,6 +326,14 @@ var tests = []test{
 		expected: "https://predefined-regex.host.path.example.com/v0.0.1/beta",
 		comment:  "for: releases.k8s.io",
 	},
+	{
+		name: "Redirect using to= field from the upstream path record in the apex zone wildcard",
+		args: data{
+			host: "apexuse.path.path.example.com",
+			path: "/test",
+		},
+		expected: "https://apexuse-to.path.path.example.com",
+	},
 }
 
 func main() {

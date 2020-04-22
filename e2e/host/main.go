@@ -95,6 +95,22 @@ var tests = []test{
 		},
 		expected: "https://chained-redirect.host.path.example.com",
 	},
+	{
+		name: "Redirect to the apex zone's wildcard record to= field",
+		args: data{
+			host: "apex.host.host.example.com",
+			path: "",
+		},
+		expected: "https://apex-to.host.host.example.com",
+	},
+	{
+		name: "Redirect using to= field from the upstream record in the apex zone wildcard",
+		args: data{
+			host: "apexuse.host.host.example.com",
+			path: "",
+		},
+		expected: "https://apexuse-to.host.host.example.com",
+	},
 }
 
 func main() {

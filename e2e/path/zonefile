@@ -116,3 +116,9 @@ _redirect.oncall-hotlist.path-subdomain.host.path.example.com.     IN TXT "v=txt
 predefined-release.host.path.example.com.                          IN A 172.20.10.2
 _redirect.predefined-release.host.path.example.com.                IN TXT "v=txtv0;type=path;root=https://index.host.path.example.com;re=record"
 _redirect.1.predefined-release.host.path.example.com.              IN TXT "v=txtv0;type=host;to=https://predefined-regex.host.path.example.com/{2}{3};re=^/([^/]*)(/.*)?$"
+
+
+apexuse.path.path.example.com.                                     IN A 172.20.10.2
+_redirect._.apexuse.path.path.example.com.                         IN TXT "v=txtv0;use=_redirect.userec.path.path.example.com"
+_redirect._.userec.path.path.example.com.                          IN TXT "v=txtv0;type=path;to=https://fallback-use.path.path.example.com;code=302"
+_redirect.test.userec.path.path.example.com.                       IN TXT "v=txtv0;type=path;to=https://apexuse-to.path.path.example.com;code=302"

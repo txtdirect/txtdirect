@@ -47,6 +47,15 @@ func getRecord(host string, c Config, w http.ResponseWriter, r *http.Request) (r
 	if err != nil {
 		log.Printf("Initial DNS query failed: %s", err)
 	}
+
+	// If record isn't on apex zone, check the "_" subzone
+	if err != nil && r.Context().Value("records") == nil {
+		txts, err = query(fmt.Sprintf("_.%s", host), r.Context(), c)
+		if err != nil {
+			log.Printf("Apex zone's wildcard DNS query failed: %s", err)
+		}
+	}
+
 	// if error present or record empty, jump into wildcards
 	if err != nil || txts[0] == "" {
 		hostSlice := strings.Split(host, ".")

@@ -197,9 +197,10 @@ func ParseRecord(str string, w http.ResponseWriter, req *http.Request, c Config)
 		if len(l) > 255 {
 			return record{}, fmt.Errorf("TXT record cannot exceed the maximum of 255 characters")
 		}
-		if r.Type == "dockerv2" && r.To == "" {
-			return record{}, fmt.Errorf("[txtdirect]: to= field is required in dockerv2 type")
-		}
+	}
+
+	if r.Type == "dockerv2" && r.To == "" {
+		return record{}, fmt.Errorf("[txtdirect]: to= field is required in dockerv2 type")
 	}
 
 	if r.Code == 0 {

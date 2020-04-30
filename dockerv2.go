@@ -29,6 +29,14 @@ type Dockerv2 struct {
 	req *http.Request
 	c   Config
 	rec record
+
+	image Image
+}
+
+type Image struct {
+	Registry string
+	Image    string
+	Tag      string
 }
 
 // NewDockerv2 returns a fresh instance of Dockerv2 struct
@@ -43,7 +51,7 @@ func NewDockerv2(w http.ResponseWriter, r *http.Request, rec record, c Config) *
 
 var dockerRegexes = map[string]*regexp.Regexp{
 	"v2":        regexp.MustCompile("^\\/?v2\\/?$"),
-	"container": regexp.MustCompile("v2\\/(([\\w\\d-]+\\/?)+)\\/(tags|manifests|_catalog|blobs)"),
+	"container": regexp.MustCompile("/v2/(.*?)\\/\\s*(blobs|manifests)/(.*)"),
 }
 
 // Redirect handles the requests for "dockerv2" type
@@ -64,7 +72,7 @@ func (d *Dockerv2) Redirect() error {
 		return err
 	}
 	if path != "/" {
-		uri, err := createDockerv2URI(d.rec.To, path)
+		uri, err := d.ParseReference()
 		if err != nil {
 			return err
 		}
@@ -79,28 +87,47 @@ func (d *Dockerv2) Redirect() error {
 	return nil
 }
 
-func createDockerv2URI(to string, path string) (string, error) {
-	uri, err := url.Parse(to)
+func (d *Dockerv2) ParseRecordReference() error {
+	uri, err := url.Parse(d.rec.To)
 	if err != nil {
-		return "", err
+		return fmt.Errorf("Couldn't parse the record endpoint: %s", err.Error())
 	}
 
-	if uri.Path == "/" || uri.Path == "" {
-		uri.Path = path
-		return uri.String(), nil
+	if uri.Path == "" {
+		uri.Path = "/"
 	}
 
-	// Replace container's path in docker's request with what's inside rec.To
-	containerPath := dockerRegexes["container"].FindAllStringSubmatch(path, -1)[0][1] // [0][1]: The second item in first group is always container path
-	containerAndVersion := strings.Split(uri.Path, ":")                               // First item in slice is container and second item is version
-	uri.Path = strings.Replace(path, containerPath, containerAndVersion[0][1:], -1)
-
-	// Replace the version number in docker's request with what's inside rec.To
-	if len(containerAndVersion) == 2 {
-		pathSlice := strings.Split(uri.Path, "/")
-		pathSlice[len(pathSlice)-1] = containerAndVersion[1]
-		uri.Path = strings.Join(pathSlice, "/")
+	path := strings.Split(uri.Path, ":")
+	if len(path) == 2 {
+		d.image.Tag = path[1]
 	}
 
-	return uri.String(), nil
+	d.image.Registry = fmt.Sprintf("%s://%s", uri.Scheme, uri.Host)
+
+	d.image.Image = path[0][1:]
+
+	return nil
+}
+
+func (d *Dockerv2) ParseReference() (string, error) {
+	path := d.req.URL.Path
+	if err := d.ParseRecordReference(); err != nil {
+		return "", fmt.Errorf("Couldn't parse the image reference: %s", err.Error())
+	}
+
+	matches := dockerRegexes["container"].FindAllStringSubmatch(path, -1)[0]
+
+	// Replace image tag on manifests requests
+	if matches[2] == "manifests" {
+		if d.image.Tag != "" {
+			path = strings.Replace(path, matches[3], d.image.Tag, -1)
+		}
+	}
+
+	// Replace image name and namepsace
+	if d.image.Image != "" {
+		path = strings.Replace(path, matches[1], d.image.Image, -1)
+	}
+
+	return fmt.Sprintf("%s%s", d.image.Registry, path), nil
 }

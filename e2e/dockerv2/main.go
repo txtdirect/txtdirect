@@ -57,6 +57,69 @@ var tests = []test{
 		},
 		kind: "pull",
 	},
+	{
+		name: "Pull an image from registry only to= field",
+		args: data{
+			image: "registry.dockerv2.dockerv2.example.com/txtdirect",
+		},
+		kind: "pull",
+	},
+	{
+		name: "Pull an image using namespace/image from registry only to= field",
+		args: data{
+			image: "registry.dockerv2.dockerv2.example.com/txtdirect/txtdirect",
+		},
+		kind: "pull",
+	},
+	{
+		name: "Pull an image with tag from registry only to= field",
+		args: data{
+			image: "registry.dockerv2.dockerv2.example.com/txtdirect/txtdirect:test",
+		},
+		kind: "pull",
+	},
+	{
+		name: "Pull an image from a to= field without tag",
+		args: data{
+			image: "specific.dockerv2.dockerv2.example.com/txtdirect",
+		},
+		kind: "pull",
+	},
+	{
+		name: "Pull an image using namespace/image from a to= field without tag",
+		args: data{
+			image: "specific.dockerv2.dockerv2.example.com/txtdirect/txtdirect",
+		},
+		kind: "pull",
+	},
+	{
+		name: "Pull an image with tag from a to= field without tag",
+		args: data{
+			image: "specific.dockerv2.dockerv2.example.com/txtdirect/txtdirect:test",
+		},
+		kind: "pull",
+	},
+	{
+		name: "Pull an image from a specific to= field with tag",
+		args: data{
+			image: "specific-tag.dockerv2.dockerv2.example.com/txtdirect",
+		},
+		kind: "pull",
+	},
+	{
+		name: "Pull an image using namespace/image from a specific to= field with tag",
+		args: data{
+			image: "specific-tag.dockerv2.dockerv2.example.com/txtdirect/txtdirect",
+		},
+		kind: "pull",
+	},
+	{
+		name: "Pull an image with tag a specific to= field with tag",
+		args: data{
+			image: "specific-tag.dockerv2.dockerv2.example.com/txtdirect/txtdirect:test",
+		},
+		kind: "pull",
+	},
 }
 
 func main() {
@@ -73,13 +136,13 @@ func main() {
 			_, err := exec.Command("crane", "pull", "-i", test.args.image, "txtdirect_e2e").CombinedOutput()
 			if err != nil {
 				result[false] = append(result[false], test)
-				log.Printf("Couldn't pull the image from the custom Docker registry: %s", err.Error())
+				log.Printf("[%s]: Couldn't pull the image from the custom Docker registry: %s", test.name, err.Error())
 				continue
 			}
 			_, err = exec.Command("rm", "./txtdirect_e2e").CombinedOutput()
 			if err != nil {
 				result[false] = append(result[false], test)
-				log.Printf("Couldn't remove the pulled image: %s", err.Error())
+				log.Printf("[%s]: Couldn't remove the pulled image: %s", test.name, err.Error())
 				continue
 			}
 		}

@@ -17,6 +17,15 @@ const (
 	testerImage  = "c.txtdirect.org/tester:dirty"
 )
 
+// TestImages a list of images with same content but different tags,
+// pushed to the testing registry
+var TestImages = map[string]string{
+	"172.20.10.3:5000/txtdirect":                "txtdirect.tar",
+	"172.20.10.3:5000/txtdirect/txtdirect":      "txtdirect-txtdirect.tar",
+	"172.20.10.3:5000/txtdirect/txtdirect:test": "txtdirect-test.tar",
+	"172.20.10.3:5000/txtdirect/txtdirect:e2e":  "txtdirect-e2e.tar",
+}
+
 var txtdirectImage = fmt.Sprintf("c.txtdirect.org/txtdirect:%s", os.Getenv("VERSION"))
 
 var resultRegex = regexp.MustCompile("Total:+\\s(\\d+),\\sPassed:+\\s(\\d+),\\sFailed:+\\s(\\d+)")
@@ -309,28 +318,36 @@ func (d *dockerManager) PushTestImage() error {
 		return fmt.Errorf("Couldn't connect Docker registry the network adaptor: %s", err.Error())
 	}
 
-	// Tag TXTDirect's image to use in custom registry
-	_, err = exec.Command("docker", "tag", txtdirectImage, "172.20.10.3:5000/txtdirect").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Couldn't tag image to use in custom Docker registry: %s", err.Error())
-	}
+	for image, tarball := range TestImages {
+		// Tag TXTDirect's image to use in custom registry
+		_, err = exec.Command("docker", "tag", txtdirectImage, image).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't tag image to use in custom Docker registry: %s", err.Error())
+		}
 
-	// Export the image to a tarball
-	_, err = exec.Command("docker", "save", "172.20.10.3:5000/txtdirect:latest", "-o", "txtdirect.tar").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Couldn't export the image into a tarball: %s", err.Error())
-	}
+		// Export the image to a tarball
+		_, err = exec.Command("docker", "save", image, "-o", tarball).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't export the image into a tarball: %s", err.Error())
+		}
 
-	// Push the TXTDirect image to the custom registry
-	_, err = exec.Command("crane", "push", "txtdirect.tar", "172.20.10.3:5000/txtdirect").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Couldn't push the image to the custom Docker registry: %s", err.Error())
-	}
+		// Push the TXTDirect image to the custom registry
+		_, err = exec.Command("crane", "push", tarball, image).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't push the image to the custom Docker registry: %s", err.Error())
+		}
 
-	// Remove the tarball after the push
-	_, err = exec.Command("rm", "./txtdirect.tar").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Couldn't remove the image tarball: %s", err.Error())
+		// Remove the tarball after the push
+		_, err = exec.Command("rm", fmt.Sprintf("./%s", tarball)).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't remove the image tarball: %s", err.Error())
+		}
+
+		// Remove the image from local cache
+		_, err = exec.Command("docker", "image", "rm", "-f", image).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("Couldn't remove the image from local cache: %s", err.Error())
+		}
 	}
 
 	return nil

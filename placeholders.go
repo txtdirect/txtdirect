@@ -25,7 +25,7 @@ import (
 )
 
 // PlaceholderRegex finds the placeholders like {x}
-var PlaceholderRegex = regexp.MustCompile("{[~>?]?\\w+}")
+var PlaceholderRegex = regexp.MustCompile("{[~>?$]?\\w+}")
 
 // parsePlaceholders gets a string input and looks for placeholders inside
 // the string. it will then replace them with the actual data from the request
@@ -128,13 +128,13 @@ func parsePlaceholders(input string, r *http.Request, pathSlice []string) (strin
 		}
 
 		// Named regex matches
-		if regexp.MustCompile("([a-zA-Z]+[0-9]*)").MatchString(string(placeholder[0][1 : len(placeholder[0])-1])) {
+		if regexp.MustCompile("(\\$[a-zA-Z]+[0-9]*)").MatchString(string(placeholder[0][1 : len(placeholder[0])-1])) {
 			matches := r.Context().Value("regexMatches")
 			mapReflect := reflect.ValueOf(matches)
 			if mapReflect.Kind() == reflect.Map {
 				iterator := reflect.ValueOf(matches).MapRange()
 				for iterator.Next() {
-					if iterator.Key().String() == string(placeholder[0][1:len(placeholder[0])-1]) {
+					if iterator.Key().String() == string(placeholder[0][2:len(placeholder[0])-1]) {
 						input = strings.Replace(input, placeholder[0], iterator.Value().String(), -1)
 					}
 				}

@@ -20,3 +20,13 @@ _redirect.fallback.dockerv2.dockerv2.example.com.             IN TXT "v=txtv0;to
 
 fallback-wrong-to.dockerv2.dockerv2.example.com.              IN A 172.20.10.2
 _redirect.fallback-wrong-to.dockerv2.dockerv2.example.com.    IN TXT "v=txtv0;to=:/wrong.uri/;type=dockerv2;website=https://fallback-website.dockerv2.dockerv2.example.com" 
+
+
+registry.dockerv2.dockerv2.example.com.                       IN A 172.20.10.2
+_redirect.registry.dockerv2.dockerv2.example.com.             IN TXT "v=txtv0;to=http://172.20.10.3:5000;type=dockerv2" 
+
+specific.dockerv2.dockerv2.example.com.                       IN A 172.20.10.2
+_redirect.specific.dockerv2.dockerv2.example.com.             IN TXT "v=txtv0;to=http://172.20.10.3:5000/txtdirect/txtdirect;type=dockerv2" 
+
+specific-tag.dockerv2.dockerv2.example.com.                   IN A 172.20.10.2
+_redirect.specific-tag.dockerv2.dockerv2.example.com.         IN TXT "v=txtv0;to=http://172.20.10.3:5000/txtdirect/txtdirect:e2e;type=dockerv2" 

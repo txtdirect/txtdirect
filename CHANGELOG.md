@@ -18,6 +18,34 @@ _2020_
 
 -->
 
+# v0.5.1
+
+_2020-05-23_
+
+- [Downloads for v0.5.1](https://txtdirect.org/releases/v0.5.1)
+- [Container build for v0.5.1](https://c.txtdirect.org/txtdirect:v0.5.1)
+- [Changelog since v0.5.0](#changes-since-v050)
+- [Documentation for v0.5.1](#documentation-for-v051)
+
+## Documentation for v0.5.1
+
+[Documentation](https://txtdirect.org/docs)
+
+[Examples](https://txtdirect.org/examples)
+
+## Changes since v0.5.0
+
+- Use a new endpoint parser for `dockerv2` [343](https://github.com/txtdirect/txtdirect/pull/343)
+- Add new E2E tests to cover more `dockerv2` use cases [344](https://github.com/txtdirect/txtdirect/pull/344)
+
+## Fixes since v0.5.0
+
+- Change the Docker CLI requests parser Regex
+
+---
+
+# v0.5.0
+
 _2020-04-23_
 
 - [Downloads for v0.5.0](https://txtdirect.org/releases/v0.5.0)

@@ -28,4 +28,4 @@ _redirect.empty-to.gometa.path.example.com.                IN TXT "v=txtv0;to=wr
 
 custom-regex.gometa.path.example.com.                      IN A   172.20.10.2
 _redirect.custom-regex.gometa.path.example.com.            IN TXT "v=txtv0;type=path;root=https://no-path.gometa.path.example.com{uri};re=^/(?P<repo>[^/]*)(?P<subpath>/.*)?$"
-_redirect._._.custom-regex.gometa.path.example.com.        IN TXT "v=txtv0;type=gometa;to=https://package.gometa.path.example.com/{repo}"
+_redirect._._.custom-regex.gometa.path.example.com.        IN TXT "v=txtv0;type=gometa;to=https://package.gometa.path.example.com/{$repo}"

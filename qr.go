@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/caddyserver/caddy"
-	qrcode "github.com/skip2/go-qrcode"
+	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
+	"github.com/skip2/go-qrcode"
 )
 
 // Qr contains Qr code generator's configuration
@@ -54,7 +54,7 @@ func (qr *Qr) ParseColors() error {
 }
 
 // ParseQr parses the config for QR requests
-func (qr *Qr) ParseQr(c *caddy.Controller) error {
+func (qr *Qr) ParseQr(c *caddyfile.Dispenser) error {
 	switch c.Val() {
 	case "size":
 		value, err := strconv.Atoi(c.RemainingArgs()[0])

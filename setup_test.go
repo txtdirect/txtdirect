@@ -13,367 +13,358 @@ limitations under the License.
 
 package txtdirect
 
-import (
-	"fmt"
-	"log"
-	"strings"
-	"testing"
+// func TestCaddyParse(t *testing.T) {
+// 	tests := []struct {
+// 		input     string
+// 		shouldErr bool
+// 		expected  Config
+// 	}{
+// 		{
+// 			`
+// 			txtdirect {
+// 				wrong keyword
+// 			}
+// 			`,
+// 			true,
+// 			Config{},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable
+// 			}
+// 			`,
+// 			true,
+// 			Config{},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				disable
+// 			}
+// 			`,
+// 			true,
+// 			Config{},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable this
+// 				disable that
+// 			}
+// 			`,
+// 			true,
+// 			Config{},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				disable this
+// 				enable that
+// 			}
+// 			`,
+// 			true,
+// 			Config{},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				redirect
+// 			}
+// 			`,
+// 			true,
+// 			Config{},
+// 		},
+// 		{
+// 			`txtdirect`,
+// 			false,
+// 			Config{
+// 				Enable: allOptions,
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable host
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Enable: []string{"host"},
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				disable host
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Enable: []string{"path", "gometa", "www"},
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				redirect https://example.com
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Redirect: "https://example.com",
+// 				Enable:   allOptions,
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable host
+// 				redirect https://example.com
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Redirect: "https://example.com",
+// 				Enable:   []string{"host"},
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable path
+// 				redirect https://example.com
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Redirect: "https://example.com",
+// 				Enable:   []string{"path"},
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable host
+// 				redirect https://example.com
+// 				prometheus
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Redirect: "https://example.com",
+// 				Enable:   []string{"host"},
+// 				Prometheus: Prometheus{
+// 					Enable:  true,
+// 					Address: "localhost:9183",
+// 					Path:    "/metrics",
+// 				},
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable host
+// 				redirect https://example.com
+// 				prometheus {
+// 					address localhost:6666
+// 					path /metrics
+// 				}
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Redirect: "https://example.com",
+// 				Enable:   []string{"host"},
+// 				Prometheus: Prometheus{
+// 					Enable:  true,
+// 					Address: "localhost:6666",
+// 					Path:    "/metrics",
+// 				},
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable host
+// 				redirect https://example.com
+// 				prometheus {
+// 					path /metrics
+// 					path_metrics_whitelist example.com,example.org
+// 				}
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Redirect: "https://example.com",
+// 				Enable:   []string{"host"},
+// 				Prometheus: Prometheus{
+// 					Enable:        true,
+// 					Address:       "localhost:9183",
+// 					Path:          "/metrics",
+// 					PathWhitelist: []string{"example.com", "example.org"},
+// 				},
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable host gometa
+// 				logfile stderr
+// 				resolver 127.0.0.1
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Enable:    []string{"host", "gometa"},
+// 				Resolver:  "127.0.0.1",
+// 				LogOutput: "stderr",
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable host gometa
+// 				logfile
+// 				resolver 127.0.0.1
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Enable:    []string{"host", "gometa"},
+// 				Resolver:  "127.0.0.1",
+// 				LogOutput: "stdout",
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable host
+// 				redirect https://example.com
+// 				qr {
+// 					size 256
+// 					background "#ffffff"
+// 					foreground "#000000"
+// 				}
+// 				resolver 127.0.0.1
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Redirect: "https://example.com",
+// 				Enable:   []string{"host"},
+// 				Resolver: "127.0.0.1",
+// 				Qr: Qr{
+// 					Size:            256,
+// 					BackgroundColor: "ffffffff",
+// 					ForegroundColor: "000000ff",
+// 				},
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable host
+// 				redirect https://example.com
+// 				qr {
+// 					size 256
+// 					background "#ffffff"
+// 					foreground "#000000"
+// 					recovery_level 1
+// 				}
+// 				resolver 127.0.0.1
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Redirect: "https://example.com",
+// 				Enable:   []string{"host"},
+// 				Resolver: "127.0.0.1",
+// 				Qr: Qr{
+// 					Size:            256,
+// 					BackgroundColor: "ffffffff",
+// 					ForegroundColor: "000000ff",
+// 					RecoveryLevel:   1,
+// 				},
+// 			},
+// 		},
+// 		{
+// 			`
+// 			txtdirect {
+// 				enable host
+// 				redirect https://example.com
+// 				resolver 127.0.0.1
+// 				qr
+// 			}
+// 			`,
+// 			false,
+// 			Config{
+// 				Redirect: "https://example.com",
+// 				Enable:   []string{"host"},
+// 				Resolver: "127.0.0.1",
+// 				Qr: Qr{
+// 					Size:            256,
+// 					BackgroundColor: "ffffffff",
+// 					ForegroundColor: "00000000",
+// 				},
+// 			},
+// 		},
+// 	}
 
-	"github.com/caddyserver/caddy"
-)
+// 	for i, test := range tests {
+// 		log.Println(log.Flags())
+// 		c := caddy.NewTestController("http", test.input)
+// 		conf, err := ParseConfig(c)
+// 		if !test.shouldErr && err != nil {
+// 			t.Errorf("Test %d: Unexpected error %s", i, err)
+// 			continue
+// 		}
+// 		if test.shouldErr {
+// 			if err == nil {
+// 				t.Errorf("Test %d: Expected error", i)
+// 			}
+// 			continue
+// 		}
 
-func TestCaddyParse(t *testing.T) {
-	tests := []struct {
-		input     string
-		shouldErr bool
-		expected  Config
-	}{
-		{
-			`
-			txtdirect {
-				wrong keyword
-			}
-			`,
-			true,
-			Config{},
-		},
-		{
-			`
-			txtdirect {
-				enable
-			}
-			`,
-			true,
-			Config{},
-		},
-		{
-			`
-			txtdirect {
-				disable
-			}
-			`,
-			true,
-			Config{},
-		},
-		{
-			`
-			txtdirect {
-				enable this
-				disable that
-			}
-			`,
-			true,
-			Config{},
-		},
-		{
-			`
-			txtdirect {
-				disable this
-				enable that
-			}
-			`,
-			true,
-			Config{},
-		},
-		{
-			`
-			txtdirect {
-				redirect
-			}
-			`,
-			true,
-			Config{},
-		},
-		{
-			`txtdirect`,
-			false,
-			Config{
-				Enable: allOptions,
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host
-			}
-			`,
-			false,
-			Config{
-				Enable: []string{"host"},
-			},
-		},
-		{
-			`
-			txtdirect {
-				disable host
-			}
-			`,
-			false,
-			Config{
-				Enable: []string{"path", "gometa", "www"},
-			},
-		},
-		{
-			`
-			txtdirect {
-				redirect https://example.com
-			}
-			`,
-			false,
-			Config{
-				Redirect: "https://example.com",
-				Enable:   allOptions,
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host
-				redirect https://example.com
-			}
-			`,
-			false,
-			Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host"},
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable path
-				redirect https://example.com
-			}
-			`,
-			false,
-			Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"path"},
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host
-				redirect https://example.com
-				prometheus
-			}
-			`,
-			false,
-			Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host"},
-				Prometheus: Prometheus{
-					Enable:  true,
-					Address: "localhost:9183",
-					Path:    "/metrics",
-				},
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host
-				redirect https://example.com
-				prometheus {
-					address localhost:6666
-					path /metrics
-				}
-			}
-			`,
-			false,
-			Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host"},
-				Prometheus: Prometheus{
-					Enable:  true,
-					Address: "localhost:6666",
-					Path:    "/metrics",
-				},
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host
-				redirect https://example.com
-				prometheus {
-					path /metrics
-					path_metrics_whitelist example.com,example.org
-				}
-			}
-			`,
-			false,
-			Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host"},
-				Prometheus: Prometheus{
-					Enable:        true,
-					Address:       "localhost:9183",
-					Path:          "/metrics",
-					PathWhitelist: []string{"example.com", "example.org"},
-				},
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host gometa
-				logfile stderr
-				resolver 127.0.0.1
-			}
-			`,
-			false,
-			Config{
-				Enable:    []string{"host", "gometa"},
-				Resolver:  "127.0.0.1",
-				LogOutput: "stderr",
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host gometa
-				logfile
-				resolver 127.0.0.1
-			}
-			`,
-			false,
-			Config{
-				Enable:    []string{"host", "gometa"},
-				Resolver:  "127.0.0.1",
-				LogOutput: "stdout",
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host
-				redirect https://example.com
-				qr {
-					size 256
-					background "#ffffff"
-					foreground "#000000"
-				}
-				resolver 127.0.0.1
-			}
-			`,
-			false,
-			Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host"},
-				Resolver: "127.0.0.1",
-				Qr: Qr{
-					Size:            256,
-					BackgroundColor: "ffffffff",
-					ForegroundColor: "000000ff",
-				},
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host
-				redirect https://example.com
-				qr {
-					size 256
-					background "#ffffff"
-					foreground "#000000"
-					recovery_level 1
-				}
-				resolver 127.0.0.1
-			}
-			`,
-			false,
-			Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host"},
-				Resolver: "127.0.0.1",
-				Qr: Qr{
-					Size:            256,
-					BackgroundColor: "ffffffff",
-					ForegroundColor: "000000ff",
-					RecoveryLevel:   1,
-				},
-			},
-		},
-		{
-			`
-			txtdirect {
-				enable host
-				redirect https://example.com
-				resolver 127.0.0.1
-				qr
-			}
-			`,
-			false,
-			Config{
-				Redirect: "https://example.com",
-				Enable:   []string{"host"},
-				Resolver: "127.0.0.1",
-				Qr: Qr{
-					Size:            256,
-					BackgroundColor: "ffffffff",
-					ForegroundColor: "00000000",
-				},
-			},
-		},
-	}
+// 		// Check configs for each enabled type
+// 		for _, e := range conf.Enable {
+// 			switch e {
+// 			case "qr":
+// 				if conf.Qr != test.expected.Qr {
+// 					t.Errorf("Expected %+v for qr config got %+v", test.expected.Qr, conf.Qr)
+// 				}
+// 			}
+// 		}
 
-	for i, test := range tests {
-		log.Println(log.Flags())
-		c := caddy.NewTestController("http", test.input)
-		conf, err := ParseConfig(c)
-		if !test.shouldErr && err != nil {
-			t.Errorf("Test %d: Unexpected error %s", i, err)
-			continue
-		}
-		if test.shouldErr {
-			if err == nil {
-				t.Errorf("Test %d: Expected error", i)
-			}
-			continue
-		}
+// 		if test.expected.Prometheus.Enable == true {
+// 			if conf.Prometheus.Address != test.expected.Prometheus.Address {
+// 				t.Errorf("Expected %s for Prometheus address, got %+s", test.expected.Prometheus.Address, conf.Prometheus.Address)
+// 			}
+// 			if conf.Prometheus.Path != test.expected.Prometheus.Path {
+// 				t.Errorf("Expected %s for Prometheus path, got %+s", test.expected.Prometheus.Path, conf.Prometheus.Path)
+// 			}
+// 			for _, uri := range test.expected.Prometheus.PathWhitelist {
+// 				if !contains(conf.Prometheus.PathWhitelist, uri) {
+// 					t.Errorf("Expected %s for Prometheus path metrics whitelist", uri)
+// 				}
+// 			}
+// 		}
 
-		// Check configs for each enabled type
-		for _, e := range conf.Enable {
-			switch e {
-			case "qr":
-				if conf.Qr != test.expected.Qr {
-					t.Errorf("Expected %+v for qr config got %+v", test.expected.Qr, conf.Qr)
-				}
-			}
-		}
+// 		if test.expected.Resolver != conf.Resolver {
+// 			t.Errorf("Expected resolver to be %s, but got %s", test.expected.Resolver, conf.Resolver)
+// 		}
 
-		if test.expected.Prometheus.Enable == true {
-			if conf.Prometheus.Address != test.expected.Prometheus.Address {
-				t.Errorf("Expected %s for Prometheus address, got %+s", test.expected.Prometheus.Address, conf.Prometheus.Address)
-			}
-			if conf.Prometheus.Path != test.expected.Prometheus.Path {
-				t.Errorf("Expected %s for Prometheus path, got %+s", test.expected.Prometheus.Path, conf.Prometheus.Path)
-			}
-			for _, uri := range test.expected.Prometheus.PathWhitelist {
-				if !contains(conf.Prometheus.PathWhitelist, uri) {
-					t.Errorf("Expected %s for Prometheus path metrics whitelist", uri)
-				}
-			}
-		}
+// 		if test.expected.LogOutput != conf.LogOutput {
+// 			t.Errorf("Expected log output to be %s, but got %s", test.expected.LogOutput, conf.LogOutput)
+// 		}
 
-		if test.expected.Resolver != conf.Resolver {
-			t.Errorf("Expected resolver to be %s, but got %s", test.expected.Resolver, conf.Resolver)
-		}
-
-		if test.expected.LogOutput != conf.LogOutput {
-			t.Errorf("Expected log output to be %s, but got %s", test.expected.LogOutput, conf.LogOutput)
-		}
-
-		if !identical(conf.Enable, test.expected.Enable) {
-			options := fmt.Sprintf("[ %s ]", strings.Join(conf.Enable, ", "))
-			expected := fmt.Sprintf("[ %s ]", strings.Join(test.expected.Enable, ", "))
-			t.Errorf("Test %d: Expected options %s, got %s", i, expected, options)
-		}
-	}
-}
+// 		if !identical(conf.Enable, test.expected.Enable) {
+// 			options := fmt.Sprintf("[ %s ]", strings.Join(conf.Enable, ", "))
+// 			expected := fmt.Sprintf("[ %s ]", strings.Join(test.expected.Enable, ", "))
+// 			t.Errorf("Test %d: Expected options %s, got %s", i, expected, options)
+// 		}
+// 	}
+// }
 
 func identical(s1, s2 []string) bool {
 	if s1 == nil {

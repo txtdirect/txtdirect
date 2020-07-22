@@ -31,21 +31,11 @@ const (
 	proxyKeepalive    = 30
 	fallbackDelay     = 300 * time.Millisecond
 	proxyTimeout      = 30 * time.Second
-	status301CacheAge = 604800
+	Status301CacheAge = 604800
 )
 
 var bl = map[string]bool{
 	"/favicon.ico": true,
-}
-
-// Config contains the middleware's configuration
-type Config struct {
-	Enable     []string
-	Redirect   string
-	Resolver   string
-	LogOutput  string
-	Prometheus Prometheus
-	Qr         Qr
 }
 
 // getBaseTarget parses the placeholder in the given record's To= field
@@ -140,9 +130,9 @@ func blacklistRedirect(w http.ResponseWriter, r *http.Request, c Config) error {
 		w.Header().Set("Content-Type", "")
 		w.Header().Add("Status-Code", strconv.Itoa(http.StatusNotFound))
 		http.Redirect(w, r, redirect, http.StatusNotFound)
-		if c.Prometheus.Enable {
-			RequestsByStatus.WithLabelValues(r.Host, strconv.Itoa(http.StatusNotFound)).Add(1)
-		}
+		// if c.Prometheus.Enable {
+		// 	RequestsByStatus.WithLabelValues(r.Host, strconv.Itoa(http.StatusNotFound)).Add(1)
+		// }
 	}
 	return nil
 }
@@ -227,10 +217,10 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "path" {
-		RequestsCountBasedOnType.WithLabelValues(host, "path").Add(1)
-		if contains(c.Prometheus.PathWhitelist, host) {
-			PathRedirectCount.WithLabelValues(host, path).Add(1)
-		}
+		// RequestsCountBasedOnType.WithLabelValues(host, "path").Add(1)
+		// if contains(c.Prometheus.PathWhitelist, host) {
+		// 	PathRedirectCount.WithLabelValues(host, path).Add(1)
+		// }
 
 		path := NewPath(w, r, path, rec, c)
 
@@ -260,20 +250,20 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "proxy" {
-		RequestsCountBasedOnType.WithLabelValues(host, "proxy").Add(1)
+		// RequestsCountBasedOnType.WithLabelValues(host, "proxy").Add(1)
 		log.Printf("[txtdirect]: %s > %s", rec.From, rec.To)
 
-		proxy := NewProxy(w, r, rec, c)
-		if err = proxy.Proxy(); err != nil {
-			log.Print("Fallback is triggered because an error has occurred: ", err)
-			fallback(w, r, "to", rec.Code, c)
-		}
+		// proxy := NewProxy(w, r, rec, c)
+		// if err = proxy.Proxy(); err != nil {
+		// 	log.Print("Fallback is triggered because an error has occurred: ", err)
+		// 	fallback(w, r, "to", rec.Code, c)
+		// }
 
 		return nil
 	}
 
 	if rec.Type == "dockerv2" {
-		RequestsCountBasedOnType.WithLabelValues(host, "dockerv2").Add(1)
+		// RequestsCountBasedOnType.WithLabelValues(host, "dockerv2").Add(1)
 
 		docker := NewDockerv2(w, r, rec, c)
 
@@ -286,7 +276,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "host" {
-		RequestsCountBasedOnType.WithLabelValues(host, "host").Add(1)
+		// RequestsCountBasedOnType.WithLabelValues(host, "host").Add(1)
 
 		host := NewHost(w, r, rec, c)
 
@@ -297,7 +287,7 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "gometa" {
-		RequestsCountBasedOnType.WithLabelValues(host, "gometa").Add(1)
+		// RequestsCountBasedOnType.WithLabelValues(host, "gometa").Add(1)
 
 		gometa := NewGometa(w, r, rec, c)
 
@@ -310,14 +300,14 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	if rec.Type == "git" {
-		git := NewGit(w, r, c, rec)
+		// git := NewGit(w, r, c, rec)
 
-		// Triggers fallback when request isn't from a Git client
-		if !git.ValidGitQuery() {
-			return nil
-		}
+		// // Triggers fallback when request isn't from a Git client
+		// if !git.ValidGitQuery() {
+		// 	return nil
+		// }
 
-		return git.Proxy()
+		// return git.Proxy()
 	}
 
 	return fmt.Errorf("record type %s unsupported", rec.Type)

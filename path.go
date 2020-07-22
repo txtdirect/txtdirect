@@ -112,13 +112,13 @@ func (p *Path) RedirectRoot() error {
 	}
 	log.Printf("[txtdirect]: %s > %s", UpstreamZone(p.req)+p.req.URL.Path, p.rec.Root)
 	if p.rec.Code == http.StatusMovedPermanently {
-		p.rw.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+		p.rw.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", Status301CacheAge))
 	}
 	p.rw.Header().Add("Status-Code", strconv.Itoa(p.rec.Code))
 	http.Redirect(p.rw, p.req, p.rec.Root, p.rec.Code)
-	if p.c.Prometheus.Enable {
-		RequestsByStatus.WithLabelValues(UpstreamZone(p.req), strconv.Itoa(p.rec.Code)).Add(1)
-	}
+	// if p.c.Prometheus.Enable {
+	// 	RequestsByStatus.WithLabelValues(UpstreamZone(p.req), strconv.Itoa(p.rec.Code)).Add(1)
+	// }
 	return nil
 }
 

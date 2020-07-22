@@ -1,179 +1,166 @@
 // Package txtdirectmain contains the functions for starting TXTDirect.
 package txtdirectmain
 
-import (
-	"flag"
-	"fmt"
-	"io/ioutil"
-	"log"
-	"os"
-	"runtime"
-	"strconv"
-	"strings"
+// func init() {
+// 	caddy.Quiet = true // don't show init stuff from caddy
+// 	setVersion()
 
-	"github.com/caddyserver/caddy"
-)
+// 	caddy.RegisterCaddyfileLoader("flag", caddy.LoaderFunc(confLoader))
+// 	caddy.SetDefaultCaddyfileLoader("default", caddy.LoaderFunc(defaultLoader))
 
-func init() {
-	caddy.Quiet = true // don't show init stuff from caddy
-	setVersion()
+// 	caddy.AppName = TXTDirectName
+// 	caddy.AppVersion = TXTDirectVersion
+// }
 
-	caddy.RegisterCaddyfileLoader("flag", caddy.LoaderFunc(confLoader))
-	caddy.SetDefaultCaddyfileLoader("default", caddy.LoaderFunc(defaultLoader))
+// // Run is TXTDirect's main() function.
+// func Run() {
+// 	flag.Parse()
+// 	caddy.TrapSignals()
 
-	caddy.AppName = TXTDirectName
-	caddy.AppVersion = TXTDirectVersion
-}
+// 	if err := getFlags(); err != nil {
+// 		log.Fatalf("[txtdirect]: Couldn't parse the flags: %s", err.Error())
+// 	}
 
-// Run is TXTDirect's main() function.
-func Run() {
-	flag.Parse()
-	caddy.TrapSignals()
+// 	if version {
+// 		showVersion()
+// 		os.Exit(0)
+// 	}
 
-	if err := getFlags(); err != nil {
-		log.Fatalf("[txtdirect]: Couldn't parse the flags: %s", err.Error())
-	}
+// 	// Get TXTDirect config input
+// 	caddyfile, err := caddy.LoadCaddyfile("http")
+// 	if err != nil {
+// 		mustLogFatal(err)
+// 	}
 
-	if version {
-		showVersion()
-		os.Exit(0)
-	}
+// 	// Start your engines
+// 	instance, err := caddy.Start(caddyfile)
+// 	if err != nil {
+// 		mustLogFatal(err)
+// 	}
 
-	// Get TXTDirect config input
-	caddyfile, err := caddy.LoadCaddyfile("http")
-	if err != nil {
-		mustLogFatal(err)
-	}
+// 	// Twiddle your thumbs
+// 	instance.Wait()
+// }
 
-	// Start your engines
-	instance, err := caddy.Start(caddyfile)
-	if err != nil {
-		mustLogFatal(err)
-	}
+// // mustLogFatal wraps log.Fatal() in a way that ensures the
+// // output is always printed to stderr so the user can see it
+// // if the user is still there, even if the process log was not
+// // enabled. If this process is an upgrade, however, and the user
+// // might not be there anymore, this just logs to the process
+// // log and exits.
+// func mustLogFatal(args ...interface{}) {
+// 	if !caddy.IsUpgrade() {
+// 		log.SetOutput(os.Stderr)
+// 	}
+// 	log.Fatal(args...)
+// }
 
-	// Twiddle your thumbs
-	instance.Wait()
-}
+// // confLoader loads the Caddyfile using the -conf flag.
+// func confLoader(serverType string) (caddy.Input, error) {
+// 	if conf == "" {
+// 		return nil, nil
+// 	}
 
-// mustLogFatal wraps log.Fatal() in a way that ensures the
-// output is always printed to stderr so the user can see it
-// if the user is still there, even if the process log was not
-// enabled. If this process is an upgrade, however, and the user
-// might not be there anymore, this just logs to the process
-// log and exits.
-func mustLogFatal(args ...interface{}) {
-	if !caddy.IsUpgrade() {
-		log.SetOutput(os.Stderr)
-	}
-	log.Fatal(args...)
-}
+// 	if conf == "stdin" {
+// 		return caddy.CaddyfileFromPipe(os.Stdin, serverType)
+// 	}
 
-// confLoader loads the Caddyfile using the -conf flag.
-func confLoader(serverType string) (caddy.Input, error) {
-	if conf == "" {
-		return nil, nil
-	}
+// 	contents, err := ioutil.ReadFile(conf)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	if conf == "stdin" {
-		return caddy.CaddyfileFromPipe(os.Stdin, serverType)
-	}
+// 	return caddy.CaddyfileInput{
+// 		Contents:       contents,
+// 		Filepath:       conf,
+// 		ServerTypeName: serverType,
+// 	}, nil
+// }
 
-	contents, err := ioutil.ReadFile(conf)
-	if err != nil {
-		return nil, err
-	}
+// // defaultLoader loads the TXTDirect config from the current working directory.
+// func defaultLoader(serverType string) (caddy.Input, error) {
+// 	contents, err := ioutil.ReadFile(caddy.DefaultConfigFile)
+// 	if err != nil {
+// 		if os.IsNotExist(err) {
+// 			return nil, nil
+// 		}
+// 		return nil, err
+// 	}
+// 	return caddy.CaddyfileInput{
+// 		Contents:       contents,
+// 		Filepath:       caddy.DefaultConfigFile,
+// 		ServerTypeName: serverType,
+// 	}, nil
+// }
 
-	return caddy.CaddyfileInput{
-		Contents:       contents,
-		Filepath:       conf,
-		ServerTypeName: serverType,
-	}, nil
-}
+// // showVersion prints the version that is starting.
+// func showVersion() {
+// 	fmt.Print(versionString())
+// 	fmt.Print(releaseString())
+// 	if devBuild && gitShortStat != "" {
+// 		fmt.Printf("%s\n%s\n", gitShortStat, gitFilesModified)
+// 	}
+// }
 
-// defaultLoader loads the TXTDirect config from the current working directory.
-func defaultLoader(serverType string) (caddy.Input, error) {
-	contents, err := ioutil.ReadFile(caddy.DefaultConfigFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return caddy.CaddyfileInput{
-		Contents:       contents,
-		Filepath:       caddy.DefaultConfigFile,
-		ServerTypeName: serverType,
-	}, nil
-}
+// // versionString returns the TXTDirect version as a string.
+// func versionString() string {
+// 	return fmt.Sprintf("%s-%s\n", caddy.AppName, caddy.AppVersion)
+// }
 
-// showVersion prints the version that is starting.
-func showVersion() {
-	fmt.Print(versionString())
-	fmt.Print(releaseString())
-	if devBuild && gitShortStat != "" {
-		fmt.Printf("%s\n%s\n", gitShortStat, gitFilesModified)
-	}
-}
+// // releaseString returns the release information related to TXTDirect version:
+// // <OS>/<ARCH>, <go version>, <commit>
+// // e.g.,
+// // linux/amd64, go1.8.3, a6d2d7b5
+// func releaseString() string {
+// 	return fmt.Sprintf("%s/%s, %s, %s\n", runtime.GOOS, runtime.GOARCH, runtime.Version(), GitCommit)
+// }
 
-// versionString returns the TXTDirect version as a string.
-func versionString() string {
-	return fmt.Sprintf("%s-%s\n", caddy.AppName, caddy.AppVersion)
-}
+// // setVersion figures out the version information
+// // based on variables set by -ldflags.
+// func setVersion() {
+// 	// A development build is one that's not at a tag or has uncommitted changes
+// 	devBuild = gitTag == "" || gitShortStat != ""
 
-// releaseString returns the release information related to TXTDirect version:
-// <OS>/<ARCH>, <go version>, <commit>
-// e.g.,
-// linux/amd64, go1.8.3, a6d2d7b5
-func releaseString() string {
-	return fmt.Sprintf("%s/%s, %s, %s\n", runtime.GOOS, runtime.GOARCH, runtime.Version(), GitCommit)
-}
+// 	// Only set the appVersion if -ldflags was used
+// 	if gitNearestTag != "" || gitTag != "" {
+// 		if devBuild && gitNearestTag != "" {
+// 			appVersion = fmt.Sprintf("%s (+%s %s)", strings.TrimPrefix(gitNearestTag, "v"), GitCommit, buildDate)
+// 		} else if gitTag != "" {
+// 			appVersion = strings.TrimPrefix(gitTag, "v")
+// 		}
+// 	}
+// }
 
-// setVersion figures out the version information
-// based on variables set by -ldflags.
-func setVersion() {
-	// A development build is one that's not at a tag or has uncommitted changes
-	devBuild = gitTag == "" || gitShortStat != ""
+// // Flags that control program flow or startup
+// var (
+// 	conf    string
+// 	version bool
+// )
 
-	// Only set the appVersion if -ldflags was used
-	if gitNearestTag != "" || gitTag != "" {
-		if devBuild && gitNearestTag != "" {
-			appVersion = fmt.Sprintf("%s (+%s %s)", strings.TrimPrefix(gitNearestTag, "v"), GitCommit, buildDate)
-		} else if gitTag != "" {
-			appVersion = strings.TrimPrefix(gitTag, "v")
-		}
-	}
-}
+// // Build information obtained with the help of -ldflags
+// var (
+// 	appVersion = "(untracked dev build)" // inferred at startup
+// 	devBuild   = true                    // inferred at startup
 
-// Flags that control program flow or startup
-var (
-	conf    string
-	version bool
-)
+// 	buildDate        string // date -u
+// 	gitTag           string // git describe --exact-match HEAD 2> /dev/null
+// 	gitNearestTag    string // git describe --abbrev=0 --tags HEAD
+// 	gitShortStat     string // git diff-index --shortstat
+// 	gitFilesModified string // git diff-index --name-only HEAD
 
-// Build information obtained with the help of -ldflags
-var (
-	appVersion = "(untracked dev build)" // inferred at startup
-	devBuild   = true                    // inferred at startup
+// 	// Gitcommit contains the commit where we built TXTDirect from.
+// 	GitCommit string
+// )
 
-	buildDate        string // date -u
-	gitTag           string // git describe --exact-match HEAD 2> /dev/null
-	gitNearestTag    string // git describe --abbrev=0 --tags HEAD
-	gitShortStat     string // git diff-index --shortstat
-	gitFilesModified string // git diff-index --name-only HEAD
+// func getFlags() error {
+// 	versionFlag := flag.Lookup("version")
+// 	if versionFlag != nil {
+// 		versionVal, err := strconv.ParseBool(versionFlag.Value.String())
+// 		if err != nil {
+// 			return fmt.Errorf("Coudln't parse the -version flag: %s", err.Error())
+// 		}
+// 		version = versionVal
+// 	}
 
-	// Gitcommit contains the commit where we built TXTDirect from.
-	GitCommit string
-)
-
-func getFlags() error {
-	versionFlag := flag.Lookup("version")
-	if versionFlag != nil {
-		versionVal, err := strconv.ParseBool(versionFlag.Value.String())
-		if err != nil {
-			return fmt.Errorf("Coudln't parse the -version flag: %s", err.Error())
-		}
-		version = versionVal
-	}
-
-	return nil
-}
+// 	return nil
+// }

@@ -31,7 +31,7 @@ type Fallback struct {
 // default fallback address
 func fallback(w http.ResponseWriter, r *http.Request, fallbackType string, code int, c Config) {
 	if code == http.StatusMovedPermanently {
-		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", status301CacheAge))
+		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", Status301CacheAge))
 	}
 	w.Header().Add("Status-Code", strconv.Itoa(code))
 
@@ -63,10 +63,10 @@ func fallback(w http.ResponseWriter, r *http.Request, fallbackType string, code 
 }
 
 func (f *Fallback) countFallback(recType string) {
-	if f.config.Prometheus.Enable {
-		FallbacksCount.WithLabelValues(f.request.Host, recType, f.fallbackType).Add(1)
-		RequestsByStatus.WithLabelValues(f.request.URL.Host, strconv.Itoa(f.code)).Add(1)
-	}
+	// if f.config.Prometheus.Enable {
+	// 	FallbacksCount.WithLabelValues(f.request.Host, recType, f.fallbackType).Add(1)
+	// 	RequestsByStatus.WithLabelValues(f.request.URL.Host, strconv.Itoa(f.code)).Add(1)
+	// }
 }
 
 func (f *Fallback) globalFallbacks(recordType string) {

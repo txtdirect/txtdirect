@@ -16,9 +16,6 @@ package main
 import (
 	"go.txtdirect.org/txtdirect/txtdirectmain"
 
-	_ "github.com/SchumacherFM/mailout"
-	_ "github.com/captncraig/caddy-realip"
-	_ "github.com/miekg/caddy-prometheus"
 	_ "go.txtdirect.org/txtdirect"
 )
 

@@ -24,11 +24,11 @@ type Gometa struct {
 	rw  http.ResponseWriter
 	req *http.Request
 	c   Config
-	rec record
+	rec Record
 }
 
 // NewGometa returns a fresh instance of Gometa struct
-func NewGometa(w http.ResponseWriter, r *http.Request, rec record, c Config) *Gometa {
+func NewGometa(w http.ResponseWriter, r *http.Request, rec Record, c Config) *Gometa {
 	return &Gometa{
 		rw:  w,
 		req: r,

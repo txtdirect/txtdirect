@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"reflect"
 	"regexp"
 	"sort"
@@ -33,7 +32,7 @@ type Path struct {
 	req  *http.Request
 	c    Config
 	path string
-	rec  record
+	rec  Record
 }
 
 // RegexRecord holds the TXT record and re= field of a predefined regex record
@@ -58,7 +57,7 @@ var GroupRegex = regexp.MustCompile("P<[a-zA-Z]+[a-zA-Z0-9]*>")
 var GroupOrderRegex = regexp.MustCompile("P<([a-zA-Z]+[a-zA-Z0-9]*)>")
 
 // NewPath returns an instance of Path struct using the given data
-func NewPath(w http.ResponseWriter, r *http.Request, path string, rec record, c Config) *Path {
+func NewPath(w http.ResponseWriter, r *http.Request, path string, rec Record, c Config) *Path {
 	return &Path{
 		rw:   w,
 		req:  r,
@@ -69,7 +68,7 @@ func NewPath(w http.ResponseWriter, r *http.Request, path string, rec record, c 
 }
 
 // Redirect finds and returns the final record
-func (p *Path) Redirect() *record {
+func (p *Path) Redirect() *Record {
 	zone, from, pathSlice, err := zoneFromPath(p.req, p.rec)
 	rec, err := getFinalRecord(zone, from, p.c, p.rw, p.req, pathSlice)
 	*p.req = *rec.addToContext(p.req)
@@ -80,20 +79,12 @@ func (p *Path) Redirect() *record {
 	}
 
 	if rec.Type == "path" {
-		// If the current record and the last record added to the context
-		// are equal, use the current record's to= field to find the final record.
-		// Without this check, a request loop to the same zone will happen because
-		// the chained record would redirect the request with the same path to
-		// itself.
 		if last := p.lastPathRecord(); last != nil && reflect.DeepEqual(rec, *last) {
-			url, err := url.Parse(rec.To)
-			rec, err := getRecord(url.Host, p.c, p.rw, p.req)
-			if err != nil {
-				log.Print("Fallback is triggered because an error has occurred: ", err)
-				fallback(p.rw, p.req, "to", p.rec.Code, p.c)
-				return nil
+			if rec.Code == http.StatusMovedPermanently {
+				p.rw.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", Status301CacheAge))
 			}
-			return &rec
+			http.Redirect(p.rw, p.req, rec.To, rec.Code)
+			return nil
 		}
 		p.rec = rec
 		return p.Redirect()
@@ -116,16 +107,13 @@ func (p *Path) RedirectRoot() error {
 	}
 	p.rw.Header().Add("Status-Code", strconv.Itoa(p.rec.Code))
 	http.Redirect(p.rw, p.req, p.rec.Root, p.rec.Code)
-	// if p.c.Prometheus.Enable {
-	// 	RequestsByStatus.WithLabelValues(UpstreamZone(p.req), strconv.Itoa(p.rec.Code)).Add(1)
-	// }
 	return nil
 }
 
 // SpecificRecord finds the most specific match using the custom regexes from subzones
 // It goes through all the custom regexes specified in each subzone and uses the
 // most specific match to return the final record.
-func (p *Path) SpecificRecord() (*record, error) {
+func (p *Path) SpecificRecord() (*Record, error) {
 	// Iterate subzones and parse the records
 	regexes, err := p.fetchRegexes()
 	if err != nil {
@@ -141,7 +129,7 @@ func (p *Path) SpecificRecord() (*record, error) {
 	return record, nil
 }
 
-func (p *Path) specificMatch(regexes []RegexRecord) (*record, error) {
+func (p *Path) specificMatch(regexes []RegexRecord) (*Record, error) {
 	var specificZone RegexRecord
 	// Run each regex on the path and list them in a map
 	for _, zone := range regexes {
@@ -168,7 +156,7 @@ func (p *Path) specificMatch(regexes []RegexRecord) (*record, error) {
 	*p.req = *p.req.WithContext(context.WithValue(p.req.Context(), "regexMatches", specificZone.Submatches))
 
 	// Parse the specific regex record
-	var rec record
+	var rec Record
 	var err error
 	if rec, err = ParseRecord(specificZone.TXT, p.rw, p.req, p.c); err != nil {
 		return nil, fmt.Errorf("Could not parse record: %s", err)
@@ -212,13 +200,8 @@ func (p *Path) fetchRegexes() ([]RegexRecord, error) {
 // zoneFromPath generates a DNS zone with the given request's path and host
 // It will use custom regex to parse the path if it's provided in
 // the given record.
-func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
+func zoneFromPath(r *http.Request, rec Record) (string, int, []string, error) {
 	path := r.URL.Path
-
-	// Check if request is from a Git client
-	if strings.HasPrefix(r.Header.Get("User-Agent"), "git") {
-		path = path[:strings.Index(path, "/info/refs")]
-	}
 
 	// Only add request query to path if the custom regex needs it. Unless it
 	// might cause problems on custom regexes that don't need query to generate
@@ -228,6 +211,8 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 	}
 
 	pathSubmatchs := PathRegex.FindAllStringSubmatch(path, -1)
+
+	// Use the custom regex to parse request's path
 	if rec.Re != "" {
 		// Compile the record regex and find path submatches
 		CustomRegex, err := regexp.Compile(rec.Re)
@@ -260,6 +245,7 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 			return strings.Join(url, "."), from, pathSlice, nil
 		}
 	}
+
 	pathSlice := []string{}
 	for _, v := range pathSubmatchs {
 		pathSlice = append(pathSlice, v[1])
@@ -309,7 +295,7 @@ func zoneFromPath(r *http.Request, rec record) (string, int, []string, error) {
 
 // getFinalRecord finds the final TXT record for the given zone.
 // It will try wildcards if the first zone return error
-func getFinalRecord(zone string, from int, c Config, w http.ResponseWriter, r *http.Request, pathSlice []string) (record, error) {
+func getFinalRecord(zone string, from int, c Config, w http.ResponseWriter, r *http.Request, pathSlice []string) (Record, error) {
 	txts, err := query(zone, r.Context(), c)
 	if err != nil {
 		// if nothing found, jump into wildcards
@@ -321,17 +307,17 @@ func getFinalRecord(zone string, from int, c Config, w http.ResponseWriter, r *h
 		}
 	}
 	if err != nil || len(txts) == 0 {
-		return record{}, fmt.Errorf("could not get TXT record: %s", err)
+		return Record{}, fmt.Errorf("could not get TXT record: %s", err)
 	}
 
 	txts[0], err = parsePlaceholders(txts[0], r, pathSlice)
-	var rec record
+	var rec Record
 	if rec, err = ParseRecord(txts[0], w, r, c); err != nil {
 		return rec, fmt.Errorf("could not parse record: %s", err)
 	}
 
 	if rec.Type == "path" {
-		records := r.Context().Value("records").([]record)
+		records := r.Context().Value("records").([]Record)
 		parent := records[len(records)-1]
 
 		// Use the parent's custom regex if available
@@ -379,8 +365,8 @@ func normalize(input []string) []string {
 	return result
 }
 
-func (p *Path) lastPathRecord() *record {
-	records := p.req.Context().Value("records").([]record)
+func (p *Path) lastPathRecord() *Record {
+	records := p.req.Context().Value("records").([]Record)
 
 	if len(records) < 2 {
 		return nil

@@ -12,11 +12,11 @@ type Host struct {
 	rw  http.ResponseWriter
 	req *http.Request
 	c   Config
-	rec record
+	rec Record
 }
 
 // NewHost returns a fresh instance of Host struct
-func NewHost(w http.ResponseWriter, r *http.Request, rec record, c Config) *Host {
+func NewHost(w http.ResponseWriter, r *http.Request, rec Record, c Config) *Host {
 	return &Host{
 		rw:  w,
 		req: r,
@@ -39,8 +39,5 @@ func (h *Host) Redirect() error {
 	}
 	h.rw.Header().Add("Status-Code", strconv.Itoa(code))
 	http.Redirect(h.rw, h.req, to, code)
-	// if h.c.Prometheus.Enable {
-	// 	RequestsByStatus.WithLabelValues(h.req.Host, strconv.Itoa(code)).Add(1)
-	// }
 	return nil
 }

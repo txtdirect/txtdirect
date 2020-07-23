@@ -14,9 +14,9 @@ type Fallback struct {
 	request *http.Request
 	config  Config
 
-	records    []record
-	pathRecord record
-	lastRecord record
+	records    []Record
+	pathRecord Record
+	lastRecord Record
 
 	fallbackType string
 	code         int
@@ -90,7 +90,7 @@ func (f *Fallback) globalFallbacks(recordType string) {
 }
 
 func (f *Fallback) fetchRecords() {
-	f.records = f.request.Context().Value("records").([]record)
+	f.records = f.request.Context().Value("records").([]Record)
 	// Note: This condition should get changed when we support more record aggregations.
 	if len(f.records) >= 2 {
 		f.pathRecord = f.records[len(f.records)-2]

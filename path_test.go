@@ -155,7 +155,7 @@ func Test_zoneFromPath(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		rec := record{}
+		rec := Record{}
 		rec.Re = test.regex
 		rec.From = test.from
 		req := httptest.NewRequest("GET", test.url, nil)
@@ -228,7 +228,7 @@ func Test_zoneFromPathRegexPlaceholders(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		rec := record{
+		rec := Record{
 			Re:   test.regex,
 			From: test.from,
 			To:   test.to,

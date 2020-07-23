@@ -24,13 +24,13 @@ func TestGometa(t *testing.T) {
 	tests := []struct {
 		host     string
 		path     string
-		record   record
+		record   Record
 		expected string
 	}{
 		{
 			host: "example.com",
 			path: "/testing",
-			record: record{
+			record: Record{
 				Vcs: "git",
 				To:  "redirect.com/my-go-pkg",
 			},
@@ -45,7 +45,7 @@ func TestGometa(t *testing.T) {
 		{
 			host:   "empty.com",
 			path:   "/testing",
-			record: record{},
+			record: Record{},
 			expected: `<!DOCTYPE html>
 <html>
 <head>
@@ -57,7 +57,7 @@ func TestGometa(t *testing.T) {
 		{
 			host: "root.com",
 			path: "/testing",
-			record: record{
+			record: Record{
 				Vcs: "git",
 				To:  "redirect.com/my-root-package",
 			},
@@ -72,7 +72,7 @@ func TestGometa(t *testing.T) {
 		{
 			host: "root.com",
 			path: "/testing",
-			record: record{
+			record: Record{
 				Vcs: "git",
 				To:  "github.com/txtdirect/txtdirect",
 			},

@@ -11,7 +11,7 @@ import (
 
 func Test_fallback(t *testing.T) {
 	tests := []struct {
-		record       record
+		record       Record
 		redirect     string
 		fallbackType string
 		enable       []string
@@ -19,7 +19,7 @@ func Test_fallback(t *testing.T) {
 		expected     string
 	}{
 		{
-			record: record{
+			record: Record{
 				To:   "https://goto.fallback.test",
 				Code: 301,
 			},
@@ -27,7 +27,7 @@ func Test_fallback(t *testing.T) {
 			expected:     "https://goto.fallback.test",
 		},
 		{
-			record: record{
+			record: Record{
 				To:   "",
 				Code: 301,
 			},
@@ -36,7 +36,7 @@ func Test_fallback(t *testing.T) {
 			expected:     "https://redirect.test",
 		},
 		{
-			record: record{
+			record: Record{
 				To:   "https://goto.fallback.test",
 				Code: 404,
 			},
@@ -44,7 +44,7 @@ func Test_fallback(t *testing.T) {
 			expected:     "not found",
 		},
 		{
-			record: record{
+			record: Record{
 				Website: "https://goto.website.test",
 				Code:    302,
 			},
@@ -52,7 +52,7 @@ func Test_fallback(t *testing.T) {
 			expected:     "https://goto.website.test",
 		},
 		{
-			record: record{
+			record: Record{
 				Root: "https://dockerv2.root.test",
 				Code: 302,
 			},
@@ -60,7 +60,7 @@ func Test_fallback(t *testing.T) {
 			expected:     "https://dockerv2.root.test",
 		},
 		{
-			record: record{
+			record: Record{
 				Code: 302,
 			},
 			enable:       []string{"www"},

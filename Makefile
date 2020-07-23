@@ -13,9 +13,9 @@ CONTAINER ?= $(BIN)
 .DEFAULT_GOAL := build
 
 build:
-	cd cmd/txtdirect && \
+	cd cmd/caddy && \
 	GO111MODULE=on CGO_ENABLED=0 GOARCH=$(BUILD_GOARCH) GOOS=$(BUILD_GOOS) go build -ldflags="-s -w -X $(CODEPATH)/txtdirectmain.TXTDirectVersion=$(VERSION) -X $(CODEPATH)/txtdirectmain.GitCommit=$(GITCOMMIT)"
-	mv cmd/txtdirect/txtdirect ./$(BIN)
+	mv cmd/caddy/caddy ./$(BIN)
 
 test:
 	GO111MODULE=on go test -v `go list ./...`

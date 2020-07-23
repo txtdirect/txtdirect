@@ -305,13 +305,13 @@ func Test_contains(t *testing.T) {
 
 func Test_getBaseTarget(t *testing.T) {
 	tests := []struct {
-		record record
+		record Record
 		reqURL string
 		url    string
 		status int
 	}{
 		{
-			record{
+			Record{
 				To:   "https://example.test",
 				Code: 200,
 			},
@@ -320,7 +320,7 @@ func Test_getBaseTarget(t *testing.T) {
 			200,
 		},
 		{
-			record{
+			Record{
 				To:   "https://{host}/{method}",
 				Code: 200,
 			},
@@ -329,7 +329,7 @@ func Test_getBaseTarget(t *testing.T) {
 			200,
 		},
 		{
-			record{
+			Record{
 				To:   "https://testing.test{path}",
 				Code: 301,
 			},

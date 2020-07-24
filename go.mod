@@ -1,6 +1,6 @@
 module go.txtdirect.org/txtdirect
 
-go 1.13
+go 1.14
 
 require (
 	github.com/caddyserver/caddy/v2 v2.1.1

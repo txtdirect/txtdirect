@@ -261,18 +261,16 @@ func (rec *Record) UpstreamRecord(c Config, w http.ResponseWriter, r *http.Reque
 	return Record{}, "", fmt.Errorf("Couldn't find any records from upstream")
 }
 
-func (rec *Record) CheckUpstream(w http.ResponseWriter, r *http.Request, c Config) *http.Request {
+func (rec *Record) CheckUpstream(w http.ResponseWriter, r *http.Request, c Config) (*http.Request, error) {
 	// Add the upstream zone address from the use= fields to the request context
 	if len(rec.Use) != 0 {
 		var zone string
 		upstreamRec, zone, err := rec.UpstreamRecord(c, w, r)
 		if err != nil {
-			log.Printf("[txtdirect]: Couldn't fetch the upstream record: %s", err.Error())
-			fallback(w, r, "global", http.StatusFound, c)
-			return nil
+			return r, err
 		}
 
-		rec = &upstreamRec
+		*rec = upstreamRec
 
 		zoneSplited := strings.Split(zone, ".")
 
@@ -280,9 +278,9 @@ func (rec *Record) CheckUpstream(w http.ResponseWriter, r *http.Request, c Confi
 			r.Context(),
 			"upstreamZone",
 			strings.Join(zoneSplited[1:], "."),
-		))
+		)), nil
 	}
-	return r
+	return r, nil
 }
 
 // ParseURI parses the given URI and triggers fallback if the URI isn't valid

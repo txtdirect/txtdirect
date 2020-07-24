@@ -168,8 +168,11 @@ func (d *dockerManager) StartContainers() error {
 		"--name", "e2e_txtdirect_container",
 		txtdirectImage,
 		// CMD
-		"-conf",
+		"run",
+		"--config",
 		"/e2e/txtdirect.config",
+		"--adapter",
+		"caddyfile",
 	).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Couldn't create the TXTDirect container: %s", err.Error())

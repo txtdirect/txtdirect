@@ -70,7 +70,11 @@ func Redirect(w http.ResponseWriter, r *http.Request, c Config) error {
 	}
 
 	// Add the upstream zone address from the use= fields to the request context
-	r = rec.CheckUpstream(w, r, c)
+	if r, err = rec.CheckUpstream(w, r, c); err != nil {
+		log.Printf("[txtdirect]: Couldn't fetch the upstream record: %s", err.Error())
+		fallback(w, r, "global", http.StatusFound, c)
+		return nil
+	}
 
 	r = rec.addToContext(r)
 

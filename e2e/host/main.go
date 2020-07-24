@@ -88,14 +88,6 @@ var tests = []test{
 		expected: "https://upstream.host.host.example.com",
 	},
 	{
-		name: "Redirect using chained path records to a host record",
-		args: data{
-			host: "chaining.path.path.example.com",
-			path: "/releases",
-		},
-		expected: "https://chained-redirect.host.path.example.com",
-	},
-	{
 		name: "Redirect to the apex zone's wildcard record to= field",
 		args: data{
 			host: "apex.host.host.example.com",

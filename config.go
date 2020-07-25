@@ -91,18 +91,18 @@ func ParseCaddy(d *caddyfile.Dispenser) (*Config, error) {
 }
 
 func removeArrayFromArray(array, toBeRemoved []string) []string {
-	tmp := make([]string, len(array))
-	copy(tmp, array)
+	t := make([]string, len(array))
+	copy(t, array)
 	for _, toRemove := range toBeRemoved {
-		for i, option := range tmp {
+		for i, option := range t {
 			if option == toRemove {
-				tmp[i] = tmp[len(tmp)-1]
-				tmp = tmp[:len(tmp)-1]
+				t[i] = t[len(t)-1]
+				t = t[:len(t)-1]
 				break
 			}
 		}
 	}
-	return tmp
+	return t
 }
 
 func parseLogfile(logfile string) {

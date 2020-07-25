@@ -65,7 +65,6 @@ func (t TXTDirect) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyh
 		return err
 	}
 
-	// Count total redirects if prometheus is enabled and set cache header
 	if w.Header().Get("Status-Code") == "301" || w.Header().Get("Status-Code") == "302" {
 		// Set Cache-Control header on permanent redirects
 		if w.Header().Get("Status-Code") == "301" {

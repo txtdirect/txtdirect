@@ -16,18 +16,12 @@ package txtdirect
 import (
 	"context"
 	"log"
-	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/caddyserver/caddy/caddyhttp/header"
-	"github.com/caddyserver/caddy/caddyhttp/httpserver"
-	"github.com/caddyserver/caddy/caddyhttp/proxy"
 	"github.com/miekg/dns"
 )
 
@@ -311,13 +305,13 @@ func Test_contains(t *testing.T) {
 
 func Test_getBaseTarget(t *testing.T) {
 	tests := []struct {
-		record record
+		record Record
 		reqURL string
 		url    string
 		status int
 	}{
 		{
-			record{
+			Record{
 				To:   "https://example.test",
 				Code: 200,
 			},
@@ -326,7 +320,7 @@ func Test_getBaseTarget(t *testing.T) {
 			200,
 		},
 		{
-			record{
+			Record{
 				To:   "https://{host}/{method}",
 				Code: 200,
 			},
@@ -335,7 +329,7 @@ func Test_getBaseTarget(t *testing.T) {
 			200,
 		},
 		{
-			record{
+			Record{
 				To:   "https://testing.test{path}",
 				Code: 301,
 			},
@@ -357,177 +351,4 @@ func Test_getBaseTarget(t *testing.T) {
 			t.Errorf("Expected %d but got %d", test.status, status)
 		}
 	}
-}
-
-// Note: ServerHeader isn't a function, this test is for checking
-// response's Server header.
-func TestServerHeaderE2E(t *testing.T) {
-	tests := []struct {
-		url          string
-		enable       []string
-		headerPlugin bool
-		proxyPlugin  bool
-		expected     string
-	}{
-		{
-			"https://host.host.example.com",
-			[]string{"host"},
-			false,
-			false,
-			"TXTDirect",
-		},
-		{
-			"https://host.host.example.com",
-			[]string{"host"},
-			true,
-			false,
-			"Testing-TXTDirect",
-		},
-		{
-			"https://host.host.example.com",
-			[]string{"host"},
-			false,
-			true,
-			"Testing-TXTDirect",
-		},
-	}
-	for _, test := range tests {
-		req := httptest.NewRequest("GET", test.url, nil)
-		resp := httptest.NewRecorder()
-		c := Config{
-			Resolver: "127.0.0.1:" + strconv.Itoa(port),
-			Enable:   test.enable,
-		}
-		err := Redirect(resp, req, c)
-		if err != nil {
-			t.Errorf("Unexpected Error: %s", err.Error())
-		}
-
-		// Use Caddy's header plugin to replace the header
-		if test.headerPlugin {
-			s := header.Headers{
-				Next: httpserver.HandlerFunc(func(w http.ResponseWriter, r *http.Request) (int, error) {
-					w.WriteHeader(http.StatusOK)
-					return 0, nil
-				}),
-				Rules: []header.Rule{
-					{Path: "/", Headers: http.Header{
-						"Server": []string{test.expected},
-					}},
-				},
-			}
-			_, err := s.ServeHTTP(resp, req)
-			if err != nil {
-				t.Errorf("Couldn't replace the header using caddy's header plugin: %s", err.Error())
-			}
-		}
-
-		if test.proxyPlugin {
-			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Server", test.expected)
-				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("Hello, client"))
-			}))
-			defer backend.Close()
-
-			// Setup the fake upsteam
-			uri, _ := url.Parse(backend.URL)
-			u := fakeUpstream{
-				name:          backend.URL,
-				from:          "/",
-				timeout:       proxyTimeout,
-				fallbackDelay: fallbackDelay,
-				host: &proxy.UpstreamHost{
-					Name:         backend.URL,
-					ReverseProxy: proxy.NewSingleHostReverseProxy(uri, "", http.DefaultMaxIdleConnsPerHost, proxyTimeout, fallbackDelay),
-				},
-			}
-
-			p := &proxy.Proxy{
-				Next:      httpserver.EmptyNext, // prevents panic in some cases when test fails
-				Upstreams: []proxy.Upstream{&u},
-			}
-			p.ServeHTTP(resp, req)
-		}
-
-		if !contains(resp.Header()["Server"], test.expected) {
-			t.Errorf("Expected \"Server\" header to be %s but it's %s", test.expected, resp.Header().Get("Server"))
-		}
-	}
-}
-
-// Note: RecordHeaders isn't a function, this test is for checking
-// response's headers with the custom headers in the record.
-func TestRecordHeadersE2E(t *testing.T) {
-	tests := []struct {
-		url     string
-		headers map[string]string
-	}{
-		{
-			"https://host.host.example.com",
-			map[string]string{"TestHeader": "TestValue"},
-		},
-		{
-			"https://path.path.example.com/host",
-			map[string]string{
-				"TestHeader":  "TestValue",
-				"TestHeader1": "TestValue1",
-			},
-		},
-		{
-			"https://host.host.example.com",
-			map[string]string{"testheader": "TestValue"},
-		},
-	}
-	for _, test := range tests {
-		req := httptest.NewRequest("GET", test.url, nil)
-		resp := httptest.NewRecorder()
-		c := Config{
-			Resolver: "127.0.0.1:" + strconv.Itoa(port),
-			Enable:   []string{"host", "path"},
-		}
-		err := Redirect(resp, req, c)
-		if err != nil {
-			t.Errorf("Unexpected Error: %s", err.Error())
-		}
-
-		for header, val := range test.headers {
-			if resp.Header().Get(header) != val {
-				t.Errorf("Expected \"%s\" header to be %s but it's %s", header, val, resp.Header().Get(header))
-			}
-		}
-
-	}
-}
-
-// Setup fakeUpstream type and methods
-type fakeUpstream struct {
-	name          string
-	host          *proxy.UpstreamHost
-	from          string
-	without       string
-	timeout       time.Duration
-	fallbackDelay time.Duration
-}
-
-func (u *fakeUpstream) AllowedPath(requestPath string) bool { return true }
-func (u *fakeUpstream) GetFallbackDelay() time.Duration     { return 300 * time.Millisecond }
-func (u *fakeUpstream) GetTryDuration() time.Duration       { return 1 * time.Second }
-func (u *fakeUpstream) GetTryInterval() time.Duration       { return 250 * time.Millisecond }
-func (u *fakeUpstream) GetTimeout() time.Duration           { return u.timeout }
-func (u *fakeUpstream) GetHostCount() int                   { return 1 }
-func (u *fakeUpstream) Stop() error                         { return nil }
-func (u *fakeUpstream) From() string                        { return u.from }
-func (u *fakeUpstream) Select(r *http.Request) *proxy.UpstreamHost {
-	if u.host == nil {
-		uri, err := url.Parse(u.name)
-		if err != nil {
-			log.Fatalf("Unable to url.Parse %s: %v", u.name, err)
-		}
-		u.host = &proxy.UpstreamHost{
-			Name:         u.name,
-			ReverseProxy: proxy.NewSingleHostReverseProxy(uri, u.without, http.DefaultMaxIdleConnsPerHost, u.GetTimeout(), u.GetFallbackDelay()),
-		}
-	}
-	return u.host
 }

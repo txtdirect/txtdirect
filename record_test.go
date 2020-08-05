@@ -24,13 +24,13 @@ import (
 func TestParseRecord(t *testing.T) {
 	tests := []struct {
 		txtRecord string
-		expected  record
+		expected  Record
 		err       error
 		status    int
 	}{
 		{
 			txtRecord: "v=txtv0;to=https://example.com/;code=302",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
@@ -40,7 +40,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;to=https://example.com/",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
@@ -50,7 +50,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;to=https://example.com/;code=302",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
@@ -60,7 +60,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;to=https://example.com/;code=302;vcs=hg;type=gometa",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
@@ -71,7 +71,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;to=https://example.com/;code=302;type=gometa;vcs=git",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
@@ -82,22 +82,22 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;to=https://example.com/;code=test",
-			expected:  record{},
+			expected:  Record{},
 			err:       fmt.Errorf("could not parse status code"),
 		},
 		{
 			txtRecord: "v=txtv1;to=https://example.com/;code=test",
-			expected:  record{},
+			expected:  Record{},
 			err:       fmt.Errorf("unhandled version 'txtv1'"),
 		},
 		{
 			txtRecord: "v=txtv0;https://example.com/",
-			expected:  record{},
+			expected:  Record{},
 			err:       fmt.Errorf("arbitrary data not allowed"),
 		},
 		{
 			txtRecord: "v=txtv0;to=https://example.com/caddy;type=path;code=302",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				To:      "https://example.com/caddy",
 				Type:    "path",
@@ -107,7 +107,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;to=https://example.com/;key=value",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				To:      "https://example.com/",
 				Code:    302,
@@ -117,7 +117,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;to={?url}",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				To:      "https://example.com/testing",
 				Code:    302,
@@ -127,7 +127,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;to={?url};from={method}",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				To:      "https://example.com/testing",
 				Code:    302,
@@ -138,7 +138,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;ref=true;code=302",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				Type:    "host",
 				Code:    302,
@@ -148,7 +148,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;ref=false;code=302",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				Type:    "host",
 				Code:    302,
@@ -158,7 +158,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;type=path;code=302;>Header-1=HeaderValue",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				Type:    "path",
 				Code:    302,
@@ -168,7 +168,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;type=path;code=302;>Header-1=HeaderValue;>Header-2=HeaderValue",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				Type:    "path",
 				Code:    302,
@@ -181,7 +181,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;type=host;to=https://example.com;code=302;use=_redirect.example.com",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				Type:    "host",
 				Code:    302,
@@ -192,7 +192,7 @@ func TestParseRecord(t *testing.T) {
 		},
 		{
 			txtRecord: "v=txtv0;type=host;to=https://example.com;use=_redirect.example.com;use=_redirect.example2.com",
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				Type:    "host",
 				Code:    302,
@@ -265,7 +265,7 @@ func TestParseRecord(t *testing.T) {
 						>X-Robots-Tag=noindex%2Cnofollow;
 						>X-UA-Compatible=Chome%3D1;
 						>X-XSS-Protection=1%3B%20mode%3Dblock`,
-			expected: record{
+			expected: Record{
 				Version: "txtv0",
 				Type:    "path",
 				Code:    302,

@@ -16,7 +16,6 @@ package txtdirect
 import (
 	"html/template"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -25,11 +24,11 @@ type Gometa struct {
 	rw  http.ResponseWriter
 	req *http.Request
 	c   Config
-	rec record
+	rec Record
 }
 
 // NewGometa returns a fresh instance of Gometa struct
-func NewGometa(w http.ResponseWriter, r *http.Request, rec record, c Config) *Gometa {
+func NewGometa(w http.ResponseWriter, r *http.Request, rec Record, c Config) *Gometa {
 	return &Gometa{
 		rw:  w,
 		req: r,
@@ -58,7 +57,7 @@ func (g *Gometa) Serve() error {
 
 	gosource := strings.Contains(g.rec.To, "github.com")
 
-	RequestsByStatus.WithLabelValues(g.req.Host, strconv.Itoa(http.StatusFound)).Add(1)
+	// RequestsByStatus.WithLabelValues(g.req.Host, strconv.Itoa(http.StatusFound)).Add(1)
 	return tmpl.Execute(g.rw, struct {
 		Host        string
 		Path        string

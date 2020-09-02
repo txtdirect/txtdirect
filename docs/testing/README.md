@@ -33,17 +33,17 @@ limitations under the License.
 - Create DNS record file named `example.test`
 
   ```
-  @                  3600 IN SOA      ns.example.test. domains.example.test. (
-                                        2017101010   ; serial
-                                        5m           ; refresh
-                                        5m           ; retry
-                                        1w           ; expire
-                                        12h    )     ; minimum
+  @                  3600 IN SOA      ns.example.test. domains.example.test. (
+                                        2017101010   ; serial
+                                        5m           ; refresh
+                                        5m           ; retry
+                                        1w           ; expire
+                                        12h    )     ; minimum
 
-  @                  86400 IN NS      ns.example.test.
-  @                  86400 IN NS      ns.example.test.
+  @                  86400 IN NS      ns.example.test.
+  @                  86400 IN NS      ns.example.test.
 
-  @                     60 IN A       127.0.0.1
+  @                     60 IN A       127.0.0.1
 
   _redirect             60 IN TXT     "v=txtv0;to=http://full-wildcard.worked.example.test;root=http://root.worked.example.test;type=path;code=302"
 

@@ -65,16 +65,21 @@ limitations under the License.
 
 - Create a caddyfile named `caddy.test`
   ```
-  example.test:8080 {
-      tls off
-      txtdirect {
-          enable path host
-          resolver 127.0.0.1:5353
-          logfile stdout
-      }
-      log / stdout "{remote} - [{when_iso}] \"{method} {uri} {proto}\" {status} {size} {latency}"
-      errors stdout
+  {
+      order txtdirect last
   }
+
+  :8080
+
+  tls internal
+
+  txtdirect {
+      enable path host
+      resolver 127.0.0.1:5353
+      logfile stdout
+  }
+
+  log
   ```
 - Navigate to the directory in terminal where the Corefile was created and start CoreDNS with the Corefile
   ```
@@ -89,7 +94,7 @@ limitations under the License.
   ```
 - Start the caddyfile
   ```
-  $ ./txtdirect -conf /<directory>/caddy.test
+  $ ./txtdirect run --config /<directory>/caddy.test --adapter caddyfile
   ```
 
 ---

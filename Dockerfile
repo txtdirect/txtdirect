@@ -1,4 +1,4 @@
-FROM alpine:3.10
+FROM docker.io/library/alpine:3.20
 
 RUN apk --no-cache add ca-certificates
 

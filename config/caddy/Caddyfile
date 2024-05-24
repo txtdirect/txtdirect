@@ -1,0 +1,12 @@
+{
+  http_port 2080
+  admin off
+}
+http://*.example.lan:8080 {
+  route {
+    txtdirect {
+      enable host
+      logfile stdout
+    }
+  }
+}

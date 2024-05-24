@@ -1,0 +1,23 @@
+$TTL 2d
+$ORIGIN example.lan.
+
+@           IN      SOA     ns1.example.lan admin.example.lan (
+                                20230218		; serial number
+		                        3600			; refresh period
+		                        600			    ; retry period
+		                        604800			; expire time
+		                        1800 			; negative TTL
+                                )
+@           IN      NS      ns1.example.lan.
+
+ns1		    IN      A	    10.55.12.5
+
+; test
+deadbeef		IN		A		10.55.12.5
+
+; TXT direct
+txtdirect.example.lan. 		IN		A		10.55.12.6 
+test-google.example.lan.               3600 IN CNAME  txtdirect.example.lan.
+_redirect._.test-google.example.lan.     3600 IN TXT    "v=txtv0;type=host;code=302;to=https://www.google.com"
+test-video.example.lan.               3600 IN CNAME  txtdirect.example.lan.
+_redirect._.test-video.example.lan.     3600 IN TXT    "v=txtv0;type=host;code=302;to=https://www.youtube.com/watch?v=iWIADZKU9dwn"

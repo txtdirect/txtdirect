@@ -27,12 +27,12 @@ docker-run: image-build
 	docker run --name $(CONTAINER) $(IMAGE)
 
 docker-test:
-	docker run --network=host -v $(shell pwd):/source -v $(GOPATH)/pkg/mod:/go/pkg/mod golang:1.14-alpine /bin/sh \
+	docker run --network=host -v $(shell pwd):/source -v $(GOPATH)/pkg/mod:/go/pkg/mod golang:1.22.3-alpine /bin/sh \
 	-c "cd /source && apk add git gcc musl-dev make && GOROOT=\"/usr/local/go\" make test"
 
 docker-build:
-	docker run --network=host -v $(shell pwd):/source -v $(GOPATH)/pkg/mod:/go/pkg/mod golang:1.14-alpine /bin/sh \
-	-c "cd /source && apk add git gcc musl-dev make && make build"
+	docker run --network=host -v $(shell pwd):/source -v $(GOPATH)/pkg/mod:/go/pkg/mod golang:1.22.3-alpine /bin/sh \
+	-c "cd /source &&  apk add git gcc musl-dev make && git config --global --add safe.directory /source && make build"
 
 endtoend-test: docker-build
 	docker build -t $(IMAGE)-dirty .
